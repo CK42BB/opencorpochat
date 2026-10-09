@@ -3,7 +3,8 @@ import { t } from './i18n';
 
 const locale = typeof navigator !== 'undefined' ? navigator.language : 'en';
 
-export const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
+export const formatTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
 
 export function formatDay(iso: string) {
   const d = new Date(iso);
@@ -13,11 +14,21 @@ export function formatDay(iso: string) {
   if (d.toDateString() === today.toDateString()) return t('Today');
   if (d.toDateString() === yesterday.toDateString()) return t('Yesterday');
   const sameYear = d.getFullYear() === today.getFullYear();
-  return d.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
+  return d.toLocaleDateString(locale, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  });
 }
 
 export const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  new Date(iso).toLocaleString(locale, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
 export function formatRelative(iso: string) {
   const diff = (Date.now() - Date.parse(iso)) / 1000;
@@ -37,10 +48,15 @@ export function formatBytes(n: number) {
 
 export function localTimeIn(tz: string) {
   try {
-    return new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', timeZone: tz });
+    return new Date().toLocaleTimeString(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: tz,
+    });
   } catch {
     return '';
   }
 }
 
-export const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
+export const sameDay = (a: string, b: string) =>
+  new Date(a).toDateString() === new Date(b).toDateString();

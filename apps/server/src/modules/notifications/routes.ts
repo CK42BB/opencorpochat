@@ -14,7 +14,10 @@ export function notificationRoutes(app: FastifyInstance, ctx: Ctx) {
     url: '/notifications',
     summary: 'Your activity feed: mentions, DMs, thread replies, keywords, reminders',
     tags: ['notifications'],
-    query: z.object({ before: z.string().max(64).optional(), unread: z.enum(['true', 'false']).optional() }),
+    query: z.object({
+      before: z.string().max(64).optional(),
+      unread: z.enum(['true', 'false']).optional(),
+    }),
     handler: async ({ user, query }) => {
       let q = ctx.db.selectFrom('notifications').selectAll().where('user_id', '=', user.id);
       if (query.before) q = q.where('id', '<', query.before);
@@ -31,7 +34,11 @@ export function notificationRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['notifications'],
     body: z.object({ ids: z.array(z.string().max(64)).max(500).optional() }),
     handler: async ({ user, body }) => {
-      let q = ctx.db.updateTable('notifications').set({ read_at: nowIso() }).where('user_id', '=', user.id).where('read_at', 'is', null);
+      let q = ctx.db
+        .updateTable('notifications')
+        .set({ read_at: nowIso() })
+        .where('user_id', '=', user.id)
+        .where('read_at', 'is', null);
       if (body.ids?.length) q = q.where('id', 'in', body.ids);
       await q.execute();
     },
@@ -46,8 +53,19 @@ export function notificationRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, body }) => {
       await ctx.db
         .insertInto('push_subscriptions')
-        .values({ id: ulid(), user_id: user.id, endpoint: body.endpoint, p256dh: body.keys.p256dh, auth: body.keys.auth, created_at: nowIso() })
-        .onConflict((oc) => oc.column('endpoint').doUpdateSet({ user_id: user.id, p256dh: body.keys.p256dh, auth: body.keys.auth }))
+        .values({
+          id: ulid(),
+          user_id: user.id,
+          endpoint: body.endpoint,
+          p256dh: body.keys.p256dh,
+          auth: body.keys.auth,
+          created_at: nowIso(),
+        })
+        .onConflict((oc) =>
+          oc
+            .column('endpoint')
+            .doUpdateSet({ user_id: user.id, p256dh: body.keys.p256dh, auth: body.keys.auth }),
+        )
         .execute();
     },
   });
@@ -59,7 +77,11 @@ export function notificationRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['notifications'],
     body: z.object({ endpoint: z.string().max(2000) }),
     handler: async ({ user, body }) => {
-      await ctx.db.deleteFrom('push_subscriptions').where('endpoint', '=', body.endpoint).where('user_id', '=', user.id).execute();
+      await ctx.db
+        .deleteFrom('push_subscriptions')
+        .where('endpoint', '=', body.endpoint)
+        .where('user_id', '=', user.id)
+        .execute();
     },
   });
 }

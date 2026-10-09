@@ -1,7 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Administration console: /admin/*
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
-import { BarChart3, Download, Hash, ListChecks, Mail, Menu as MenuIcon, Settings, Shield, Smile, Users as UsersIcon, UsersRound } from 'lucide-react';
+import {
+  BarChart3,
+  Download,
+  Hash,
+  ListChecks,
+  Mail,
+  Menu as MenuIcon,
+  Settings,
+  Shield,
+  Smile,
+  Users as UsersIcon,
+  UsersRound,
+} from 'lucide-react';
 import { useStore } from '../lib/store';
 import { t } from '../lib/i18n';
 import { EmptyState } from '../components/ui';
@@ -34,7 +46,11 @@ export function AdminPage() {
   return (
     <main className="main" aria-label={t('Administration')}>
       <header className="page-header">
-        <button className="icon-btn mobile-only" onClick={() => window.dispatchEvent(new CustomEvent('ocpc:toggle-nav'))} aria-label={t('Open navigation')}>
+        <button
+          className="icon-btn mobile-only"
+          onClick={() => window.dispatchEvent(new CustomEvent('ocpc:toggle-nav'))}
+          aria-label={t('Open navigation')}
+        >
           <MenuIcon size={18} />
         </button>
         <Shield size={18} />
@@ -49,7 +65,11 @@ export function AdminPage() {
           <nav className="settings-nav" aria-label={t('Administration sections')}>
             <h4>{t('Organization')}</h4>
             {SECTIONS.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={`/admin/${path}`} className={({ isActive }) => (isActive ? 'active' : '')}>
+              <NavLink
+                key={path}
+                to={`/admin/${path}`}
+                className={({ isActive }) => (isActive ? 'active' : '')}
+              >
                 <Icon size={16} /> {t(label)}
               </NavLink>
             ))}

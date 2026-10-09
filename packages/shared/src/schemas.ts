@@ -2,7 +2,9 @@
 // Request-body schemas. The server validates with these; clients may use them for forms.
 import { z } from 'zod';
 
-export const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{1,31}$/;
+// The escaped '-' keeps this valid as an HTML pattern attribute (compiled with the `v` flag).
+// eslint-disable-next-line no-useless-escape
+export const USERNAME_RE = /^[a-z0-9][a-z0-9._\-]{1,31}$/;
 export const CHANNEL_NAME_RE = /^[a-z0-9][a-z0-9_-]{0,79}$/;
 export const EMOJI_NAME_RE = /^[a-z0-9_+-]{1,64}$/;
 
@@ -49,7 +51,10 @@ export const ChangePasswordInput = z.object({
   newPassword: password,
 });
 
-export const TotpEnableInput = z.object({ secret: z.string().min(16).max(64), code: z.string().max(12) });
+export const TotpEnableInput = z.object({
+  secret: z.string().min(16).max(64),
+  code: z.string().max(12),
+});
 export const TotpDisableInput = z.object({ code: z.string().max(32) });
 
 export const UpdateProfileInput = z
@@ -173,7 +178,13 @@ export const CreateInviteInput = z.object({
   role: z.enum(['admin', 'member', 'guest']).default('member'),
   email: email.optional(),
   maxUses: z.number().int().min(1).max(10_000).nullable().default(null),
-  expiresInHours: z.number().int().min(1).max(24 * 365).nullable().default(168),
+  expiresInHours: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 365)
+    .nullable()
+    .default(168),
   channelIds: z.array(id).max(100).default([]),
 });
 
@@ -217,11 +228,7 @@ export const CustomEmojiInput = z.object({
   fileId: id,
 });
 
-export const API_SCOPES = [
-  'read',
-  'write',
-  'admin',
-] as const;
+export const API_SCOPES = ['read', 'write', 'admin'] as const;
 export type ApiScope = (typeof API_SCOPES)[number];
 
 export const CreateTokenInput = z.object({

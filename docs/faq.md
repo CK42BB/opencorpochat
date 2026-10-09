@@ -30,7 +30,7 @@ No. It makes no outbound connections unless you configure a service that needs o
 
 ### Is there a mobile app?
 
-OpenCorpoChat is a **Progressive Web App (PWA)**. On a phone, open your chat URL and choose *Add to Home Screen* or *Install app*. You get an app icon, full-screen use and push notifications, including on iOS 16.4 and later. Native apps are a possible future addition.
+OpenCorpoChat is a **Progressive Web App (PWA)**. On a phone, open your chat URL and choose _Add to Home Screen_ or _Install app_. You get an app icon, full-screen use and push notifications, including on iOS 16.4 and later. Native apps are a possible future addition.
 
 ### What does the AGPL mean for my company?
 

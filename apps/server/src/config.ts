@@ -62,6 +62,8 @@ const EnvSchema = z.object({
   TURN_URLS: list,
   TURN_SECRET: opt,
   STUN_URLS: list,
+  OCPC_STUN_PORT: z.coerce.number().int().min(0).max(65535).default(3478),
+  OCPC_STUN_HOST: opt,
 
   LIVEKIT_URL: opt,
   LIVEKIT_API_KEY: opt,
@@ -108,6 +110,8 @@ export interface Config {
     allowedDomains: string[];
   };
   turn: { urls: string[]; secret?: string; stunUrls: string[] };
+  /** Built-in STUN server (0 = disabled) and the hostname clients should reach it at. */
+  stun: { port: number; host: string };
   livekit: null | { url: string; apiKey: string; apiSecret: string };
   vapid: { publicKey: string; privateKey: string; subject: string };
 }
@@ -131,7 +135,10 @@ function persisted(dataDir: string, name: string, make: () => string): string {
   return v;
 }
 
-export function loadConfig(source: NodeJS.ProcessEnv = process.env, overrides: Partial<Env> = {}): Config {
+export function loadConfig(
+  source: NodeJS.ProcessEnv = process.env,
+  overrides: Partial<Env> = {},
+): Config {
   const parsed = EnvSchema.safeParse({ ...source, ...overrides });
   if (!parsed.success) {
     const lines = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`);
@@ -146,26 +153,36 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, overrides: P
 
   const publicUrl = (env.OCPC_PUBLIC_URL ?? `http://localhost:${env.PORT}`).replace(/\/+$/, '');
   if (production && !env.OCPC_PUBLIC_URL) {
-    console.warn('[ocpc] OCPC_PUBLIC_URL is not set; links in emails and SSO redirects will use ' + publicUrl);
+    console.warn(
+      '[ocpc] OCPC_PUBLIC_URL is not set; links in emails and SSO redirects will use ' + publicUrl,
+    );
   }
 
   const dbUrl = env.DATABASE_URL;
   const database: Config['database'] =
     dbUrl && /^postgres(ql)?:\/\//.test(dbUrl)
       ? { kind: 'postgres', url: dbUrl, poolMax: env.DATABASE_POOL_MAX }
-      : { kind: 'sqlite', file: dbUrl ? dbUrl.replace(/^sqlite:(\/\/)?/, '') : path.join(dataDir, 'ocpc.db') };
+      : {
+          kind: 'sqlite',
+          file: dbUrl ? dbUrl.replace(/^sqlite:(\/\/)?/, '') : path.join(dataDir, 'ocpc.db'),
+        };
 
-  const secret = env.OCPC_SECRET ?? persisted(dataDir, 'secret.key', () => randomBytes(32).toString('base64url'));
+  const secret =
+    env.OCPC_SECRET ??
+    persisted(dataDir, 'secret.key', () => randomBytes(32).toString('base64url'));
 
   // VAPID keys for Web Push: from env, or generated once and persisted in the data dir.
   let vapid: Config['vapid'];
   if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
     vapid = { publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, subject: '' };
   } else {
-    const keys = JSON.parse(persisted(dataDir, 'vapid.json', () => JSON.stringify(generateVapidKeys())));
+    const keys = JSON.parse(
+      persisted(dataDir, 'vapid.json', () => JSON.stringify(generateVapidKeys())),
+    );
     vapid = { publicKey: keys.publicKey, privateKey: keys.privateKey, subject: '' };
   }
-  vapid.subject = env.VAPID_SUBJECT ?? (publicUrl.startsWith('https://') ? publicUrl : 'mailto:admin@localhost');
+  vapid.subject =
+    env.VAPID_SUBJECT ?? (publicUrl.startsWith('https://') ? publicUrl : 'mailto:admin@localhost');
 
   const webDirCandidates = [
     env.OCPC_WEB_DIST,
@@ -200,7 +217,12 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, overrides: P
           forcePathStyle: env.S3_FORCE_PATH_STYLE,
         }
       : null,
-    smtp: env.SMTP_URL ? { url: env.SMTP_URL, from: env.SMTP_FROM ?? `OpenCorpoChat <no-reply@${new URL(publicUrl).hostname}>` } : null,
+    smtp: env.SMTP_URL
+      ? {
+          url: env.SMTP_URL,
+          from: env.SMTP_FROM ?? `OpenCorpoChat <no-reply@${new URL(publicUrl).hostname}>`,
+        }
+      : null,
     oidc:
       env.OIDC_ISSUER && env.OIDC_CLIENT_ID
         ? {
@@ -213,6 +235,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env, overrides: P
           }
         : null,
     turn: { urls: env.TURN_URLS, secret: env.TURN_SECRET, stunUrls: env.STUN_URLS },
+    stun: { port: env.OCPC_STUN_PORT, host: env.OCPC_STUN_HOST ?? new URL(publicUrl).hostname },
     livekit:
       env.LIVEKIT_URL && env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET
         ? { url: env.LIVEKIT_URL, apiKey: env.LIVEKIT_API_KEY, apiSecret: env.LIVEKIT_API_SECRET }

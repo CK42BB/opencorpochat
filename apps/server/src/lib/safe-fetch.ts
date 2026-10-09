@@ -10,19 +10,38 @@ export function isPrivateAddress(ip: string): boolean {
   if (net.isIPv4(ip)) {
     const [a, b] = ip.split('.').map(Number) as [number, number];
     return (
-      a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224 || (a === 192 && b === 0) ||
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      a >= 224 ||
+      (a === 192 && b === 0) ||
       (a === 198 && (b === 18 || b === 19))
     );
   }
   const v = ip.toLowerCase();
   if (v === '::' || v === '::1') return true;
   if (v.startsWith('::ffff:')) return isPrivateAddress(v.slice(7));
-  return v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe8') || v.startsWith('fe9') || v.startsWith('fea') || v.startsWith('feb') || v.startsWith('ff');
+  return (
+    v.startsWith('fc') ||
+    v.startsWith('fd') ||
+    v.startsWith('fe8') ||
+    v.startsWith('fe9') ||
+    v.startsWith('fea') ||
+    v.startsWith('feb') ||
+    v.startsWith('ff')
+  );
 }
 
 const safeLookup: typeof dnsLookup = ((hostname: string, options: unknown, cb: unknown) => {
-  const callback = (typeof options === 'function' ? options : cb) as (err: Error | null, address?: unknown, family?: number) => void;
+  const callback = (typeof options === 'function' ? options : cb) as (
+    err: Error | null,
+    address?: unknown,
+    family?: number,
+  ) => void;
   const opts = typeof options === 'object' && options ? (options as object) : {};
   dnsLookup(hostname, { ...opts, all: true }, (err, addresses) => {
     if (err) return callback(err);
@@ -49,8 +68,12 @@ export async function safeFetch(
   const timeoutMs = opts.timeoutMs ?? 5000;
   let current = new URL(url);
   for (let hop = 0; hop <= (opts.maxRedirects ?? 3); hop++) {
-    if (current.protocol !== 'http:' && current.protocol !== 'https:') throw new Error('Unsupported protocol');
-    if (net.isIP(current.hostname.replace(/^\[|\]$/g, '')) && isPrivateAddress(current.hostname.replace(/^\[|\]$/g, ''))) {
+    if (current.protocol !== 'http:' && current.protocol !== 'https:')
+      throw new Error('Unsupported protocol');
+    if (
+      net.isIP(current.hostname.replace(/^\[|\]$/g, '')) &&
+      isPrivateAddress(current.hostname.replace(/^\[|\]$/g, ''))
+    ) {
       throw new Error('Blocked address');
     }
     const res = await new Promise<SafeResponse | { redirect: string }>((resolve, reject) => {
@@ -60,7 +83,10 @@ export async function safeFetch(
         {
           lookup: safeLookup,
           timeout: timeoutMs,
-          headers: { 'user-agent': 'OpenCorpoChat-LinkPreview/1.0', accept: opts.accept ?? 'text/html,*/*;q=0.5' },
+          headers: {
+            'user-agent': 'OpenCorpoChat-LinkPreview/1.0',
+            accept: opts.accept ?? 'text/html,*/*;q=0.5',
+          },
         },
         (r) => {
           const status = r.statusCode ?? 0;
@@ -74,12 +100,24 @@ export async function safeFetch(
             size += c.length;
             if (size > maxBytes) {
               r.destroy();
-              resolve({ status, url: current.toString(), contentType: String(r.headers['content-type'] ?? ''), body: Buffer.concat(chunks) });
+              resolve({
+                status,
+                url: current.toString(),
+                contentType: String(r.headers['content-type'] ?? ''),
+                body: Buffer.concat(chunks),
+              });
               return;
             }
             chunks.push(c);
           });
-          r.on('end', () => resolve({ status, url: current.toString(), contentType: String(r.headers['content-type'] ?? ''), body: Buffer.concat(chunks) }));
+          r.on('end', () =>
+            resolve({
+              status,
+              url: current.toString(),
+              contentType: String(r.headers['content-type'] ?? ''),
+              body: Buffer.concat(chunks),
+            }),
+          );
           r.on('error', reject);
         },
       );
@@ -96,7 +134,12 @@ export async function safeFetch(
 }
 
 /** POST JSON to a trusted (admin-configured) integration URL. */
-export async function postJson(url: string, body: unknown, headers: Record<string, string> = {}, timeoutMs = 5000) {
+export async function postJson(
+  url: string,
+  body: unknown,
+  headers: Record<string, string> = {},
+  timeoutMs = 5000,
+) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'user-agent': 'OpenCorpoChat/1.0', ...headers },

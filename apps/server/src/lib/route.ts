@@ -56,17 +56,19 @@ interface RouteDef<B extends ZodType | undefined, Q extends ZodType | undefined>
   query?: Q;
   rateLimit?: { max: number; timeWindow: string | number };
   handler: (
-    args: HandlerArgs<B extends ZodType ? z.output<B> : undefined, Q extends ZodType ? z.output<Q> : undefined>,
+    args: HandlerArgs<
+      B extends ZodType ? z.output<B> : undefined,
+      Q extends ZodType ? z.output<Q> : undefined
+    >,
   ) => Promise<unknown> | unknown;
 }
 
 const ROLE_RANK: Record<Role, number> = { bot: 1, guest: 0, member: 1, admin: 2, owner: 3 };
 
-export function route<B extends ZodType | undefined = undefined, Q extends ZodType | undefined = undefined>(
-  app: FastifyInstance,
-  ctx: Ctx,
-  def: RouteDef<B, Q>,
-) {
+export function route<
+  B extends ZodType | undefined = undefined,
+  Q extends ZodType | undefined = undefined,
+>(app: FastifyInstance, ctx: Ctx, def: RouteDef<B, Q>) {
   const authLevel = def.auth ?? 'user';
   ctx.routeDocs.push({
     method: def.method,
@@ -97,7 +99,8 @@ export function route<B extends ZodType | undefined = undefined, Q extends ZodTy
             (scope === 'read' && auth.scopes.includes('write')) ||
             auth.scopes.includes('admin');
           if (!ok) throw forbidden(`Token lacks the "${scope}" scope`);
-          if (authLevel === 'admin' && !auth.scopes.includes('admin')) throw forbidden('Token lacks the "admin" scope');
+          if (authLevel === 'admin' && !auth.scopes.includes('admin'))
+            throw forbidden('Token lacks the "admin" scope');
         }
       }
       let body: unknown = undefined;

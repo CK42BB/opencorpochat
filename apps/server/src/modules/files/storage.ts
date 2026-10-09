@@ -119,7 +119,9 @@ class S3Storage implements Storage {
 }
 
 export function createStorage(config: Config): Storage {
-  return config.s3 ? new S3Storage(config.s3, path.join(config.dataDir, 'tmp')) : new LocalStorage(config.filesDir);
+  return config.s3
+    ? new S3Storage(config.s3, path.join(config.dataDir, 'tmp'))
+    : new LocalStorage(config.filesDir);
 }
 
 /** Buffer → Readable helper. */

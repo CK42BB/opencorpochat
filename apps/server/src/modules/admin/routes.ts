@@ -20,7 +20,13 @@ import { ulid } from '../../lib/ids.js';
 import { route } from '../../lib/route.js';
 import { HOUR, isoIn, nowIso } from '../../lib/time.js';
 import { sendMail } from '../notifications/email.js';
-import { findUserByLogin, getUserRow, isUsernameTaken, publishUser, toUser } from '../users/service.js';
+import {
+  findUserByLogin,
+  getUserRow,
+  isUsernameTaken,
+  publishUser,
+  toUser,
+} from '../users/service.js';
 import { audit } from './audit.js';
 import { exportStream } from './export.js';
 import { canInvite } from '@ocpc/shared';
@@ -71,13 +77,28 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     body: OrgSettingsInput,
     handler: async ({ user, body, ip }) => {
       if (body.iconFileId) {
-        const f = await ctx.db.selectFrom('files').select(['mime']).where('id', '=', body.iconFileId).executeTakeFirst();
+        const f = await ctx.db
+          .selectFrom('files')
+          .select(['mime'])
+          .where('id', '=', body.iconFileId)
+          .executeTakeFirst();
         if (!f?.mime.startsWith('image/')) throw badRequest('Icon must be an image');
-        await ctx.db.updateTable('files').set({ purpose: 'org_icon' }).where('id', '=', body.iconFileId).execute();
+        await ctx.db
+          .updateTable('files')
+          .set({ purpose: 'org_icon' })
+          .where('id', '=', body.iconFileId)
+          .execute();
       }
-      if (body.ssoOnly && !ctx.config.oidc) throw badRequest('Configure OIDC before enabling SSO-only mode');
+      if (body.ssoOnly && !ctx.config.oidc)
+        throw badRequest('Configure OIDC before enabling SSO-only mode');
       await ctx.settings.update(body);
-      await audit(ctx, { actorId: user.id, action: 'settings.updated', targetType: 'org', ip, metadata: body });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'settings.updated',
+        targetType: 'org',
+        ip,
+        metadata: body,
+      });
       ctx.hub.broadcast('settings.updated', {});
       return ctx.settings.public();
     },
@@ -91,7 +112,12 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'admin',
     handler: async ({ user }) => {
       try {
-        await sendMail(ctx, user.email, `[${ctx.settings.get().name}] Test email`, 'Email delivery from OpenCorpoChat is working.');
+        await sendMail(
+          ctx,
+          user.email,
+          `[${ctx.settings.get().name}] Test email`,
+          'Email delivery from OpenCorpoChat is working.',
+        );
       } catch (err) {
         throw badRequest(`Email failed: ${(err as Error).message}`);
       }
@@ -129,16 +155,29 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, params, body, ip }) => {
       const target = await getUserRow(ctx, params.id!);
       const actor = { id: user.id, role: user.role as Role };
-      if (target.role === 'owner' && user.role !== 'owner') throw forbidden('Only owners can modify owners');
+      if (target.role === 'owner' && user.role !== 'owner')
+        throw forbidden('Only owners can modify owners');
       if (body.role && body.role !== target.role) {
-        if (!canChangeRole(actor, { id: target.id, role: target.role as Role }, body.role)) throw forbidden();
+        if (!canChangeRole(actor, { id: target.id, role: target.role as Role }, body.role))
+          throw forbidden();
         if (target.role === 'owner') {
-          const owners = await ctx.db.selectFrom('users').select('id').where('role', '=', 'owner').where('deactivated_at', 'is', null).execute();
+          const owners = await ctx.db
+            .selectFrom('users')
+            .select('id')
+            .where('role', '=', 'owner')
+            .where('deactivated_at', 'is', null)
+            .execute();
           if (owners.length <= 1) throw badRequest('There must be at least one owner');
         }
       }
-      if (body.deactivated !== undefined && target.id === user.id) throw badRequest('You cannot deactivate yourself');
-      if (body.username && body.username !== target.username && (await isUsernameTaken(ctx, body.username, target.id))) throw conflict('That username is taken');
+      if (body.deactivated !== undefined && target.id === user.id)
+        throw badRequest('You cannot deactivate yourself');
+      if (
+        body.username &&
+        body.username !== target.username &&
+        (await isUsernameTaken(ctx, body.username, target.id))
+      )
+        throw conflict('That username is taken');
       if (body.email && body.email !== target.email) {
         const other = await findUserByLogin(ctx, body.email);
         if (other && other.id !== target.id) throw conflict('That email is in use');
@@ -150,7 +189,8 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
           username: body.username,
           email: body.email,
           display_name: body.displayName,
-          deactivated_at: body.deactivated === undefined ? undefined : body.deactivated ? nowIso() : null,
+          deactivated_at:
+            body.deactivated === undefined ? undefined : body.deactivated ? nowIso() : null,
         })
         .where('id', '=', target.id)
         .execute();
@@ -158,7 +198,14 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
         await ctx.db.deleteFrom('sessions').where('user_id', '=', target.id).execute();
         ctx.hub.kick({ userId: target.id });
       }
-      await audit(ctx, { actorId: user.id, action: 'user.updated', targetType: 'user', targetId: target.id, ip, metadata: body });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'user.updated',
+        targetType: 'user',
+        targetId: target.id,
+        ip,
+        metadata: body,
+      });
       return toUser(await publishUser(ctx, target.id));
     },
   });
@@ -172,8 +219,18 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, params, ip }) => {
       const target = await getUserRow(ctx, params.id!);
       if (target.role === 'owner' && user.role !== 'owner') throw forbidden();
-      await ctx.db.updateTable('users').set({ totp_enabled: 0, totp_secret: null, recovery_codes: null }).where('id', '=', target.id).execute();
-      await audit(ctx, { actorId: user.id, action: 'user.2fa_reset', targetType: 'user', targetId: target.id, ip });
+      await ctx.db
+        .updateTable('users')
+        .set({ totp_enabled: 0, totp_secret: null, recovery_codes: null })
+        .where('id', '=', target.id)
+        .execute();
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'user.2fa_reset',
+        targetType: 'user',
+        targetId: target.id,
+        ip,
+      });
     },
   });
 
@@ -188,13 +245,27 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
       if (target.role === 'owner' && user.role !== 'owner') throw forbidden();
       if (target.role === 'bot') throw badRequest('Bots do not have passwords');
       const token = randomToken();
-      await ctx.db.insertInto('kv').values({ key: `pwreset:${sha256(token)}`, value: target.id, expires_at: isoIn(24 * HOUR) }).execute();
-      await audit(ctx, { actorId: user.id, action: 'user.password_reset_issued', targetType: 'user', targetId: target.id, ip });
+      await ctx.db
+        .insertInto('kv')
+        .values({ key: `pwreset:${sha256(token)}`, value: target.id, expires_at: isoIn(24 * HOUR) })
+        .execute();
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'user.password_reset_issued',
+        targetType: 'user',
+        targetId: target.id,
+        ip,
+      });
       const link = `${ctx.config.publicUrl}/reset/${token}`;
       let emailed = false;
       if (ctx.config.smtp) {
         try {
-          await sendMail(ctx, target.email, `[${ctx.settings.get().name}] Reset your password`, `An administrator created a password reset link for you:\n\n${link}\n\nIt expires in 24 hours.`);
+          await sendMail(
+            ctx,
+            target.email,
+            `[${ctx.settings.get().name}] Reset your password`,
+            `An administrator created a password reset link for you:\n\n${link}\n\nIt expires in 24 hours.`,
+          );
           emailed = true;
         } catch {
           /* fall back to showing the link */
@@ -214,27 +285,51 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     rateLimit: { max: 10, timeWindow: '5 minutes' },
     handler: async ({ body, ip }) => {
       const key = `pwreset:${sha256(body.token)}`;
-      const kv = await ctx.db.selectFrom('kv').selectAll().where('key', '=', key).executeTakeFirst();
-      if (!kv || (kv.expires_at && kv.expires_at < nowIso())) throw badRequest('This reset link is invalid or has expired');
+      const kv = await ctx.db
+        .selectFrom('kv')
+        .selectAll()
+        .where('key', '=', key)
+        .executeTakeFirst();
+      if (!kv || (kv.expires_at && kv.expires_at < nowIso()))
+        throw badRequest('This reset link is invalid or has expired');
       await ctx.db.deleteFrom('kv').where('key', '=', key).execute();
-      await ctx.db.updateTable('users').set({ password_hash: await hashPassword(body.password) }).where('id', '=', kv.value).execute();
+      await ctx.db
+        .updateTable('users')
+        .set({ password_hash: await hashPassword(body.password) })
+        .where('id', '=', kv.value)
+        .execute();
       await ctx.db.deleteFrom('sessions').where('user_id', '=', kv.value).execute();
       ctx.hub.kick({ userId: kv.value });
-      await audit(ctx, { actorId: kv.value, action: 'auth.password_reset', targetType: 'user', targetId: kv.value, ip });
+      await audit(ctx, {
+        actorId: kv.value,
+        action: 'auth.password_reset',
+        targetType: 'user',
+        targetId: kv.value,
+        ip,
+      });
     },
   });
 
   route(app, ctx, {
     method: 'GET',
     url: '/admin/users/:id/export',
-    summary: 'Export one person\'s data (data-subject access request), as NDJSON',
+    summary: "Export one person's data (data-subject access request), as NDJSON",
     tags: ['admin'],
     auth: 'admin',
     handler: async ({ user, params, reply, ip }) => {
       const target = await getUserRow(ctx, params.id!);
-      await audit(ctx, { actorId: user.id, action: 'user.exported', targetType: 'user', targetId: target.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'user.exported',
+        targetType: 'user',
+        targetId: target.id,
+        ip,
+      });
       reply.header('Content-Type', 'application/x-ndjson');
-      reply.header('Content-Disposition', `attachment; filename="user-${target.username}-export.ndjson"`);
+      reply.header(
+        'Content-Disposition',
+        `attachment; filename="user-${target.username}-export.ndjson"`,
+      );
       return reply.send(exportStream(ctx, { userId: target.id }));
     },
   });
@@ -249,7 +344,11 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
       const target = await getUserRow(ctx, params.id!);
       if (target.id === user.id) throw badRequest('You cannot erase yourself');
       if (target.role === 'owner') throw forbidden('Demote the owner before erasing them');
-      const files = await ctx.db.selectFrom('files').select(['storage_key']).where('uploader_id', '=', target.id).execute();
+      const files = await ctx.db
+        .selectFrom('files')
+        .select(['storage_key'])
+        .where('uploader_id', '=', target.id)
+        .execute();
       const tag = `deleted-${target.id.slice(-8).toLowerCase()}`;
       await ctx.db.transaction().execute(async (trx) => {
         await trx
@@ -257,7 +356,22 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
           .set({ body: '', deleted_at: nowIso(), poll: null, previews: null, forwarded_from: null })
           .where('user_id', '=', target.id)
           .execute();
-        for (const t of ['reactions', 'saved_items', 'thread_follows', 'poll_votes', 'mentions', 'notifications', 'push_subscriptions', 'reminders', 'scheduled_messages', 'sessions', 'api_tokens', 'identities', 'user_group_members', 'channel_members'] as const) {
+        for (const t of [
+          'reactions',
+          'saved_items',
+          'thread_follows',
+          'poll_votes',
+          'mentions',
+          'notifications',
+          'push_subscriptions',
+          'reminders',
+          'scheduled_messages',
+          'sessions',
+          'api_tokens',
+          'identities',
+          'user_group_members',
+          'channel_members',
+        ] as const) {
           await trx.deleteFrom(t).where('user_id', '=', target.id).execute();
         }
         await trx.deleteFrom('files').where('uploader_id', '=', target.id).execute();
@@ -287,7 +401,13 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
       for (const f of files) await ctx.storage.delete(f.storage_key).catch(() => {});
       ctx.hub.kick({ userId: target.id });
       await publishUser(ctx, target.id);
-      await audit(ctx, { actorId: user.id, action: 'user.erased', targetType: 'user', targetId: target.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'user.erased',
+        targetType: 'user',
+        targetId: target.id,
+        ip,
+      });
     },
   });
 
@@ -313,9 +433,12 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'member',
     body: CreateInviteInput,
     handler: async ({ user, body, ip }) => {
-      if (!canInvite({ id: user.id, role: user.role as Role }, body.role)) throw forbidden('You cannot create that kind of invite');
-      if (body.role === 'guest' && !ctx.settings.get().guestsEnabled) throw forbidden('Guest accounts are disabled');
-      if (body.role === 'guest' && !body.channelIds.length) throw badRequest('Choose at least one channel for the guest');
+      if (!canInvite({ id: user.id, role: user.role as Role }, body.role))
+        throw forbidden('You cannot create that kind of invite');
+      if (body.role === 'guest' && !ctx.settings.get().guestsEnabled)
+        throw forbidden('Guest accounts are disabled');
+      if (body.role === 'guest' && !body.channelIds.length)
+        throw badRequest('Choose at least one channel for the guest');
       const code = randomToken(18);
       const row: InvitesTable = {
         id: ulid(),
@@ -331,18 +454,35 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
         created_at: nowIso(),
       };
       await ctx.db.insertInto('invites').values(row).execute();
-      await audit(ctx, { actorId: user.id, action: 'invite.created', targetType: 'invite', targetId: row.id, ip, metadata: { role: body.role, email: body.email } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'invite.created',
+        targetType: 'invite',
+        targetId: row.id,
+        ip,
+        metadata: { role: body.role, email: body.email },
+      });
       const link = `${ctx.config.publicUrl}/join/${code}`;
       let emailed = false;
       if (body.email && ctx.config.smtp) {
         try {
-          await sendMail(ctx, body.email, `You're invited to ${ctx.settings.get().name}`, `${user.display_name} invited you to join ${ctx.settings.get().name} on OpenCorpoChat.\n\nAccept the invite: ${link}\n`);
+          await sendMail(
+            ctx,
+            body.email,
+            `You're invited to ${ctx.settings.get().name}`,
+            `${user.display_name} invited you to join ${ctx.settings.get().name} on OpenCorpoChat.\n\nAccept the invite: ${link}\n`,
+          );
           emailed = true;
         } catch (err) {
           ctx.log.warn({ err }, 'invite email failed');
         }
       }
-      return { ...toInvite(row, code), link, emailed, channelIds: json<string[]>(row.channel_ids, []) };
+      return {
+        ...toInvite(row, code),
+        link,
+        emailed,
+        channelIds: json<string[]>(row.channel_ids, []),
+      };
     },
   });
 
@@ -353,11 +493,26 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['admin'],
     auth: 'member',
     handler: async ({ user, params, ip }) => {
-      const inv = await ctx.db.selectFrom('invites').selectAll().where('id', '=', params.id!).executeTakeFirst();
+      const inv = await ctx.db
+        .selectFrom('invites')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .executeTakeFirst();
       if (!inv) throw notFound('Invite');
-      if (inv.created_by !== user.id && user.role !== 'admin' && user.role !== 'owner') throw forbidden();
-      await ctx.db.updateTable('invites').set({ revoked_at: nowIso() }).where('id', '=', inv.id).execute();
-      await audit(ctx, { actorId: user.id, action: 'invite.revoked', targetType: 'invite', targetId: inv.id, ip });
+      if (inv.created_by !== user.id && user.role !== 'admin' && user.role !== 'owner')
+        throw forbidden();
+      await ctx.db
+        .updateTable('invites')
+        .set({ revoked_at: nowIso() })
+        .where('id', '=', inv.id)
+        .execute();
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'invite.revoked',
+        targetType: 'invite',
+        targetId: inv.id,
+        ip,
+      });
     },
   });
 
@@ -402,15 +557,29 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'admin',
     handler: async () => {
       const count = async (t: 'users' | 'channels' | 'messages' | 'files') =>
-        Number((await ctx.db.selectFrom(t).select((eb) => eb.fn.countAll<number>().as('n')).executeTakeFirst())?.n ?? 0);
+        Number(
+          (
+            await ctx.db
+              .selectFrom(t)
+              .select((eb) => eb.fn.countAll<number>().as('n'))
+              .executeTakeFirst()
+          )?.n ?? 0,
+        );
       const since = new Date(Date.now() - 30 * 24 * HOUR).toISOString();
       const active = await ctx.db
         .selectFrom('messages')
         .select((eb) => eb.fn.count<number>('user_id').distinct().as('n'))
         .where('created_at', '>=', since)
         .executeTakeFirst();
-      const recent = await ctx.db.selectFrom('messages').select((eb) => eb.fn.countAll<number>().as('n')).where('created_at', '>=', since).executeTakeFirst();
-      const storage = await ctx.db.selectFrom('files').select((eb) => eb.fn.sum<number>('size').as('n')).executeTakeFirst();
+      const recent = await ctx.db
+        .selectFrom('messages')
+        .select((eb) => eb.fn.countAll<number>().as('n'))
+        .where('created_at', '>=', since)
+        .executeTakeFirst();
+      const storage = await ctx.db
+        .selectFrom('files')
+        .select((eb) => eb.fn.sum<number>('size').as('n'))
+        .executeTakeFirst();
       const byDay = await ctx.db
         .selectFrom('messages')
         .select(['created_at'])
@@ -446,7 +615,10 @@ export function adminRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, reply, ip }) => {
       await audit(ctx, { actorId: user.id, action: 'org.exported', targetType: 'org', ip });
       reply.header('Content-Type', 'application/x-ndjson');
-      reply.header('Content-Disposition', `attachment; filename="ocpc-export-${new Date().toISOString().slice(0, 10)}.ndjson"`);
+      reply.header(
+        'Content-Disposition',
+        `attachment; filename="ocpc-export-${new Date().toISOString().slice(0, 10)}.ndjson"`,
+      );
       return reply.send(exportStream(ctx));
     },
   });

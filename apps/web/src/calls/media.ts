@@ -7,12 +7,22 @@ export class MediaError extends Error {}
 
 function describe(err: unknown, kind: 'microphone' | 'camera' | 'screen'): MediaError {
   const name = (err as { name?: string })?.name ?? '';
-  const what = kind === 'microphone' ? t('microphone') : kind === 'camera' ? t('camera') : t('screen');
+  const what =
+    kind === 'microphone' ? t('microphone') : kind === 'camera' ? t('camera') : t('screen');
   if (name === 'NotAllowedError' || name === 'SecurityError') {
-    return new MediaError(kind === 'screen' ? t('Screen sharing was cancelled or blocked.') : t('Permission to use your {what} was denied. Allow it in your browser settings and try again.', { what }));
+    return new MediaError(
+      kind === 'screen'
+        ? t('Screen sharing was cancelled or blocked.')
+        : t(
+            'Permission to use your {what} was denied. Allow it in your browser settings and try again.',
+            { what },
+          ),
+    );
   }
-  if (name === 'NotFoundError' || name === 'OverconstrainedError') return new MediaError(t('No {what} was found.', { what }));
-  if (name === 'NotReadableError') return new MediaError(t('Your {what} is in use by another application.', { what }));
+  if (name === 'NotFoundError' || name === 'OverconstrainedError')
+    return new MediaError(t('No {what} was found.', { what }));
+  if (name === 'NotReadableError')
+    return new MediaError(t('Your {what} is in use by another application.', { what }));
   if (!navigator.mediaDevices) return new MediaError(t('Calls need a secure (HTTPS) connection.'));
   return new MediaError(t('Could not access your {what}.', { what }));
 }
@@ -20,7 +30,12 @@ function describe(err: unknown, kind: 'microphone' | 'camera' | 'screen'): Media
 export async function getMic(deviceId?: string): Promise<MediaStreamTrack> {
   try {
     const s = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+      },
     });
     return s.getAudioTracks()[0]!;
   } catch (err) {
@@ -31,7 +46,12 @@ export async function getMic(deviceId?: string): Promise<MediaStreamTrack> {
 export async function getCamera(deviceId?: string): Promise<MediaStreamTrack> {
   try {
     const s = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 24 }, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) },
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 360 },
+        frameRate: { ideal: 24 },
+        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+      },
     });
     return s.getVideoTracks()[0]!;
   } catch (err) {
@@ -41,7 +61,10 @@ export async function getCamera(deviceId?: string): Promise<MediaStreamTrack> {
 
 export async function getScreen(): Promise<MediaStreamTrack> {
   try {
-    const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 15 } }, audio: false });
+    const s = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: { ideal: 15 } },
+      audio: false,
+    });
     const track = s.getVideoTracks()[0]!;
     track.contentHint = 'detail';
     return track;
@@ -53,7 +76,10 @@ export async function getScreen(): Promise<MediaStreamTrack> {
 /** Polls audio levels for a set of streams and updates the speaking map (by userId). */
 export class SpeakingMonitor {
   private ctx: AudioContext | null = null;
-  private entries = new Map<string, { userId: string; analyser: AnalyserNode; source: MediaStreamAudioSourceNode; trackId: string }>();
+  private entries = new Map<
+    string,
+    { userId: string; analyser: AnalyserNode; source: MediaStreamAudioSourceNode; trackId: string }
+  >();
   private timer: ReturnType<typeof setInterval> | null = null;
   private buf = new Uint8Array(512);
 

@@ -38,7 +38,8 @@ export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () =
   // Keep the thread marked read while it is open.
   const last = replyIds[replyIds.length - 1];
   useEffect(() => {
-    if (last && messages[last]?.userId !== meId) api.post(`/threads/${rootId}/read`).catch(() => {});
+    if (last && messages[last]?.userId !== meId)
+      api.post(`/threads/${rootId}/read`).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [last]);
 
@@ -47,7 +48,9 @@ export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () =
     const onEditLast = (e: Event) => {
       const d = (e as CustomEvent).detail as { threadRootId: string | null };
       if (d.threadRootId !== rootId) return;
-      const mine = [...replyIds].reverse().find((id) => messages[id]?.userId === meId && !messages[id]?.deleted);
+      const mine = [...replyIds]
+        .reverse()
+        .find((id) => messages[id]?.userId === meId && !messages[id]?.deleted);
       if (mine) useStore.setState({ editRequest: mine });
     };
     window.addEventListener('ocpc:edit-last', onEditLast);
@@ -57,8 +60,12 @@ export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () =
   const toggleFollow = async () => {
     const following = !thread?.following;
     try {
-      await (following ? api.post(`/threads/${rootId}/follow`) : api.del(`/threads/${rootId}/follow`));
-      useStore.setState((s) => ({ threads: { ...s.threads, [rootId]: { ...s.threads[rootId]!, following } } }));
+      await (following
+        ? api.post(`/threads/${rootId}/follow`)
+        : api.del(`/threads/${rootId}/follow`));
+      useStore.setState((s) => ({
+        threads: { ...s.threads, [rootId]: { ...s.threads[rootId]!, following } },
+      }));
     } catch (err) {
       toastError(err);
     }
@@ -71,12 +78,19 @@ export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () =
           {t('Thread')}
           {channel && (
             <span className="faint small" style={{ fontWeight: 400, marginLeft: 8 }}>
-              {channel.kind === 'public' || channel.kind === 'private' ? `#${channel.name}` : channelTitle(channel, meId)}
+              {channel.kind === 'public' || channel.kind === 'private'
+                ? `#${channel.name}`
+                : channelTitle(channel, meId)}
             </span>
           )}
         </h3>
         {thread && (
-          <button className="icon-btn" onClick={toggleFollow} title={thread.following ? t('Stop following') : t('Follow thread')} aria-label={thread.following ? t('Stop following') : t('Follow thread')}>
+          <button
+            className="icon-btn"
+            onClick={toggleFollow}
+            title={thread.following ? t('Stop following') : t('Follow thread')}
+            aria-label={thread.following ? t('Stop following') : t('Follow thread')}
+          >
             {thread.following ? <BellOff size={17} /> : <Bell size={17} />}
           </button>
         )}
@@ -92,10 +106,19 @@ export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () =
         ) : (
           <div style={{ padding: '8px 0' }}>
             <Message message={root} context="thread" />
-            <div className="thread-replies-divider">{plural(replyIds.length, '{n} reply', '{n} replies')}</div>
+            <div className="thread-replies-divider">
+              {plural(replyIds.length, '{n} reply', '{n} replies')}
+            </div>
             {replyIds.map((id, i) => {
               const m = messages[id];
-              return m ? <Message key={id} message={m} context="thread" continued={isContinued(messages[replyIds[i - 1] ?? ''], m)} /> : null;
+              return m ? (
+                <Message
+                  key={id}
+                  message={m}
+                  context="thread"
+                  continued={isContinued(messages[replyIds[i - 1] ?? ''], m)}
+                />
+              ) : null;
             })}
           </div>
         )}

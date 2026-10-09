@@ -16,6 +16,11 @@ services:
     environment:
       OCPC_PUBLIC_URL: https://${OCPC_DOMAIN}
       OCPC_TRUST_PROXY: 'true'
+    ports:
+      # Built-in STUN server so calls can connect across home/office NATs.
+      # Open 3478/udp in your firewall. For very restrictive networks add TURN
+      # (see docker-compose.full.yml).
+      - '3478:3478/udp'
     volumes:
       - ocpc-data:/data
 

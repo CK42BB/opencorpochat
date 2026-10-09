@@ -1,10 +1,10 @@
 # OpenCorpoChat — Product Requirements Document
 
-| | |
-|---|---|
-| **Status** | Draft v1.0 — approved for build |
-| **Date** | 2026-10-09 |
-| **License** | AGPL-3.0-only |
+|              |                                                                      |
+| ------------ | -------------------------------------------------------------------- |
+| **Status**   | Draft v1.0 — approved for build                                      |
+| **Date**     | 2026-10-09                                                           |
+| **License**  | AGPL-3.0-only                                                        |
 | **Audience** | Maintainers, contributors, and organizations evaluating self-hosting |
 
 ---
@@ -32,14 +32,14 @@ OpenCorpoChat is a self-hosted team communication platform. It's built to be:
 
 ## 3. Target users & personas
 
-| Persona | Description | Key needs |
-|---|---|---|
-| **Member** | Everyday employee | Fast messaging, threads, search, notifications that don't overwhelm, calls, mobile access |
-| **Admin** | Office manager / IT generalist, not necessarily a developer | Easy install, user management, SSO, backups, upgrades without drama |
-| **Owner** | Founder / exec | Data ownership, cost control, compliance export, retention policy |
-| **Guest** | Contractor, client, partner | Access only to specific channels |
-| **Integrator** | Developer at the org | Webhooks, bot API, slash commands, documented REST + realtime API |
-| **Forker** | Developer at another org / consultancy | Readable code, extension points, permissive contribution process |
+| Persona        | Description                                                 | Key needs                                                                                 |
+| -------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Member**     | Everyday employee                                           | Fast messaging, threads, search, notifications that don't overwhelm, calls, mobile access |
+| **Admin**      | Office manager / IT generalist, not necessarily a developer | Easy install, user management, SSO, backups, upgrades without drama                       |
+| **Owner**      | Founder / exec                                              | Data ownership, cost control, compliance export, retention policy                         |
+| **Guest**      | Contractor, client, partner                                 | Access only to specific channels                                                          |
+| **Integrator** | Developer at the org                                        | Webhooks, bot API, slash commands, documented REST + realtime API                         |
+| **Forker**     | Developer at another org / consultancy                      | Readable code, extension points, permissive contribution process                          |
 
 **Scale target:** up to 200 active users and ~50 concurrent call participants per instance, plus a few million messages over the life of the instance. Run it on a $10–20/month VPS or a spare office machine.
 
@@ -71,143 +71,143 @@ Priority key: **P0** = v1.0 launch blocker, **P1** = v1.x, **P2** = later / comm
 
 ### 6.1 Workspace & identity
 
-| ID | Feature | Pri |
-|---|---|---|
-| W-1 | Single organization per instance (keeps the model simple; run multiple instances for multiple orgs) | P0 |
-| W-2 | First-run setup wizard: creates owner account, org name, default channels | P0 |
-| W-3 | Email + password accounts (scrypt hashing, password policy) | P0 |
-| W-4 | Invite links (expiring, max-uses, optional email domain restriction) and email invites | P0 |
-| W-5 | Roles: **owner**, **admin**, **member**, **guest** (guest = channel-scoped) | P0 |
-| W-6 | Profile: display name, full name, title, pronouns (optional free text), avatar, timezone, phone | P0 |
-| W-7 | Custom status (emoji + text + expiry) and Do Not Disturb with schedule | P0 |
-| W-8 | TOTP two-factor authentication with recovery codes; admin can require 2FA | P0 |
-| W-9 | OpenID Connect SSO (Google Workspace, Microsoft Entra, Okta, Keycloak, Authentik…); optional "SSO only" mode | P0 |
-| W-10 | Session management: list and revoke active sessions | P0 |
-| W-11 | Deactivate users (content kept, login blocked); hard-delete per data-protection request | P0 |
-| W-12 | User groups (`@design`, `@oncall`) mentionable as a unit | P1 |
-| W-13 | SCIM 2.0 provisioning | P2 |
-| W-14 | LDAP auth | P2 |
+| ID   | Feature                                                                                                      | Pri |
+| ---- | ------------------------------------------------------------------------------------------------------------ | --- |
+| W-1  | Single organization per instance (keeps the model simple; run multiple instances for multiple orgs)          | P0  |
+| W-2  | First-run setup wizard: creates owner account, org name, default channels                                    | P0  |
+| W-3  | Email + password accounts (scrypt hashing, password policy)                                                  | P0  |
+| W-4  | Invite links (expiring, max-uses, optional email domain restriction) and email invites                       | P0  |
+| W-5  | Roles: **owner**, **admin**, **member**, **guest** (guest = channel-scoped)                                  | P0  |
+| W-6  | Profile: display name, full name, title, pronouns (optional free text), avatar, timezone, phone              | P0  |
+| W-7  | Custom status (emoji + text + expiry) and Do Not Disturb with schedule                                       | P0  |
+| W-8  | TOTP two-factor authentication with recovery codes; admin can require 2FA                                    | P0  |
+| W-9  | OpenID Connect SSO (Google Workspace, Microsoft Entra, Okta, Keycloak, Authentik…); optional "SSO only" mode | P0  |
+| W-10 | Session management: list and revoke active sessions                                                          | P0  |
+| W-11 | Deactivate users (content kept, login blocked); hard-delete per data-protection request                      | P0  |
+| W-12 | User groups (`@design`, `@oncall`) mentionable as a unit                                                     | P1  |
+| W-13 | SCIM 2.0 provisioning                                                                                        | P2  |
+| W-14 | LDAP auth                                                                                                    | P2  |
 
 ### 6.2 Conversations
 
-| ID | Feature | Pri |
-|---|---|---|
-| C-1 | Public channels (discoverable, anyone joins) | P0 |
-| C-2 | Private channels (invite-only, invisible to non-members) | P0 |
-| C-3 | Direct messages (1:1) and group DMs (up to 9 people) | P0 |
-| C-4 | Channel topic, description, archive / unarchive | P0 |
-| C-5 | Channel roles: channel admins can manage membership and settings | P1 |
-| C-6 | Read-only "announcement" channels (only admins post) | P0 |
-| C-7 | Default channels that new members auto-join | P0 |
-| C-8 | Browse / search channel directory | P0 |
-| C-9 | Mute channel, per-channel notification preference (all / mentions / none) | P0 |
-| C-10 | Sidebar sections: Starred, Channels, DMs; custom sections | P1 |
-| C-11 | Shared channels between instances (federation) | P2 |
+| ID   | Feature                                                                   | Pri |
+| ---- | ------------------------------------------------------------------------- | --- |
+| C-1  | Public channels (discoverable, anyone joins)                              | P0  |
+| C-2  | Private channels (invite-only, invisible to non-members)                  | P0  |
+| C-3  | Direct messages (1:1) and group DMs (up to 9 people)                      | P0  |
+| C-4  | Channel topic, description, archive / unarchive                           | P0  |
+| C-5  | Channel roles: channel admins can manage membership and settings          | P1  |
+| C-6  | Read-only "announcement" channels (only admins post)                      | P0  |
+| C-7  | Default channels that new members auto-join                               | P0  |
+| C-8  | Browse / search channel directory                                         | P0  |
+| C-9  | Mute channel, per-channel notification preference (all / mentions / none) | P0  |
+| C-10 | Sidebar sections: Starred, Channels, DMs; custom sections                 | P1  |
+| C-11 | Shared channels between instances (federation)                            | P2  |
 
 ### 6.3 Messaging
 
-| ID | Feature | Pri |
-|---|---|---|
-| M-1 | Send / receive in real time over WebSocket, with optimistic UI and retry | P0 |
-| M-2 | Markdown subset: bold, italic, strike, inline code, code blocks with syntax highlighting, quotes, lists, links | P0 |
-| M-3 | Threads (replies in side panel; optional "also send to channel") | P0 |
-| M-4 | Emoji reactions (native Unicode + custom emoji) | P0 |
-| M-5 | @user, @channel, @here, @group mentions with autocomplete | P0 |
-| M-6 | #channel links with autocomplete | P0 |
-| M-7 | Edit (shows "edited") and delete (shows tombstone in threads) own messages; admins can delete any | P0 |
-| M-8 | Pinned messages per channel | P0 |
-| M-9 | Saved items (personal bookmarks) | P0 |
-| M-10 | Unread tracking per channel, unread divider, mark as unread, jump to first unread | P0 |
-| M-11 | Typing indicators | P0 |
-| M-12 | Link previews (server-fetched, SSRF-safe, size/time-limited, can be disabled) | P1 |
-| M-13 | Scheduled messages | P1 |
-| M-14 | Reminders ("remind me about this in 1h") | P1 |
-| M-15 | Message forwarding / share to another channel | P1 |
-| M-16 | Polls | P1 |
-| M-17 | Drafts persisted per channel (local + server sync) | P1 |
-| M-18 | Read receipts in DMs (opt-in per org) | P2 |
+| ID   | Feature                                                                                                        | Pri |
+| ---- | -------------------------------------------------------------------------------------------------------------- | --- |
+| M-1  | Send / receive in real time over WebSocket, with optimistic UI and retry                                       | P0  |
+| M-2  | Markdown subset: bold, italic, strike, inline code, code blocks with syntax highlighting, quotes, lists, links | P0  |
+| M-3  | Threads (replies in side panel; optional "also send to channel")                                               | P0  |
+| M-4  | Emoji reactions (native Unicode + custom emoji)                                                                | P0  |
+| M-5  | @user, @channel, @here, @group mentions with autocomplete                                                      | P0  |
+| M-6  | #channel links with autocomplete                                                                               | P0  |
+| M-7  | Edit (shows "edited") and delete (shows tombstone in threads) own messages; admins can delete any              | P0  |
+| M-8  | Pinned messages per channel                                                                                    | P0  |
+| M-9  | Saved items (personal bookmarks)                                                                               | P0  |
+| M-10 | Unread tracking per channel, unread divider, mark as unread, jump to first unread                              | P0  |
+| M-11 | Typing indicators                                                                                              | P0  |
+| M-12 | Link previews (server-fetched, SSRF-safe, size/time-limited, can be disabled)                                  | P1  |
+| M-13 | Scheduled messages                                                                                             | P1  |
+| M-14 | Reminders ("remind me about this in 1h")                                                                       | P1  |
+| M-15 | Message forwarding / share to another channel                                                                  | P1  |
+| M-16 | Polls                                                                                                          | P1  |
+| M-17 | Drafts persisted per channel (local + server sync)                                                             | P1  |
+| M-18 | Read receipts in DMs (opt-in per org)                                                                          | P2  |
 
 ### 6.4 Files
 
-| ID | Feature | Pri |
-|---|---|---|
-| F-1 | Upload via button, drag-and-drop, and paste | P0 |
-| F-2 | Image previews/thumbnails, inline video/audio player, PDF preview in browser | P0 |
-| F-3 | Storage backends: local disk (default) or S3-compatible (MinIO, AWS, Backblaze, R2) | P0 |
-| F-4 | Per-file and per-org size quotas; allowed MIME types configurable | P0 |
-| F-5 | Files browser per channel | P1 |
-| F-6 | Optional ClamAV scan hook | P2 |
+| ID  | Feature                                                                             | Pri |
+| --- | ----------------------------------------------------------------------------------- | --- |
+| F-1 | Upload via button, drag-and-drop, and paste                                         | P0  |
+| F-2 | Image previews/thumbnails, inline video/audio player, PDF preview in browser        | P0  |
+| F-3 | Storage backends: local disk (default) or S3-compatible (MinIO, AWS, Backblaze, R2) | P0  |
+| F-4 | Per-file and per-org size quotas; allowed MIME types configurable                   | P0  |
+| F-5 | Files browser per channel                                                           | P1  |
+| F-6 | Optional ClamAV scan hook                                                           | P2  |
 
 ### 6.5 Search
 
-| ID | Feature | Pri |
-|---|---|---|
-| S-1 | Full-text search over messages the user can access (SQLite FTS5 / Postgres `tsvector`) | P0 |
-| S-2 | Filters: `in:#channel`, `from:@user`, `before:`, `after:`, `has:file`, `has:link` | P0 |
-| S-3 | Quick switcher (Ctrl/Cmd-K) for channels, DMs and people | P0 |
-| S-4 | File name search | P1 |
+| ID  | Feature                                                                                | Pri |
+| --- | -------------------------------------------------------------------------------------- | --- |
+| S-1 | Full-text search over messages the user can access (SQLite FTS5 / Postgres `tsvector`) | P0  |
+| S-2 | Filters: `in:#channel`, `from:@user`, `before:`, `after:`, `has:file`, `has:link`      | P0  |
+| S-3 | Quick switcher (Ctrl/Cmd-K) for channels, DMs and people                               | P0  |
+| S-4 | File name search                                                                       | P1  |
 
 ### 6.6 Notifications & presence
 
-| ID | Feature | Pri |
-|---|---|---|
-| N-1 | Presence: online / away (idle detection) / offline / DND | P0 |
-| N-2 | In-app notification + unread badges + favicon/tab title badge | P0 |
-| N-3 | Browser/OS notifications via Web Push (VAPID, no third-party push service needed for web) | P0 |
-| N-4 | Email notifications for missed mentions/DMs (batched digest, configurable delay) | P1 |
-| N-5 | Keyword notifications | P1 |
-| N-6 | Notification schedule (working hours) | P1 |
+| ID  | Feature                                                                                   | Pri |
+| --- | ----------------------------------------------------------------------------------------- | --- |
+| N-1 | Presence: online / away (idle detection) / offline / DND                                  | P0  |
+| N-2 | In-app notification + unread badges + favicon/tab title badge                             | P0  |
+| N-3 | Browser/OS notifications via Web Push (VAPID, no third-party push service needed for web) | P0  |
+| N-4 | Email notifications for missed mentions/DMs (batched digest, configurable delay)          | P1  |
+| N-5 | Keyword notifications                                                                     | P1  |
+| N-6 | Notification schedule (working hours)                                                     | P1  |
 
 ### 6.7 Voice, video & screen share
 
-| ID | Feature | Pri |
-|---|---|---|
-| V-1 | 1:1 voice/video calls from DMs (WebRTC peer-to-peer, server-relayed signaling) | P0 |
-| V-2 | Small group calls & persistent "huddle" in a channel (mesh, ≤ 6 participants) | P0 |
-| V-3 | Screen sharing | P0 |
-| V-4 | STUN/TURN config (bundled coturn instructions; Google STUN not used by default) | P0 |
-| V-5 | Optional LiveKit SFU integration for larger meetings (up to ~50) | P1 |
-| V-6 | Call notifications / ringing, join/leave sounds (original sounds) | P0 |
-| V-7 | Recording (via LiveKit egress) | P2 |
+| ID  | Feature                                                                         | Pri |
+| --- | ------------------------------------------------------------------------------- | --- |
+| V-1 | 1:1 voice/video calls from DMs (WebRTC peer-to-peer, server-relayed signaling)  | P0  |
+| V-2 | Small group calls & persistent "huddle" in a channel (mesh, ≤ 6 participants)   | P0  |
+| V-3 | Screen sharing                                                                  | P0  |
+| V-4 | STUN/TURN config (bundled coturn instructions; Google STUN not used by default) | P0  |
+| V-5 | Optional LiveKit SFU integration for larger meetings (up to ~50)                | P1  |
+| V-6 | Call notifications / ringing, join/leave sounds (original sounds)               | P0  |
+| V-7 | Recording (via LiveKit egress)                                                  | P2  |
 
 ### 6.8 Integrations & extensibility
 
-| ID | Feature | Pri |
-|---|---|---|
-| I-1 | Public REST API (OpenAPI 3.1 spec, generated docs) | P0 |
-| I-2 | Realtime WebSocket event API (documented event schema) | P0 |
-| I-3 | Personal access tokens & bot accounts with scoped tokens | P0 |
-| I-4 | Incoming webhooks (post JSON → channel; accepts the widely used `{"text": ...}` shape) | P0 |
-| I-5 | Outgoing webhooks (trigger words / all messages in channel → HTTP POST, HMAC-signed) | P1 |
-| I-6 | Slash commands: built-ins (`/me`, `/shrug`, `/topic`, `/invite`, `/leave`, `/remind`, `/status`, `/call`) + custom HTTP-backed commands | P1 |
-| I-7 | Interactive message buttons (bot receives signed callback) | P2 |
-| I-8 | Server-side plugin API (in-process hooks) | P2 |
+| ID  | Feature                                                                                                                                 | Pri |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| I-1 | Public REST API (OpenAPI 3.1 spec, generated docs)                                                                                      | P0  |
+| I-2 | Realtime WebSocket event API (documented event schema)                                                                                  | P0  |
+| I-3 | Personal access tokens & bot accounts with scoped tokens                                                                                | P0  |
+| I-4 | Incoming webhooks (post JSON → channel; accepts the widely used `{"text": ...}` shape)                                                  | P0  |
+| I-5 | Outgoing webhooks (trigger words / all messages in channel → HTTP POST, HMAC-signed)                                                    | P1  |
+| I-6 | Slash commands: built-ins (`/me`, `/shrug`, `/topic`, `/invite`, `/leave`, `/remind`, `/status`, `/call`) + custom HTTP-backed commands | P1  |
+| I-7 | Interactive message buttons (bot receives signed callback)                                                                              | P2  |
+| I-8 | Server-side plugin API (in-process hooks)                                                                                               | P2  |
 
 ### 6.9 Administration & compliance
 
-| ID | Feature | Pri |
-|---|---|---|
-| A-1 | Admin console: users, invites, roles, channels, settings, custom emoji | P0 |
-| A-2 | Audit log (logins, role changes, deletions, settings changes, exports) | P0 |
-| A-3 | Message retention policy (org-wide and per channel; automatic purge job) | P1 |
-| A-4 | Full org export (JSON + files, documented format) | P0 |
-| A-5 | Import from public export formats: generic chat export JSON (Slack-format export archive as first importer) | P1 |
-| A-6 | Legal hold (exempt users/channels from retention) | P2 |
-| A-7 | Data-subject requests: export a user's data, erase a user | P1 |
-| A-8 | Usage stats dashboard (local only, no telemetry) | P1 |
-| A-9 | Backup & restore commands (`ocpc backup`, `ocpc restore`) | P0 |
+| ID  | Feature                                                                                                     | Pri |
+| --- | ----------------------------------------------------------------------------------------------------------- | --- |
+| A-1 | Admin console: users, invites, roles, channels, settings, custom emoji                                      | P0  |
+| A-2 | Audit log (logins, role changes, deletions, settings changes, exports)                                      | P0  |
+| A-3 | Message retention policy (org-wide and per channel; automatic purge job)                                    | P1  |
+| A-4 | Full org export (JSON + files, documented format)                                                           | P0  |
+| A-5 | Import from public export formats: generic chat export JSON (Slack-format export archive as first importer) | P1  |
+| A-6 | Legal hold (exempt users/channels from retention)                                                           | P2  |
+| A-7 | Data-subject requests: export a user's data, erase a user                                                   | P1  |
+| A-8 | Usage stats dashboard (local only, no telemetry)                                                            | P1  |
+| A-9 | Backup & restore commands (`ocpc backup`, `ocpc restore`)                                                   | P0  |
 
 ### 6.10 Clients
 
-| ID | Feature | Pri |
-|---|---|---|
-| X-1 | Responsive web app (desktop + mobile browsers) | P0 |
-| X-2 | Installable PWA (offline shell, Web Push, app badge) — covers iOS/Android/desktop install | P0 |
-| X-3 | Light/dark/system themes; compact/comfortable density | P0 |
-| X-4 | Keyboard shortcuts (documented, discoverable via `?`) | P0 |
-| X-5 | i18n framework, English shipped; community translations | P0 |
-| X-6 | Native desktop wrapper (Tauri) | P2 |
-| X-7 | Native mobile apps | P2 |
+| ID  | Feature                                                                                   | Pri |
+| --- | ----------------------------------------------------------------------------------------- | --- |
+| X-1 | Responsive web app (desktop + mobile browsers)                                            | P0  |
+| X-2 | Installable PWA (offline shell, Web Push, app badge) — covers iOS/Android/desktop install | P0  |
+| X-3 | Light/dark/system themes; compact/comfortable density                                     | P0  |
+| X-4 | Keyboard shortcuts (documented, discoverable via `?`)                                     | P0  |
+| X-5 | i18n framework, English shipped; community translations                                   | P0  |
+| X-6 | Native desktop wrapper (Tauri)                                                            | P2  |
+| X-7 | Native mobile apps                                                                        | P2  |
 
 ### 6.11 Explicit non-goals for v1
 
@@ -219,18 +219,18 @@ Priority key: **P0** = v1.0 launch blocker, **P1** = v1.x, **P2** = later / comm
 
 ## 7. Non-functional requirements
 
-| Area | Requirement |
-|---|---|
-| **Performance** | p95 message send→deliver < 150 ms on LAN; initial app load < 2 s on 4G for 200-user org; channel switch < 300 ms |
-| **Capacity** | 200 users, 50 concurrent in calls (with SFU), 10M messages on Postgres, 2M on SQLite |
-| **Footprint** | Idle server < 200 MB RAM; runs on 1 vCPU / 1 GB RAM |
-| **Availability** | Single-node design; zero-downtime is non-goal; restart < 10 s; graceful WebSocket reconnect with gap-fill |
-| **Security** | OWASP ASVS L2 as guide; CSP; rate limits on auth & API; all authz enforced server-side; dependency audit in CI; SECURITY.md disclosure process |
-| **Privacy** | No outbound network calls unless configured (SMTP, OIDC, S3, link previews, push) |
-| **Accessibility** | WCAG 2.2 AA; full keyboard operation; screen-reader live regions for new messages |
-| **Browser support** | Last 2 versions of Chromium, Firefox, Safari (desktop & mobile) |
-| **Upgrades** | Automatic, forward-only, transactional DB migrations on startup; documented rollback via backup |
-| **Observability** | Structured JSON logs; `/healthz` & `/readyz`; optional Prometheus `/metrics` |
+| Area                | Requirement                                                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Performance**     | p95 message send→deliver < 150 ms on LAN; initial app load < 2 s on 4G for 200-user org; channel switch < 300 ms                               |
+| **Capacity**        | 200 users, 50 concurrent in calls (with SFU), 10M messages on Postgres, 2M on SQLite                                                           |
+| **Footprint**       | Idle server < 200 MB RAM; runs on 1 vCPU / 1 GB RAM                                                                                            |
+| **Availability**    | Single-node design; zero-downtime is non-goal; restart < 10 s; graceful WebSocket reconnect with gap-fill                                      |
+| **Security**        | OWASP ASVS L2 as guide; CSP; rate limits on auth & API; all authz enforced server-side; dependency audit in CI; SECURITY.md disclosure process |
+| **Privacy**         | No outbound network calls unless configured (SMTP, OIDC, S3, link previews, push)                                                              |
+| **Accessibility**   | WCAG 2.2 AA; full keyboard operation; screen-reader live regions for new messages                                                              |
+| **Browser support** | Last 2 versions of Chromium, Firefox, Safari (desktop & mobile)                                                                                |
+| **Upgrades**        | Automatic, forward-only, transactional DB migrations on startup; documented rollback via backup                                                |
+| **Observability**   | Structured JSON logs; `/healthz` & `/readyz`; optional Prometheus `/metrics`                                                                   |
 
 ## 8. Architecture
 
@@ -255,23 +255,23 @@ Single process. No Redis, broker, or search cluster. The realtime fan-out is in-
 
 ### 8.2 Tech stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| Language | TypeScript (strict) everywhere | One language for whole stack; largest contributor pool |
-| Runtime | Node.js ≥ 22 LTS | Ubiquitous; built-in `crypto.scrypt`, `fetch`, test runner |
-| HTTP | Fastify | Fast, schema-first, mature plugin ecosystem |
-| Realtime | `ws` via `@fastify/websocket` | Standard WebSocket; no proprietary protocol |
-| DB access | Kysely (typed SQL query builder) | One codebase targets SQLite + Postgres; SQL stays visible and teachable |
-| DB drivers | `better-sqlite3`, `pg` | Standard |
-| Validation | Zod (shared schemas → API types + OpenAPI) | Single source of truth client/server |
-| Web UI | React 18 + Vite + React Router | Mainstream |
-| Client state | TanStack Query (server cache) + Zustand (UI/realtime state) | Small, well-known |
-| Styling | Plain CSS modules + CSS custom properties (design tokens) | No framework lock-in; easy theming for forks |
-| Icons | Lucide (ISC) | Clean license |
-| Markdown | `marked` + DOMPurify-equivalent sanitization on render; server stores raw text | Safe by construction |
-| Testing | Vitest (unit/integration), Playwright (e2e) | Mainstream |
-| Packaging | Docker image, docker-compose examples, plain `node` tarball | Easy installs |
-| Monorepo | pnpm workspaces | Fast, strict |
+| Layer        | Choice                                                                         | Why                                                                     |
+| ------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Language     | TypeScript (strict) everywhere                                                 | One language for whole stack; largest contributor pool                  |
+| Runtime      | Node.js ≥ 22 LTS                                                               | Ubiquitous; built-in `crypto.scrypt`, `fetch`, test runner              |
+| HTTP         | Fastify                                                                        | Fast, schema-first, mature plugin ecosystem                             |
+| Realtime     | `ws` via `@fastify/websocket`                                                  | Standard WebSocket; no proprietary protocol                             |
+| DB access    | Kysely (typed SQL query builder)                                               | One codebase targets SQLite + Postgres; SQL stays visible and teachable |
+| DB drivers   | `better-sqlite3`, `pg`                                                         | Standard                                                                |
+| Validation   | Zod (shared schemas → API types + OpenAPI)                                     | Single source of truth client/server                                    |
+| Web UI       | React 18 + Vite + React Router                                                 | Mainstream                                                              |
+| Client state | TanStack Query (server cache) + Zustand (UI/realtime state)                    | Small, well-known                                                       |
+| Styling      | Plain CSS modules + CSS custom properties (design tokens)                      | No framework lock-in; easy theming for forks                            |
+| Icons        | Lucide (ISC)                                                                   | Clean license                                                           |
+| Markdown     | `marked` + DOMPurify-equivalent sanitization on render; server stores raw text | Safe by construction                                                    |
+| Testing      | Vitest (unit/integration), Playwright (e2e)                                    | Mainstream                                                              |
+| Packaging    | Docker image, docker-compose examples, plain `node` tarball                    | Easy installs                                                           |
+| Monorepo     | pnpm workspaces                                                                | Fast, strict                                                            |
 
 ### 8.3 Repository layout
 
@@ -364,12 +364,12 @@ Org-level settings (name, invite policy, retention, 2FA requirement…) live in 
 
 ## 9. Deployment & operations
 
-| Path | Audience |
-|---|---|
-| `docker run -p 8080:8080 -v ocpc:/data ghcr.io/<org>/opencorpochat` | Fastest start |
-| `deploy/compose/docker-compose.yml` — app + Caddy (auto-HTTPS) | Recommended small-org production |
-| `deploy/compose/docker-compose.full.yml` — app + Postgres + MinIO + coturn + LiveKit + Caddy | Larger orgs |
-| `pnpm install && pnpm build && node apps/server/dist/index.js` | Bare metal / forkers |
+| Path                                                                                         | Audience                         |
+| -------------------------------------------------------------------------------------------- | -------------------------------- |
+| `docker run -p 8080:8080 -v ocpc:/data ghcr.io/<org>/opencorpochat`                          | Fastest start                    |
+| `deploy/compose/docker-compose.yml` — app + Caddy (auto-HTTPS)                               | Recommended small-org production |
+| `deploy/compose/docker-compose.full.yml` — app + Postgres + MinIO + coturn + LiveKit + Caddy | Larger orgs                      |
+| `pnpm install && pnpm build && node apps/server/dist/index.js`                               | Bare metal / forkers             |
 
 Built-in jobs (in-process scheduler) handle scheduled messages, reminders, email digests, retention purges, expired-status clearing, and session cleanup.
 
@@ -394,15 +394,15 @@ Built-in jobs (in-process scheduler) handle scheduled messages, reminders, email
 
 ## 11. Milestones
 
-| Milestone | Contents | Exit criteria |
-|---|---|---|
-| **M0 Foundations** | Monorepo, tooling, CI, governance docs, config, DB layer + migrations, health endpoints | `pnpm dev` runs both apps; CI green |
-| **M1 Core chat** | Setup wizard, auth (password + sessions), invites, users/profiles, channels, DMs, messages, threads, reactions, mentions, edit/delete, unread, typing, presence, realtime WS, web UI shell | Two users can chat in real time in channels, DMs & threads |
-| **M2 Daily-driver** | Files (local/S3), search + quick switcher, pins, saved items, statuses/DND, notifications (in-app + Web Push), custom emoji, admin console, audit log, themes, shortcuts, PWA | A 10-person team can dogfood for a week |
-| **M3 Calls** | WebRTC 1:1 + mesh huddles, screen share, TURN config, LiveKit adapter | Stable 4-person call with screen share across NAT via TURN |
-| **M4 Integrations** | API tokens, bots, incoming/outgoing webhooks, slash commands, OpenAPI docs | Example bot & CI webhook work end-to-end |
-| **M5 Enterprise-lite** | OIDC SSO, TOTP 2FA, retention, export, Slack-export import, email notifications, scheduled messages, reminders, user groups | Admin checklist in docs passes |
-| **M6 Release 1.0** | Docker images, compose files, admin guide, e2e suite, a11y audit, security review, translations scaffold | Tagged v1.0.0 with SBOM & signed image |
+| Milestone              | Contents                                                                                                                                                                                   | Exit criteria                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| **M0 Foundations**     | Monorepo, tooling, CI, governance docs, config, DB layer + migrations, health endpoints                                                                                                    | `pnpm dev` runs both apps; CI green                        |
+| **M1 Core chat**       | Setup wizard, auth (password + sessions), invites, users/profiles, channels, DMs, messages, threads, reactions, mentions, edit/delete, unread, typing, presence, realtime WS, web UI shell | Two users can chat in real time in channels, DMs & threads |
+| **M2 Daily-driver**    | Files (local/S3), search + quick switcher, pins, saved items, statuses/DND, notifications (in-app + Web Push), custom emoji, admin console, audit log, themes, shortcuts, PWA              | A 10-person team can dogfood for a week                    |
+| **M3 Calls**           | WebRTC 1:1 + mesh huddles, screen share, TURN config, LiveKit adapter                                                                                                                      | Stable 4-person call with screen share across NAT via TURN |
+| **M4 Integrations**    | API tokens, bots, incoming/outgoing webhooks, slash commands, OpenAPI docs                                                                                                                 | Example bot & CI webhook work end-to-end                   |
+| **M5 Enterprise-lite** | OIDC SSO, TOTP 2FA, retention, export, Slack-export import, email notifications, scheduled messages, reminders, user groups                                                                | Admin checklist in docs passes                             |
+| **M6 Release 1.0**     | Docker images, compose files, admin guide, e2e suite, a11y audit, security review, translations scaffold                                                                                   | Tagged v1.0.0 with SBOM & signed image                     |
 
 ## 12. Success metrics
 
@@ -414,14 +414,14 @@ Built-in jobs (in-process scheduler) handle scheduled messages, reminders, email
 
 ## 13. Risks & mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Scope creep toward "everything a giant vendor does" | P0/P1/P2 discipline; non-goals list; plugin/webhook escape hatch |
-| WebRTC NAT traversal failures | TURN docs + compose file with coturn; connection diagnostics page |
-| SQLite limits as orgs grow | Same code on Postgres; documented migration via export/import |
+| Risk                                                    | Mitigation                                                                                                    |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Scope creep toward "everything a giant vendor does"     | P0/P1/P2 discipline; non-goals list; plugin/webhook escape hatch                                              |
+| WebRTC NAT traversal failures                           | TURN docs + compose file with coturn; connection diagnostics page                                             |
+| SQLite limits as orgs grow                              | Same code on Postgres; documented migration via export/import                                                 |
 | Security bugs in a self-hosted product orgs don't patch | Secure defaults, in-app "update available" notice (opt-in check), SECURITY.md process, minimal attack surface |
-| Trademark/IP claims | Guardrails in §5, DCO, review checklist, nominative-use-only policy |
-| Maintainer burnout | GOVERNANCE.md, clear module ownership, keep the core small |
+| Trademark/IP claims                                     | Guardrails in §5, DCO, review checklist, nominative-use-only policy                                           |
+| Maintainer burnout                                      | GOVERNANCE.md, clear module ownership, keep the core small                                                    |
 
 ## 14. Open questions
 

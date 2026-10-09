@@ -18,7 +18,10 @@ interface IceResult {
 }
 
 /** Gather ICE candidates with a throwaway connection and report which types were found. */
-export async function gatherCandidateTypes(iceServers: IceServer[], timeoutMs = 8000): Promise<Set<string>> {
+export async function gatherCandidateTypes(
+  iceServers: IceServer[],
+  timeoutMs = 8000,
+): Promise<Set<string>> {
   const pc = new RTCPeerConnection({ iceServers: iceServers as RTCIceServer[] });
   const types = new Set<string>();
   pc.createDataChannel('probe');
@@ -45,7 +48,13 @@ export async function gatherCandidateTypes(iceServers: IceServer[], timeoutMs = 
 function Check({ ok, label, hint }: { ok: boolean | null; label: string; hint?: string }) {
   return (
     <div className="row" style={{ alignItems: 'flex-start', marginBottom: 8 }}>
-      {ok === null ? <Spinner size={18} /> : ok ? <CheckCircle2 size={18} color="var(--success)" /> : <XCircle size={18} color="var(--danger)" />}
+      {ok === null ? (
+        <Spinner size={18} />
+      ) : ok ? (
+        <CheckCircle2 size={18} color="var(--success)" />
+      ) : (
+        <XCircle size={18} color="var(--danger)" />
+      )}
       <div>
         <div>{label}</div>
         {hint && <div className="faint small">{hint}</div>}
@@ -73,7 +82,11 @@ export function CallDiagnostics({ onClose }: { onClose: () => void }) {
         const types = await gatherCandidateTypes(r.iceServers);
         if (!cancelled) setIce({ servers: r.iceServers, mode: r.mode, types, done: true });
       })
-      .catch((err: Error) => !cancelled && setIce({ servers: [], mode: '?', types: new Set(), done: true, error: err.message }));
+      .catch(
+        (err: Error) =>
+          !cancelled &&
+          setIce({ servers: [], mode: '?', types: new Set(), done: true, error: err.message }),
+      );
 
     const tracks: MediaStreamTrack[] = [];
     let raf = 0;
@@ -123,10 +136,19 @@ export function CallDiagnostics({ onClose }: { onClose: () => void }) {
   const relay = ice?.types.has('relay') ?? false;
   const srflx = ice?.types.has('srflx') ?? false;
   const host = ice?.types.has('host') ?? false;
-  const hasTurn = ice?.servers.some((s) => [s.urls].flat().some((u) => u.startsWith('turn'))) ?? false;
+  const hasTurn =
+    ice?.servers.some((s) => [s.urls].flat().some((u) => u.startsWith('turn'))) ?? false;
 
   return (
-    <Modal title={t('Call diagnostics')} onClose={onClose} footer={<button className="btn btn-primary" onClick={onClose}>{t('Done')}</button>}>
+    <Modal
+      title={t('Call diagnostics')}
+      onClose={onClose}
+      footer={
+        <button className="btn btn-primary" onClick={onClose}>
+          {t('Done')}
+        </button>
+      }
+    >
       <h4 style={{ margin: '4px 0 8px' }}>{t('Network')}</h4>
       {!ice ? (
         <Spinner />
@@ -135,23 +157,78 @@ export function CallDiagnostics({ onClose }: { onClose: () => void }) {
       ) : (
         <>
           <div className="faint small" style={{ marginBottom: 8 }}>
-            {t('Mode')}: {ice.mode === 'livekit' ? t('LiveKit media server') : t('peer-to-peer')} · {t('ICE servers')}:{' '}
-            {ice.servers.length ? ice.servers.flatMap((s) => [s.urls].flat()).join(', ') : t('none configured')}
+            {t('Mode')}: {ice.mode === 'livekit' ? t('LiveKit media server') : t('peer-to-peer')} ·{' '}
+            {t('ICE servers')}:{' '}
+            {ice.servers.length
+              ? ice.servers.flatMap((s) => [s.urls].flat()).join(', ')
+              : t('none configured')}
           </div>
           <Check ok={ice.done ? host : null} label={t('Local network connectivity')} />
-          <Check ok={ice.done ? srflx : null} label={t('Public address discovery (STUN)')} hint={!ice.servers.length ? t('No STUN/TURN servers configured: calls only work on the same network.') : undefined} />
-          <Check ok={ice.done ? relay : null} label={t('Relay (TURN)')} hint={ice.done && !relay ? (hasTurn ? t('TURN is configured but not reachable. Check the TURN server, its ports and the shared secret.') : t('No TURN server configured. Calls may fail across strict firewalls.')) : t('Needed for calls across strict firewalls.')} />
+          <Check
+            ok={ice.done ? srflx : null}
+            label={t('Public address discovery (STUN)')}
+            hint={
+              !ice.servers.length
+                ? t('No STUN/TURN servers configured: calls only work on the same network.')
+                : undefined
+            }
+          />
+          <Check
+            ok={ice.done ? relay : null}
+            label={t('Relay (TURN)')}
+            hint={
+              ice.done && !relay
+                ? hasTurn
+                  ? t(
+                      'TURN is configured but not reachable. Check the TURN server, its ports and the shared secret.',
+                    )
+                  : t('No TURN server configured. Calls may fail across strict firewalls.')
+                : t('Needed for calls across strict firewalls.')
+            }
+          />
         </>
       )}
       <h4 style={{ margin: '12px 0 8px' }}>{t('Devices')}</h4>
-      <Check ok={mic} label={t('Microphone')} hint={micError || (mic ? t('Speak to test the level meter.') : undefined)} />
+      <Check
+        ok={mic}
+        label={t('Microphone')}
+        hint={micError || (mic ? t('Speak to test the level meter.') : undefined)}
+      />
       {mic && (
-        <div style={{ height: 8, background: 'var(--bg-sunken)', borderRadius: 4, overflow: 'hidden', margin: '-2px 0 10px 26px' }} aria-label={t('Microphone level')} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level * 100)}>
-          <div style={{ width: `${level * 100}%`, height: '100%', background: 'var(--success)', transition: 'width 0.08s' }} />
+        <div
+          style={{
+            height: 8,
+            background: 'var(--bg-sunken)',
+            borderRadius: 4,
+            overflow: 'hidden',
+            margin: '-2px 0 10px 26px',
+          }}
+          aria-label={t('Microphone level')}
+          role="meter"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(level * 100)}
+        >
+          <div
+            style={{
+              width: `${level * 100}%`,
+              height: '100%',
+              background: 'var(--success)',
+              transition: 'width 0.08s',
+            }}
+          />
         </div>
       )}
       <Check ok={cam} label={t('Camera')} hint={camError || undefined} />
-      {cam && <video ref={video} autoPlay muted playsInline style={{ width: 200, borderRadius: 8, marginLeft: 26, background: '#000' }} />}
+      {cam && (
+        <video
+          ref={video}
+          autoPlay
+          muted
+          playsInline
+          style={{ width: 200, borderRadius: 8, marginLeft: 26, background: '#000' }}
+        />
+      )}
     </Modal>
   );
 }

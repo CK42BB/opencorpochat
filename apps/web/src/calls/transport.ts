@@ -23,7 +23,10 @@ export function isPolite(myConnectionId: string, theirConnectionId: string) {
 /** Buffers ICE candidates that arrive before the remote description is applied. */
 export class CandidateQueue {
   private queue: RTCIceCandidateInit[] = [];
-  constructor(private hasRemote: () => boolean, private add: (c: RTCIceCandidateInit) => Promise<void>) {}
+  constructor(
+    private hasRemote: () => boolean,
+    private add: (c: RTCIceCandidateInit) => Promise<void>,
+  ) {}
 
   async push(c: RTCIceCandidateInit) {
     if (this.hasRemote()) await this.add(c);

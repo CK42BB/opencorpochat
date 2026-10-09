@@ -19,7 +19,27 @@ export async function savePrefs(patch: Partial<UserPreferences>) {
 
 /** Very small user-agent summary: "Firefox on macOS". */
 export function describeUserAgent(ua: string) {
-  const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /curl|node|python/i.test(ua) ? 'Script' : 'Browser';
-  const os = /Windows/.test(ua) ? 'Windows' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac OS X/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /Linux/.test(ua) ? 'Linux' : '';
+  const browser = /Edg\//.test(ua)
+    ? 'Edge'
+    : /Firefox\//.test(ua)
+      ? 'Firefox'
+      : /Chrome\//.test(ua)
+        ? 'Chrome'
+        : /Safari\//.test(ua)
+          ? 'Safari'
+          : /curl|node|python/i.test(ua)
+            ? 'Script'
+            : 'Browser';
+  const os = /Windows/.test(ua)
+    ? 'Windows'
+    : /iPhone|iPad/.test(ua)
+      ? 'iOS'
+      : /Mac OS X/.test(ua)
+        ? 'macOS'
+        : /Android/.test(ua)
+          ? 'Android'
+          : /Linux/.test(ua)
+            ? 'Linux'
+            : '';
   return os ? `${browser} · ${os}` : browser;
 }

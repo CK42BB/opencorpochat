@@ -43,7 +43,11 @@ export async function subscribePush() {
   if (!key || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
-  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+  if (!sub)
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
   const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
   await api.post('/push/subscribe', { endpoint: json.endpoint, keys: json.keys });
 }
@@ -84,9 +88,15 @@ export function showDesktopNotification(n: Note, navigate: (url: string) => void
   const ch = n.channelId ? s.channels[n.channelId] : undefined;
   const where = ch ? (ch.kind === 'dm' || ch.kind === 'group_dm' ? '' : ` in #${ch.name}`) : '';
   const title = n.kind === 'reminder' ? '⏰ Reminder' : `${actor}${where}`;
-  const url = n.channelId ? `/c/${n.channelId}${n.messageId ? `#${n.messageId}` : ''}` : '/activity';
+  const url = n.channelId
+    ? `/c/${n.channelId}${n.messageId ? `#${n.messageId}` : ''}`
+    : '/activity';
   try {
-    const note = new Notification(title || s.info?.orgName || 'OpenCorpoChat', { body: n.text, tag: n.id, icon: '/icon-192.png' });
+    const note = new Notification(title || s.info?.orgName || 'OpenCorpoChat', {
+      body: n.text,
+      tag: n.id,
+      icon: '/icon-192.png',
+    });
     note.onclick = () => {
       window.focus();
       navigate(url);
@@ -108,10 +118,17 @@ export function syncTitle() {
     if (c.unreadCount > 0) unread = true;
   }
   const active = s.activeChannelId ? s.channels[s.activeChannelId] : undefined;
-  const name = active ? (active.kind === 'dm' || active.kind === 'group_dm' ? channelTitle(active, s.me?.id) : `#${active.name}`) : '';
+  const name = active
+    ? active.kind === 'dm' || active.kind === 'group_dm'
+      ? channelTitle(active, s.me?.id)
+      : `#${active.name}`
+    : '';
   const org = s.info?.orgName ?? 'OpenCorpoChat';
   document.title = `${mentions ? `(${mentions}) ` : unread ? '• ' : ''}${name ? `${name} – ` : ''}${org}`;
-  const nav = navigator as Navigator & { setAppBadge?: (n?: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
+  const nav = navigator as Navigator & {
+    setAppBadge?: (n?: number) => Promise<void>;
+    clearAppBadge?: () => Promise<void>;
+  };
   if (mentions) nav.setAppBadge?.(mentions).catch(() => {});
   else nav.clearAppBadge?.().catch(() => {});
 }

@@ -41,7 +41,11 @@ export function toChannel(row: ChannelsTable, memberCount: number, dmUserIds?: s
 }
 
 export async function getChannelRow(ctx: Ctx, id: string) {
-  const row = await ctx.db.selectFrom('channels').selectAll().where('id', '=', id).executeTakeFirst();
+  const row = await ctx.db
+    .selectFrom('channels')
+    .selectAll()
+    .where('id', '=', id)
+    .executeTakeFirst();
   if (!row) throw notFound('Channel');
   return row;
 }
@@ -76,7 +80,8 @@ export async function memberCount(ctx: Ctx, channelId: string) {
 }
 
 export async function channelView(ctx: Ctx, row: ChannelsTable): Promise<Channel> {
-  const ids = row.kind === 'dm' || row.kind === 'group_dm' ? await memberIds(ctx, row.id) : undefined;
+  const ids =
+    row.kind === 'dm' || row.kind === 'group_dm' ? await memberIds(ctx, row.id) : undefined;
   return toChannel(row, ids ? ids.length : await memberCount(ctx, row.id), ids);
 }
 
@@ -85,7 +90,13 @@ export async function requireChannelAccess(ctx: Ctx, user: UsersTable, channelId
   const channel = await getChannelRow(ctx, channelId);
   const membership = await getMembershipRow(ctx, channelId, user.id);
   const actor = { id: user.id, role: user.role as never };
-  if (!canViewChannel(actor, { kind: channel.kind as ChannelKind }, membership ? toMembership(membership) : null)) {
+  if (
+    !canViewChannel(
+      actor,
+      { kind: channel.kind as ChannelKind },
+      membership ? toMembership(membership) : null,
+    )
+  ) {
     throw notFound('Channel');
   }
   return { channel, membership };
@@ -133,7 +144,12 @@ export async function myChannels(ctx: Ctx, userId: string): Promise<MyChannel[]>
     .where((eb) => eb.or([eb('m.thread_root_id', 'is', null), eb('m.also_in_channel', '=', 1)]))
     .where('m.deleted_at', 'is', null)
     .where((eb) => eb.or([eb('m.user_id', 'is', null), eb('m.user_id', '!=', userId)]))
-    .where((eb) => eb.or([eb('cm.last_read_message_id', 'is', null), eb('m.id', '>', eb.ref('cm.last_read_message_id'))]))
+    .where((eb) =>
+      eb.or([
+        eb('cm.last_read_message_id', 'is', null),
+        eb('m.id', '>', eb.ref('cm.last_read_message_id')),
+      ]),
+    )
     .groupBy('m.channel_id')
     .execute();
   const unreadMap = new Map(unread.map((u) => [u.channel_id, Number(u.n)]));
@@ -147,23 +163,33 @@ export async function myChannels(ctx: Ctx, userId: string): Promise<MyChannel[]>
     .select(['mn.channel_id', (eb) => eb.fn.countAll<number>().as('n')])
     .where('mn.user_id', '=', userId)
     .where('m.deleted_at', 'is', null)
-    .where((eb) => eb.or([eb('cm.last_read_message_id', 'is', null), eb('mn.message_id', '>', eb.ref('cm.last_read_message_id'))]))
+    .where((eb) =>
+      eb.or([
+        eb('cm.last_read_message_id', 'is', null),
+        eb('mn.message_id', '>', eb.ref('cm.last_read_message_id')),
+      ]),
+    )
     .groupBy('mn.channel_id')
     .execute();
   const mentionMap = new Map(mentions.map((u) => [u.channel_id, Number(u.n)]));
 
   const dmIds = rows.filter((r) => r.kind === 'dm' || r.kind === 'group_dm').map((r) => r.id);
   const dmMembers = dmIds.length
-    ? await ctx.db.selectFrom('channel_members').select(['channel_id', 'user_id']).where('channel_id', 'in', dmIds).execute()
+    ? await ctx.db
+        .selectFrom('channel_members')
+        .select(['channel_id', 'user_id'])
+        .where('channel_id', 'in', dmIds)
+        .execute()
     : [];
   const dmMap = new Map<string, string[]>();
-  for (const m of dmMembers) dmMap.set(m.channel_id, [...(dmMap.get(m.channel_id) ?? []), m.user_id]);
+  for (const m of dmMembers)
+    dmMap.set(m.channel_id, [...(dmMap.get(m.channel_id) ?? []), m.user_id]);
 
   return rows.map((r) => {
     const isDm = r.kind === 'dm' || r.kind === 'group_dm';
     const unreadCount = unreadMap.get(r.id) ?? 0;
     return {
-      ...toChannel(r, countMap.get(r.id) ?? 0, isDm ? dmMap.get(r.id) ?? [] : undefined),
+      ...toChannel(r, countMap.get(r.id) ?? 0, isDm ? (dmMap.get(r.id) ?? []) : undefined),
       membership: {
         channelId: r.id,
         userId,
@@ -176,12 +202,16 @@ export async function myChannels(ctx: Ctx, userId: string): Promise<MyChannel[]>
       },
       unreadCount,
       // In DMs every unread message counts as a mention.
-      mentionCount: isDm ? unreadCount : mentionMap.get(r.id) ?? 0,
+      mentionCount: isDm ? unreadCount : (mentionMap.get(r.id) ?? 0),
     };
   });
 }
 
-export async function myChannel(ctx: Ctx, userId: string, channelId: string): Promise<MyChannel | null> {
+export async function myChannel(
+  ctx: Ctx,
+  userId: string,
+  channelId: string,
+): Promise<MyChannel | null> {
   return (await myChannels(ctx, userId)).find((c) => c.id === channelId) ?? null;
 }
 
@@ -237,19 +267,43 @@ export async function addMembers(
   for (const u of toAdd) {
     const mine = await myChannel(ctx, u.id, channel.id);
     if (mine) ctx.hub.sendToUsers([u.id], 'channel.created', { channel: mine });
-    ctx.hub.sendToUsers(existing, 'channel.member_joined', { channelId: channel.id, userId: u.id, memberCount: count });
+    ctx.hub.sendToUsers(existing, 'channel.member_joined', {
+      channelId: channel.id,
+      userId: u.id,
+      memberCount: count,
+    });
   }
   if (!opts.silent && channel.kind !== 'dm' && channel.kind !== 'group_dm') {
     const names = toAdd.map((u) => '@' + u.username);
     const self = toAdd.length === 1 && toAdd[0]!.id === actorId;
-    const actor = actorId && !self ? await ctx.db.selectFrom('users').select('username').where('id', '=', actorId).executeTakeFirst() : null;
-    const body = self ? `${names[0]} joined #${channel.name}` : `${names.join(', ')} ${toAdd.length > 1 ? 'were' : 'was'} added${actor ? ` by @${actor.username}` : ''}`;
-    await createMessage(ctx, { channel, userId: actorId ?? toAdd[0]!.id, body, kind: 'system', skipNotify: true });
+    const actor =
+      actorId && !self
+        ? await ctx.db
+            .selectFrom('users')
+            .select('username')
+            .where('id', '=', actorId)
+            .executeTakeFirst()
+        : null;
+    const body = self
+      ? `${names[0]} joined #${channel.name}`
+      : `${names.join(', ')} ${toAdd.length > 1 ? 'were' : 'was'} added${actor ? ` by @${actor.username}` : ''}`;
+    await createMessage(ctx, {
+      channel,
+      userId: actorId ?? toAdd[0]!.id,
+      body,
+      kind: 'system',
+      skipNotify: true,
+    });
   }
   return toAdd.map((u) => u.id);
 }
 
-export async function removeMember(ctx: Ctx, channel: ChannelsTable, userId: string, actorId: string) {
+export async function removeMember(
+  ctx: Ctx,
+  channel: ChannelsTable,
+  userId: string,
+  actorId: string,
+) {
   const res = await ctx.db
     .deleteFrom('channel_members')
     .where('channel_id', '=', channel.id)
@@ -258,10 +312,21 @@ export async function removeMember(ctx: Ctx, channel: ChannelsTable, userId: str
   if (Number(res.numDeletedRows) === 0) return;
   const count = await memberCount(ctx, channel.id);
   ctx.hub.sendToUsers([userId], 'channel.removed', { channelId: channel.id });
-  await ctx.hub.sendToChannel(channel.id, 'channel.member_left', { channelId: channel.id, userId, memberCount: count });
-  const u = await ctx.db.selectFrom('users').select('username').where('id', '=', userId).executeTakeFirst();
+  await ctx.hub.sendToChannel(channel.id, 'channel.member_left', {
+    channelId: channel.id,
+    userId,
+    memberCount: count,
+  });
+  const u = await ctx.db
+    .selectFrom('users')
+    .select('username')
+    .where('id', '=', userId)
+    .executeTakeFirst();
   if (u) {
-    const body = actorId === userId ? `@${u.username} left #${channel.name}` : `@${u.username} was removed from #${channel.name}`;
+    const body =
+      actorId === userId
+        ? `@${u.username} left #${channel.name}`
+        : `@${u.username} was removed from #${channel.name}`;
     await createMessage(ctx, { channel, userId: actorId, body, kind: 'system', skipNotify: true });
   }
 }
@@ -311,13 +376,22 @@ export async function createChannel(
 /** Find or create the DM / group DM for exactly this set of users. */
 export async function openDm(ctx: Ctx, me: UsersTable, otherIds: string[]) {
   const ids = [...new Set([me.id, ...otherIds])].sort();
-  const users = await ctx.db.selectFrom('users').select(['id', 'deactivated_at']).where('id', 'in', ids).execute();
+  const users = await ctx.db
+    .selectFrom('users')
+    .select(['id', 'deactivated_at'])
+    .where('id', 'in', ids)
+    .execute();
   if (users.length !== ids.length) throw notFound('User');
   const key = ids.join(':');
-  const existing = await ctx.db.selectFrom('channels').selectAll().where('dm_key', '=', key).executeTakeFirst();
+  const existing = await ctx.db
+    .selectFrom('channels')
+    .selectAll()
+    .where('dm_key', '=', key)
+    .executeTakeFirst();
   if (existing) {
     // Re-add the caller if they had left a group DM.
-    if (!(await getMembershipRow(ctx, existing.id, me.id))) await addMembers(ctx, existing, [me.id], me.id, { silent: true });
+    if (!(await getMembershipRow(ctx, existing.id, me.id)))
+      await addMembers(ctx, existing, [me.id], me.id, { silent: true });
     return existing;
   }
   const row: ChannelsTable = {
@@ -340,7 +414,11 @@ export async function openDm(ctx: Ctx, me: UsersTable, otherIds: string[]) {
   return row;
 }
 
-export async function joinDefaultChannels(ctx: Ctx, userId: string, extraChannelIds: string[] = []) {
+export async function joinDefaultChannels(
+  ctx: Ctx,
+  userId: string,
+  extraChannelIds: string[] = [],
+) {
   const settings = ctx.settings.get();
   const defaults = await ctx.db
     .selectFrom('channels')
@@ -354,7 +432,11 @@ export async function joinDefaultChannels(ctx: Ctx, userId: string, extraChannel
       ]),
     )
     .execute();
-  const user = await ctx.db.selectFrom('users').select('role').where('id', '=', userId).executeTakeFirst();
+  const user = await ctx.db
+    .selectFrom('users')
+    .select('role')
+    .where('id', '=', userId)
+    .executeTakeFirst();
   for (const ch of defaults) {
     // Guests only join channels they were explicitly invited to.
     if (user?.role === 'guest' && !extraChannelIds.includes(ch.id)) continue;
@@ -363,7 +445,12 @@ export async function joinDefaultChannels(ctx: Ctx, userId: string, extraChannel
   }
 }
 
-export async function markRead(ctx: Ctx, channelId: string, userId: string, messageId: string | null) {
+export async function markRead(
+  ctx: Ctx,
+  channelId: string,
+  userId: string,
+  messageId: string | null,
+) {
   await ctx.db
     .updateTable('channel_members')
     .set({ last_read_message_id: messageId })

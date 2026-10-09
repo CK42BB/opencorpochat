@@ -34,7 +34,15 @@ const ALL = (() => {
   return out;
 })();
 
-export function EmojiPicker({ anchor, onPick, onClose }: { anchor: HTMLElement | null; onPick: (emoji: string) => void; onClose: () => void }) {
+export function EmojiPicker({
+  anchor,
+  onPick,
+  onClose,
+}: {
+  anchor: HTMLElement | null;
+  onPick: (emoji: string) => void;
+  onClose: () => void;
+}) {
   const [q, setQ] = useState('');
   const custom = useStore((s) => s.emoji);
   const query = q.trim().toLowerCase().replace(/:/g, '');
@@ -57,7 +65,14 @@ export function EmojiPicker({ anchor, onPick, onClose }: { anchor: HTMLElement |
   return (
     <Popover anchor={anchor} onClose={onClose} placement="top-end">
       <div className="emoji-picker">
-        <input className="input" placeholder={t('Search emoji')} value={q} onChange={(e) => setQ(e.target.value)} autoFocus aria-label={t('Search emoji')} />
+        <input
+          className="input"
+          placeholder={t('Search emoji')}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          autoFocus
+          aria-label={t('Search emoji')}
+        />
         <div className="emoji-grid" role="listbox">
           {results ? (
             <>
@@ -71,7 +86,9 @@ export function EmojiPicker({ anchor, onPick, onClose }: { anchor: HTMLElement |
                   {e.char}
                 </button>
               ))}
-              {!results.custom.length && !results.std.length && <div className="emoji-cat">{t('No emoji found')}</div>}
+              {!results.custom.length && !results.std.length && (
+                <div className="emoji-cat">{t('No emoji found')}</div>
+              )}
             </>
           ) : (
             <>

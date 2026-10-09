@@ -1,11 +1,25 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: AGPL-3.0-only
 // `ocpc` administration CLI. Run `ocpc help` for usage.
-import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, createWriteStream } from 'node:fs';
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+  createWriteStream,
+} from 'node:fs';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { parseArgs } from 'node:util';
-import { email as emailSchema, password as passwordSchema, username as usernameSchema, VERSION } from '@ocpc/shared';
+import {
+  email as emailSchema,
+  password as passwordSchema,
+  username as usernameSchema,
+  VERSION,
+} from '@ocpc/shared';
 import { generateVapidKeys, loadConfig } from './config.js';
 import { migrate, openDatabase, rebuildSearchIndex } from './db/index.js';
 import { hashPassword, randomToken } from './lib/crypto.js';
@@ -93,7 +107,8 @@ async function main() {
       const pw = values.password ?? randomToken(12);
       if (!passwordSchema.safeParse(pw).success) fail('Password must be at least 10 characters');
       await withApp(async (ctx) => {
-        const { insertUser, isUsernameTaken, findUserByLogin } = await import('./modules/users/service.js');
+        const { insertUser, isUsernameTaken, findUserByLogin } =
+          await import('./modules/users/service.js');
         const { joinDefaultChannels } = await import('./modules/channels/service.js');
         if (await findUserByLogin(ctx, email.data)) fail('A user with that email already exists');
         if (await isUsernameTaken(ctx, username.data)) fail('That username is taken');
@@ -120,9 +135,15 @@ async function main() {
         const { findUserByLogin } = await import('./modules/users/service.js');
         const u = await findUserByLogin(ctx, values.email!);
         if (!u) fail('No such user');
-        await ctx.db.updateTable('users').set({ password_hash: await hashPassword(pw) }).where('id', '=', u.id).execute();
+        await ctx.db
+          .updateTable('users')
+          .set({ password_hash: await hashPassword(pw) })
+          .where('id', '=', u.id)
+          .execute();
         await ctx.db.deleteFrom('sessions').where('user_id', '=', u.id).execute();
-        console.log(`Password reset for @${u.username}.${values.password ? '' : ` New password: ${pw}`}`);
+        console.log(
+          `Password reset for @${u.username}.${values.password ? '' : ` New password: ${pw}`}`,
+        );
       });
       return;
     }
@@ -131,7 +152,9 @@ async function main() {
       const out = values.out ?? fail('Provide --out DIR');
       const config = loadConfig();
       if (config.database.kind !== 'sqlite') {
-        fail('For PostgreSQL use pg_dump for the database, and back up OCPC_DATA_DIR (and your S3 bucket) separately.');
+        fail(
+          'For PostgreSQL use pg_dump for the database, and back up OCPC_DATA_DIR (and your S3 bucket) separately.',
+        );
       }
       mkdirSync(out, { recursive: true });
       const target = path.join(out, 'ocpc.db');
@@ -142,10 +165,20 @@ async function main() {
       db.close();
       if (!config.s3) cpSync(config.filesDir, path.join(out, 'files'), { recursive: true });
       for (const f of ['secret.key', 'vapid.json']) {
-        if (existsSync(path.join(config.dataDir, f))) copyFileSync(path.join(config.dataDir, f), path.join(out, f));
+        if (existsSync(path.join(config.dataDir, f)))
+          copyFileSync(path.join(config.dataDir, f), path.join(out, f));
       }
-      writeFileSync(path.join(out, 'backup.json'), JSON.stringify({ version: VERSION, createdAt: new Date().toISOString(), s3: !!config.s3 }, null, 2));
-      console.log(`Backup written to ${out}${config.s3 ? ' (files are in S3 and were not copied)' : ''}`);
+      writeFileSync(
+        path.join(out, 'backup.json'),
+        JSON.stringify(
+          { version: VERSION, createdAt: new Date().toISOString(), s3: !!config.s3 },
+          null,
+          2,
+        ),
+      );
+      console.log(
+        `Backup written to ${out}${config.s3 ? ' (files are in S3 and were not copied)' : ''}`,
+      );
       return;
     }
 
@@ -156,14 +189,16 @@ async function main() {
       const config = loadConfig();
       if (config.database.kind !== 'sqlite') fail('Restore supports SQLite backups only');
       const info = JSON.parse(readFileSync(meta, 'utf8'));
-      for (const suffix of ['', '-wal', '-shm']) rmSync(config.database.file + suffix, { force: true });
+      for (const suffix of ['', '-wal', '-shm'])
+        rmSync(config.database.file + suffix, { force: true });
       copyFileSync(path.join(input, 'ocpc.db'), config.database.file);
       if (existsSync(path.join(input, 'files'))) {
         rmSync(config.filesDir, { recursive: true, force: true });
         cpSync(path.join(input, 'files'), config.filesDir, { recursive: true });
       }
       for (const f of ['secret.key', 'vapid.json']) {
-        if (existsSync(path.join(input, f))) copyFileSync(path.join(input, f), path.join(config.dataDir, f));
+        if (existsSync(path.join(input, f)))
+          copyFileSync(path.join(input, f), path.join(config.dataDir, f));
       }
       const handle = await openDatabase(config);
       await migrate(handle);

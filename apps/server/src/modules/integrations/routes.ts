@@ -46,12 +46,20 @@ function toWebhook(ctx: Ctx, w: WebhooksTable, secret?: string): Webhook {
     triggerWords: json<string[]>(w.trigger_words, []),
     createdBy: w.created_by,
     createdAt: w.created_at,
-    ...(secret && w.kind === 'incoming' ? { postUrl: `${ctx.config.publicUrl}/api/v1/hooks/${w.id}/${secret}` } : {}),
+    ...(secret && w.kind === 'incoming'
+      ? { postUrl: `${ctx.config.publicUrl}/api/v1/hooks/${w.id}/${secret}` }
+      : {}),
     ...(secret && w.kind === 'outgoing' ? { secret } : {}),
   };
 }
 
-async function issueToken(ctx: Ctx, userId: string, name: string, scopes: string[], expiresInDays: number | null) {
+async function issueToken(
+  ctx: Ctx,
+  userId: string,
+  name: string,
+  scopes: string[],
+  expiresInDays: number | null,
+) {
   const secret = `ocpc_${randomToken(32)}`;
   const row: ApiTokensTable = {
     id: ulid(),
@@ -78,13 +86,30 @@ export function signatureHeaders(secret: string, body: unknown) {
 
 /** Message-created hook: deliver to matching outgoing webhooks. */
 export async function runOutgoingWebhooks(ctx: Ctx, messageId: string) {
-  const msg = await ctx.db.selectFrom('messages').selectAll().where('id', '=', messageId).executeTakeFirst();
+  const msg = await ctx.db
+    .selectFrom('messages')
+    .selectAll()
+    .where('id', '=', messageId)
+    .executeTakeFirst();
   if (!msg || msg.kind !== 'user' || msg.edited_at || msg.deleted_at) return;
-  const hooks = await ctx.db.selectFrom('webhooks').selectAll().where('kind', '=', 'outgoing').where('channel_id', '=', msg.channel_id).execute();
+  const hooks = await ctx.db
+    .selectFrom('webhooks')
+    .selectAll()
+    .where('kind', '=', 'outgoing')
+    .where('channel_id', '=', msg.channel_id)
+    .execute();
   if (!hooks.length) return;
   const [user, channel] = await Promise.all([
-    ctx.db.selectFrom('users').select(['id', 'username']).where('id', '=', msg.user_id ?? '').executeTakeFirst(),
-    ctx.db.selectFrom('channels').selectAll().where('id', '=', msg.channel_id).executeTakeFirstOrThrow(),
+    ctx.db
+      .selectFrom('users')
+      .select(['id', 'username'])
+      .where('id', '=', msg.user_id ?? '')
+      .executeTakeFirst(),
+    ctx.db
+      .selectFrom('channels')
+      .selectAll()
+      .where('id', '=', msg.channel_id)
+      .executeTakeFirstOrThrow(),
   ]);
   for (const h of hooks) {
     const triggers = json<string[]>(h.trigger_words, []);
@@ -131,7 +156,14 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     summary: 'List your personal API tokens',
     tags: ['integrations'],
     handler: async ({ user }) =>
-      (await ctx.db.selectFrom('api_tokens').selectAll().where('user_id', '=', user.id).orderBy('created_at', 'desc').execute()).map((t) => toToken(t)),
+      (
+        await ctx.db
+          .selectFrom('api_tokens')
+          .selectAll()
+          .where('user_id', '=', user.id)
+          .orderBy('created_at', 'desc')
+          .execute()
+      ).map((t) => toToken(t)),
   });
 
   route(app, ctx, {
@@ -142,9 +174,17 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     body: CreateTokenInput,
     handler: async ({ user, body, auth, ip }) => {
       if (auth.tokenId) throw forbidden('Tokens cannot create other tokens');
-      if (body.scopes.includes('admin') && user.role !== 'admin' && user.role !== 'owner') throw forbidden('Only admins can create admin-scoped tokens');
+      if (body.scopes.includes('admin') && user.role !== 'admin' && user.role !== 'owner')
+        throw forbidden('Only admins can create admin-scoped tokens');
       const t = await issueToken(ctx, user.id, body.name, body.scopes, body.expiresInDays);
-      await audit(ctx, { actorId: user.id, action: 'token.created', targetType: 'token', targetId: t.id, ip, metadata: { scopes: body.scopes } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'token.created',
+        targetType: 'token',
+        targetId: t.id,
+        ip,
+        metadata: { scopes: body.scopes },
+      });
       return t;
     },
   });
@@ -155,12 +195,28 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     summary: 'Revoke a token',
     tags: ['integrations'],
     handler: async ({ user, params, ip }) => {
-      const t = await ctx.db.selectFrom('api_tokens').selectAll().where('id', '=', params.id!).executeTakeFirst();
+      const t = await ctx.db
+        .selectFrom('api_tokens')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .executeTakeFirst();
       if (!t) throw notFound('Token');
-      const isOwnerOfBot = await ctx.db.selectFrom('users').select('id').where('id', '=', t.user_id).where('bot_owner_id', '=', user.id).executeTakeFirst();
-      if (t.user_id !== user.id && !isOwnerOfBot && user.role !== 'admin' && user.role !== 'owner') throw forbidden();
+      const isOwnerOfBot = await ctx.db
+        .selectFrom('users')
+        .select('id')
+        .where('id', '=', t.user_id)
+        .where('bot_owner_id', '=', user.id)
+        .executeTakeFirst();
+      if (t.user_id !== user.id && !isOwnerOfBot && user.role !== 'admin' && user.role !== 'owner')
+        throw forbidden();
       await ctx.db.deleteFrom('api_tokens').where('id', '=', t.id).execute();
-      await audit(ctx, { actorId: user.id, action: 'token.revoked', targetType: 'token', targetId: t.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'token.revoked',
+        targetType: 'token',
+        targetId: t.id,
+        ip,
+      });
     },
   });
 
@@ -172,8 +228,17 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['integrations'],
     auth: 'member',
     handler: async () => {
-      const bots = await ctx.db.selectFrom('users').selectAll().where('role', '=', 'bot').orderBy('username').execute();
-      return bots.map((b) => ({ ...toUser(b), ownerId: b.bot_owner_id, description: b.bot_description }));
+      const bots = await ctx.db
+        .selectFrom('users')
+        .selectAll()
+        .where('role', '=', 'bot')
+        .orderBy('username')
+        .execute();
+      return bots.map((b) => ({
+        ...toUser(b),
+        ownerId: b.bot_owner_id,
+        description: b.bot_description,
+      }));
     },
   });
 
@@ -195,7 +260,13 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
         botOwnerId: user.id,
         botDescription: body.description,
       });
-      await audit(ctx, { actorId: user.id, action: 'bot.created', targetType: 'user', targetId: bot.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'bot.created',
+        targetType: 'user',
+        targetId: bot.id,
+        ip,
+      });
       const token = await issueToken(ctx, bot.id, 'default', ['read', 'write'], null);
       return { bot: toUser(bot), token };
     },
@@ -209,10 +280,28 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'admin',
     body: CreateTokenInput,
     handler: async ({ user, params, body, ip }) => {
-      const bot = await ctx.db.selectFrom('users').selectAll().where('id', '=', params.id!).where('role', '=', 'bot').executeTakeFirst();
+      const bot = await ctx.db
+        .selectFrom('users')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .where('role', '=', 'bot')
+        .executeTakeFirst();
       if (!bot) throw notFound('Bot');
-      const t = await issueToken(ctx, bot.id, body.name, body.scopes.filter((s) => s !== 'admin'), body.expiresInDays);
-      await audit(ctx, { actorId: user.id, action: 'token.created', targetType: 'token', targetId: t.id, ip, metadata: { botId: bot.id } });
+      const t = await issueToken(
+        ctx,
+        bot.id,
+        body.name,
+        body.scopes.filter((s) => s !== 'admin'),
+        body.expiresInDays,
+      );
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'token.created',
+        targetType: 'token',
+        targetId: t.id,
+        ip,
+        metadata: { botId: bot.id },
+      });
       return t;
     },
   });
@@ -220,11 +309,18 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
   route(app, ctx, {
     method: 'GET',
     url: '/bots/:id/tokens',
-    summary: 'List a bot\'s tokens',
+    summary: "List a bot's tokens",
     tags: ['integrations'],
     auth: 'admin',
     handler: async ({ params }) =>
-      (await ctx.db.selectFrom('api_tokens').selectAll().where('user_id', '=', params.id!).orderBy('created_at', 'desc').execute()).map((t) => toToken(t)),
+      (
+        await ctx.db
+          .selectFrom('api_tokens')
+          .selectAll()
+          .where('user_id', '=', params.id!)
+          .orderBy('created_at', 'desc')
+          .execute()
+      ).map((t) => toToken(t)),
   });
 
   // ----- Webhooks -----
@@ -251,7 +347,8 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, body, ip }) => {
       await requireMember(ctx, user, body.channelId);
       if (body.kind === 'outgoing') {
-        if (user.role !== 'admin' && user.role !== 'owner') throw forbidden('Only admins can create outgoing webhooks');
+        if (user.role !== 'admin' && user.role !== 'owner')
+          throw forbidden('Only admins can create outgoing webhooks');
         if (!body.url) throw badRequest('Outgoing webhooks need a URL');
       }
       const secret = randomToken(24);
@@ -268,7 +365,14 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
         created_at: nowIso(),
       };
       await ctx.db.insertInto('webhooks').values(row).execute();
-      await audit(ctx, { actorId: user.id, action: 'webhook.created', targetType: 'webhook', targetId: row.id, ip, metadata: { kind: body.kind, channelId: body.channelId } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'webhook.created',
+        targetType: 'webhook',
+        targetId: row.id,
+        ip,
+        metadata: { kind: body.kind, channelId: body.channelId },
+      });
       return toWebhook(ctx, row, secret);
     },
   });
@@ -280,11 +384,22 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['integrations'],
     auth: 'member',
     handler: async ({ user, params, ip }) => {
-      const w = await ctx.db.selectFrom('webhooks').selectAll().where('id', '=', params.id!).executeTakeFirst();
+      const w = await ctx.db
+        .selectFrom('webhooks')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .executeTakeFirst();
       if (!w) throw notFound('Webhook');
-      if (w.created_by !== user.id && user.role !== 'admin' && user.role !== 'owner') throw forbidden();
+      if (w.created_by !== user.id && user.role !== 'admin' && user.role !== 'owner')
+        throw forbidden();
       await ctx.db.deleteFrom('webhooks').where('id', '=', w.id).execute();
-      await audit(ctx, { actorId: user.id, action: 'webhook.deleted', targetType: 'webhook', targetId: w.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'webhook.deleted',
+        targetType: 'webhook',
+        targetId: w.id,
+        ip,
+      });
     },
   });
 
@@ -297,7 +412,12 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'none',
     rateLimit: { max: 60, timeWindow: '1 minute' },
     handler: async ({ params, req }) => {
-      const w = await ctx.db.selectFrom('webhooks').selectAll().where('id', '=', params.id!).where('kind', '=', 'incoming').executeTakeFirst();
+      const w = await ctx.db
+        .selectFrom('webhooks')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .where('kind', '=', 'incoming')
+        .executeTakeFirst();
       if (!w || w.token_hash !== sha256(params.token!)) throw unauthorized('Invalid webhook');
       const parsed = IncomingWebhookPayload.safeParse(req.body ?? {});
       if (!parsed.success) throw badRequest(formatZodError(parsed.error));
@@ -306,15 +426,26 @@ export function integrationRoutes(app: FastifyInstance, ctx: Ctx) {
       if (p.text) parts.push(p.text);
       for (const a of p.attachments ?? []) {
         if (a.pretext) parts.push(a.pretext);
-        if (a.title) parts.push(a.title_link ? `**[${a.title}](${a.title_link})**` : `**${a.title}**`);
+        if (a.title)
+          parts.push(a.title_link ? `**[${a.title}](${a.title_link})**` : `**${a.title}**`);
         if (a.text) parts.push(a.text);
         else if (!a.title && a.fallback) parts.push(a.fallback);
       }
       const body = parts.join('\n').trim();
       if (!body) throw badRequest('Nothing to post: include "text"');
-      const channel = await ctx.db.selectFrom('channels').selectAll().where('id', '=', w.channel_id).executeTakeFirstOrThrow();
+      const channel = await ctx.db
+        .selectFrom('channels')
+        .selectAll()
+        .where('id', '=', w.channel_id)
+        .executeTakeFirstOrThrow();
       if (channel.archived_at) throw forbidden('Channel is archived');
-      const msg = await createMessage(ctx, { channel, userId: null, kind: 'bot', asName: (p.username ?? w.name).slice(0, 80), body });
+      const msg = await createMessage(ctx, {
+        channel,
+        userId: null,
+        kind: 'bot',
+        asName: (p.username ?? w.name).slice(0, 80),
+        body,
+      });
       return { ok: true, messageId: msg.id };
     },
   });

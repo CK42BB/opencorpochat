@@ -25,7 +25,14 @@ export function Emoji() {
     setFile(f);
     if (preview) URL.revokeObjectURL(preview);
     setPreview(URL.createObjectURL(f));
-    if (!name) setName(f.name.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9_+-]/g, '_').slice(0, 64));
+    if (!name)
+      setName(
+        f.name
+          .replace(/\.[^.]+$/, '')
+          .toLowerCase()
+          .replace(/[^a-z0-9_+-]/g, '_')
+          .slice(0, 64),
+      );
   };
 
   const add = async () => {
@@ -47,7 +54,15 @@ export function Emoji() {
   };
 
   const remove = async (e: CustomEmoji) => {
-    if (!(await confirmDialog({ title: t('Remove :{name}:?', { name: e.name }), body: t('Messages that used it will show the text :{name}: instead.', { name: e.name }), confirmLabel: t('Remove'), danger: true }))) return;
+    if (
+      !(await confirmDialog({
+        title: t('Remove :{name}:?', { name: e.name }),
+        body: t('Messages that used it will show the text :{name}: instead.', { name: e.name }),
+        confirmLabel: t('Remove'),
+        danger: true,
+      }))
+    )
+      return;
     try {
       await api.del(`/emoji/${encodeURIComponent(e.name)}`);
     } catch (err) {
@@ -62,19 +77,38 @@ export function Emoji() {
         <h3>{t('Add emoji')}</h3>
         <div className="row" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <button className="btn" onClick={() => input.current?.click()}>
-            {preview ? <img src={preview} alt="" width={24} height={24} style={{ objectFit: 'contain' }} /> : <Upload size={15} />} {file ? t('Change image') : t('Choose image')}
+            {preview ? (
+              <img src={preview} alt="" width={24} height={24} style={{ objectFit: 'contain' }} />
+            ) : (
+              <Upload size={15} />
+            )}{' '}
+            {file ? t('Change image') : t('Choose image')}
           </button>
-          <input ref={input} type="file" accept="image/png,image/gif,image/webp,image/jpeg" hidden onChange={(e) => (choose(e.target.files?.[0]), (e.target.value = ''))} />
+          <input
+            ref={input}
+            type="file"
+            accept="image/png,image/gif,image/webp,image/jpeg"
+            hidden
+            onChange={(e) => (choose(e.target.files?.[0]), (e.target.value = ''))}
+          />
           <div className="field" style={{ margin: 0, flex: 1, minWidth: 180 }}>
             <label htmlFor="emoji-name">{t('Name')}</label>
-            <input id="emoji-name" className="input" value={name} onChange={(e) => setName(e.target.value.toLowerCase())} placeholder="party_parrot" />
+            <input
+              id="emoji-name"
+              className="input"
+              value={name}
+              onChange={(e) => setName(e.target.value.toLowerCase())}
+              placeholder="party_parrot"
+            />
           </div>
           <button className="btn btn-primary" onClick={add} disabled={!valid || busy}>
             {t('Add')}
           </button>
         </div>
         <p className="hint small faint" style={{ marginBottom: 0 }}>
-          {t('Square PNG, GIF or WebP under 256 KB. Names use lowercase letters, numbers, _ + and -. Only upload images you have the rights to use.')}
+          {t(
+            'Square PNG, GIF or WebP under 256 KB. Names use lowercase letters, numbers, _ + and -. Only upload images you have the rights to use.',
+          )}
         </p>
       </div>
       {emoji.length === 0 ? (
@@ -88,7 +122,11 @@ export function Emoji() {
               <span className="faint small ellipsis" style={{ maxWidth: '100%' }}>
                 {displayName(users[e.createdBy])}
               </span>
-              <button className="icon-btn icon-btn-sm del" onClick={() => remove(e)} aria-label={t('Remove :{name}:', { name: e.name })}>
+              <button
+                className="icon-btn icon-btn-sm del"
+                onClick={() => remove(e)}
+                aria-label={t('Remove :{name}:', { name: e.name })}
+              >
                 <Trash2 size={14} />
               </button>
             </div>

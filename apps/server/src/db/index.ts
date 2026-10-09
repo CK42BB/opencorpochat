@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Database connection + migrations. SQLite is the zero-config default; PostgreSQL is
 // selected when DATABASE_URL starts with postgres://.
-import { Kysely, PostgresDialect, SqliteDialect, sql, type Migration, type MigrationProvider, Migrator } from 'kysely';
+import {
+  Kysely,
+  PostgresDialect,
+  SqliteDialect,
+  sql,
+  type Migration,
+  type MigrationProvider,
+  Migrator,
+} from 'kysely';
 import type { Config } from '../config.js';
 import type { Database } from './schema.js';
 import * as m0001 from './migrations/0001_initial.js';
@@ -20,7 +28,10 @@ export async function openDatabase(config: Config): Promise<DbHandle> {
     const pg = (await import('pg')).default;
     // Return BIGINT/COUNT as JS numbers (safe for our value ranges).
     pg.types.setTypeParser(20, (v: string) => Number(v));
-    const pool = new pg.Pool({ connectionString: config.database.url, max: config.database.poolMax });
+    const pool = new pg.Pool({
+      connectionString: config.database.url,
+      max: config.database.poolMax,
+    });
     const db = new Kysely<Database>({ dialect: new PostgresDialect({ pool }) });
     return { db, dialect: 'postgres', close: () => db.destroy() };
   }

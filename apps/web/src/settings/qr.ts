@@ -35,7 +35,18 @@ const ALIGNMENT: Record<number, number[]> = {
   10: [6, 28, 50],
 };
 
-const REMAINDER_BITS: Record<number, number> = { 1: 0, 2: 7, 3: 7, 4: 7, 5: 7, 6: 7, 7: 0, 8: 0, 9: 0, 10: 0 };
+const REMAINDER_BITS: Record<number, number> = {
+  1: 0,
+  2: 7,
+  3: 7,
+  4: 7,
+  5: 7,
+  6: 7,
+  7: 0,
+  8: 0,
+  9: 0,
+  10: 0,
+};
 
 export const MAX_VERSION = 10;
 
@@ -170,8 +181,12 @@ class Builder {
   reserved: boolean[][];
   constructor(public version: number) {
     this.size = version * 4 + 17;
-    this.modules = Array.from({ length: this.size }, () => new Array<boolean>(this.size).fill(false));
-    this.reserved = Array.from({ length: this.size }, () => new Array<boolean>(this.size).fill(false));
+    this.modules = Array.from({ length: this.size }, () =>
+      new Array<boolean>(this.size).fill(false),
+    );
+    this.reserved = Array.from({ length: this.size }, () =>
+      new Array<boolean>(this.size).fill(false),
+    );
   }
   setFn(x: number, y: number, dark: boolean) {
     this.modules[y]![x] = dark;
@@ -204,9 +219,15 @@ class Builder {
     const pos = ALIGNMENT[this.version]!;
     for (let i = 0; i < pos.length; i++) {
       for (let j = 0; j < pos.length; j++) {
-        if ((i === 0 && j === 0) || (i === 0 && j === pos.length - 1) || (i === pos.length - 1 && j === 0)) continue;
+        if (
+          (i === 0 && j === 0) ||
+          (i === 0 && j === pos.length - 1) ||
+          (i === pos.length - 1 && j === 0)
+        )
+          continue;
         for (let dy = -2; dy <= 2; dy++) {
-          for (let dx = -2; dx <= 2; dx++) this.setFn(pos[i]! + dx, pos[j]! + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+          for (let dx = -2; dx <= 2; dx++)
+            this.setFn(pos[i]! + dx, pos[j]! + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
         }
       }
     }
@@ -260,7 +281,8 @@ class Builder {
   applyMask(mask: number) {
     const fn = MASKS[mask]!;
     for (let y = 0; y < this.size; y++) {
-      for (let x = 0; x < this.size; x++) if (!this.reserved[y]![x] && fn(x, y)) this.modules[y]![x] = !this.modules[y]![x];
+      for (let x = 0; x < this.size; x++)
+        if (!this.reserved[y]![x] && fn(x, y)) this.modules[y]![x] = !this.modules[y]![x];
     }
   }
   penalty(): number {
@@ -337,7 +359,8 @@ export function encodeQr(text: string, forceMask?: number): QrMatrix {
 export function qrSvgPath(qr: QrMatrix, quiet = 4): string {
   const parts: string[] = [];
   for (let y = 0; y < qr.size; y++) {
-    for (let x = 0; x < qr.size; x++) if (qr.modules[y]![x]) parts.push(`M${x + quiet},${y + quiet}h1v1h-1z`);
+    for (let x = 0; x < qr.size; x++)
+      if (qr.modules[y]![x]) parts.push(`M${x + quiet},${y + quiet}h1v1h-1z`);
   }
   return parts.join('');
 }

@@ -98,7 +98,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
 
   await s
     .createTable('channel_members')
-    .addColumn('channel_id', 'text', (c) => c.notNull().references('channels.id').onDelete('cascade'))
+    .addColumn('channel_id', 'text', (c) =>
+      c.notNull().references('channels.id').onDelete('cascade'),
+    )
     .addColumn('user_id', 'text', (c) => c.notNull().references('users.id').onDelete('cascade'))
     .addColumn('role', 'text', (c) => c.notNull().defaultTo('member'))
     .addColumn('notify_level', 'text', (c) => c.notNull().defaultTo('all'))
@@ -113,7 +115,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
   await s
     .createTable('messages')
     .addColumn('id', 'text', (c) => c.primaryKey())
-    .addColumn('channel_id', 'text', (c) => c.notNull().references('channels.id').onDelete('cascade'))
+    .addColumn('channel_id', 'text', (c) =>
+      c.notNull().references('channels.id').onDelete('cascade'),
+    )
     .addColumn('user_id', 'text')
     .addColumn('thread_root_id', 'text')
     .addColumn('body', 'text', (c) => c.notNull())
@@ -129,13 +133,23 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
     .addColumn('deleted_at', 'text')
     .addColumn('created_at', 'text', (c) => c.notNull())
     .execute();
-  await s.createIndex('messages_channel_idx').on('messages').columns(['channel_id', 'thread_root_id', 'id']).execute();
-  await s.createIndex('messages_thread_idx').on('messages').columns(['thread_root_id', 'id']).execute();
+  await s
+    .createIndex('messages_channel_idx')
+    .on('messages')
+    .columns(['channel_id', 'thread_root_id', 'id'])
+    .execute();
+  await s
+    .createIndex('messages_thread_idx')
+    .on('messages')
+    .columns(['thread_root_id', 'id'])
+    .execute();
   await s.createIndex('messages_user_idx').on('messages').columns(['user_id', 'id']).execute();
 
   await s
     .createTable('reactions')
-    .addColumn('message_id', 'text', (c) => c.notNull().references('messages.id').onDelete('cascade'))
+    .addColumn('message_id', 'text', (c) =>
+      c.notNull().references('messages.id').onDelete('cascade'),
+    )
     .addColumn('user_id', 'text', (c) => c.notNull())
     .addColumn('emoji', 'text', (c) => c.notNull())
     .addColumn('created_at', 'text', (c) => c.notNull())
@@ -144,17 +158,25 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
 
   await s
     .createTable('mentions')
-    .addColumn('message_id', 'text', (c) => c.notNull().references('messages.id').onDelete('cascade'))
+    .addColumn('message_id', 'text', (c) =>
+      c.notNull().references('messages.id').onDelete('cascade'),
+    )
     .addColumn('user_id', 'text', (c) => c.notNull())
     .addColumn('channel_id', 'text', (c) => c.notNull())
     .addPrimaryKeyConstraint('mentions_pk', ['message_id', 'user_id'])
     .execute();
-  await s.createIndex('mentions_user_idx').on('mentions').columns(['user_id', 'channel_id', 'message_id']).execute();
+  await s
+    .createIndex('mentions_user_idx')
+    .on('mentions')
+    .columns(['user_id', 'channel_id', 'message_id'])
+    .execute();
 
   await s
     .createTable('pins')
     .addColumn('channel_id', 'text', (c) => c.notNull())
-    .addColumn('message_id', 'text', (c) => c.notNull().references('messages.id').onDelete('cascade'))
+    .addColumn('message_id', 'text', (c) =>
+      c.notNull().references('messages.id').onDelete('cascade'),
+    )
     .addColumn('pinned_by', 'text', (c) => c.notNull())
     .addColumn('created_at', 'text', (c) => c.notNull())
     .addPrimaryKeyConstraint('pins_pk', ['channel_id', 'message_id'])
@@ -163,7 +185,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
   await s
     .createTable('saved_items')
     .addColumn('user_id', 'text', (c) => c.notNull())
-    .addColumn('message_id', 'text', (c) => c.notNull().references('messages.id').onDelete('cascade'))
+    .addColumn('message_id', 'text', (c) =>
+      c.notNull().references('messages.id').onDelete('cascade'),
+    )
     .addColumn('created_at', 'text', (c) => c.notNull())
     .addPrimaryKeyConstraint('saved_items_pk', ['user_id', 'message_id'])
     .execute();
@@ -180,7 +204,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
 
   await s
     .createTable('poll_votes')
-    .addColumn('message_id', 'text', (c) => c.notNull().references('messages.id').onDelete('cascade'))
+    .addColumn('message_id', 'text', (c) =>
+      c.notNull().references('messages.id').onDelete('cascade'),
+    )
     .addColumn('option_id', 'text', (c) => c.notNull())
     .addColumn('user_id', 'text', (c) => c.notNull())
     .addPrimaryKeyConstraint('poll_votes_pk', ['message_id', 'option_id', 'user_id'])
@@ -223,7 +249,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
     .execute();
   await s
     .createTable('user_group_members')
-    .addColumn('group_id', 'text', (c) => c.notNull().references('user_groups.id').onDelete('cascade'))
+    .addColumn('group_id', 'text', (c) =>
+      c.notNull().references('user_groups.id').onDelete('cascade'),
+    )
     .addColumn('user_id', 'text', (c) => c.notNull().references('users.id').onDelete('cascade'))
     .addPrimaryKeyConstraint('user_group_members_pk', ['group_id', 'user_id'])
     .execute();
@@ -233,7 +261,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
     .addColumn('id', 'text', (c) => c.primaryKey())
     .addColumn('kind', 'text', (c) => c.notNull())
     .addColumn('name', 'text', (c) => c.notNull())
-    .addColumn('channel_id', 'text', (c) => c.notNull().references('channels.id').onDelete('cascade'))
+    .addColumn('channel_id', 'text', (c) =>
+      c.notNull().references('channels.id').onDelete('cascade'),
+    )
     .addColumn('token_hash', 'text', (c) => c.notNull())
     .addColumn('secret', 'text')
     .addColumn('url', 'text')
@@ -280,7 +310,9 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
     .createTable('scheduled_messages')
     .addColumn('id', 'text', (c) => c.primaryKey())
     .addColumn('user_id', 'text', (c) => c.notNull().references('users.id').onDelete('cascade'))
-    .addColumn('channel_id', 'text', (c) => c.notNull().references('channels.id').onDelete('cascade'))
+    .addColumn('channel_id', 'text', (c) =>
+      c.notNull().references('channels.id').onDelete('cascade'),
+    )
     .addColumn('thread_root_id', 'text')
     .addColumn('body', 'text', (c) => c.notNull())
     .addColumn('send_at', 'text', (c) => c.notNull())
@@ -312,7 +344,11 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
     .addColumn('emailed_at', 'text')
     .addColumn('created_at', 'text', (c) => c.notNull())
     .execute();
-  await s.createIndex('notifications_user_idx').on('notifications').columns(['user_id', 'id']).execute();
+  await s
+    .createIndex('notifications_user_idx')
+    .on('notifications')
+    .columns(['user_id', 'id'])
+    .execute();
 
   await s
     .createTable('audit_log')
@@ -351,16 +387,22 @@ export async function up(db: Kysely<any>, dialect: Dialect): Promise<void> {
 
   // ----- Full-text search -----
   if (dialect === 'sqlite') {
-    await sql`CREATE VIRTUAL TABLE messages_fts USING fts5(body, content='messages', content_rowid='rowid', tokenize='unicode61 remove_diacritics 2')`.execute(db);
+    await sql`CREATE VIRTUAL TABLE messages_fts USING fts5(body, content='messages', content_rowid='rowid', tokenize='unicode61 remove_diacritics 2')`.execute(
+      db,
+    );
     await sql`CREATE TRIGGER messages_fts_ai AFTER INSERT ON messages BEGIN
       INSERT INTO messages_fts(rowid, body) VALUES (new.rowid, new.body); END`.execute(db);
     await sql`CREATE TRIGGER messages_fts_ad AFTER DELETE ON messages BEGIN
-      INSERT INTO messages_fts(messages_fts, rowid, body) VALUES ('delete', old.rowid, old.body); END`.execute(db);
+      INSERT INTO messages_fts(messages_fts, rowid, body) VALUES ('delete', old.rowid, old.body); END`.execute(
+      db,
+    );
     await sql`CREATE TRIGGER messages_fts_au AFTER UPDATE OF body ON messages BEGIN
       INSERT INTO messages_fts(messages_fts, rowid, body) VALUES ('delete', old.rowid, old.body);
       INSERT INTO messages_fts(rowid, body) VALUES (new.rowid, new.body); END`.execute(db);
   } else {
-    await sql`ALTER TABLE messages ADD COLUMN search tsvector GENERATED ALWAYS AS (to_tsvector('simple', body)) STORED`.execute(db);
+    await sql`ALTER TABLE messages ADD COLUMN search tsvector GENERATED ALWAYS AS (to_tsvector('simple', body)) STORED`.execute(
+      db,
+    );
     await sql`CREATE INDEX messages_search_idx ON messages USING GIN (search)`.execute(db);
   }
 }

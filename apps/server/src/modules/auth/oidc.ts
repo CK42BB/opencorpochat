@@ -18,7 +18,9 @@ let cached: { at: number; doc: Discovery } | null = null;
 
 async function discover(cfg: NonNullable<Config['oidc']>): Promise<Discovery> {
   if (cached && Date.now() - cached.at < 3600_000) return cached.doc;
-  const res = await fetch(`${cfg.issuer}/.well-known/openid-configuration`, { signal: AbortSignal.timeout(10_000) });
+  const res = await fetch(`${cfg.issuer}/.well-known/openid-configuration`, {
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!res.ok) throw new Error(`OIDC discovery failed: HTTP ${res.status}`);
   const doc = (await res.json()) as Discovery;
   cached = { at: Date.now(), doc };
@@ -35,7 +37,12 @@ export interface OidcState {
 export async function startOidc(config: Config, returnTo: string) {
   const cfg = config.oidc!;
   const doc = await discover(cfg);
-  const st: OidcState = { state: randomToken(16), nonce: randomToken(16), verifier: randomToken(48), returnTo };
+  const st: OidcState = {
+    state: randomToken(16),
+    nonce: randomToken(16),
+    verifier: randomToken(48),
+    returnTo,
+  };
   const challenge = createHash('sha256').update(st.verifier).digest('base64url');
   const url = new URL(doc.authorization_endpoint);
   url.searchParams.set('response_type', 'code');
@@ -79,11 +86,14 @@ export async function finishOidc(config: Config, code: string, st: OidcState): P
   if (!res.ok) throw new Error(`OIDC token exchange failed: HTTP ${res.status}`);
   const tokens = (await res.json()) as { id_token?: string; access_token?: string };
   if (!tokens.id_token) throw new Error('OIDC provider returned no id_token');
-  const payload = JSON.parse(Buffer.from(tokens.id_token.split('.')[1] ?? '', 'base64url').toString('utf8'));
+  const payload = JSON.parse(
+    Buffer.from(tokens.id_token.split('.')[1] ?? '', 'base64url').toString('utf8'),
+  );
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   if (payload.iss !== doc.issuer) throw new Error('OIDC issuer mismatch');
   if (!aud.includes(cfg.clientId)) throw new Error('OIDC audience mismatch');
-  if (typeof payload.exp !== 'number' || payload.exp * 1000 < Date.now() - 60_000) throw new Error('OIDC token expired');
+  if (typeof payload.exp !== 'number' || payload.exp * 1000 < Date.now() - 60_000)
+    throw new Error('OIDC token expired');
   if (payload.nonce !== st.nonce) throw new Error('OIDC nonce mismatch');
   let claims: OidcClaims = payload;
   // Some providers only put email/profile in userinfo.
@@ -94,7 +104,13 @@ export async function finishOidc(config: Config, code: string, st: OidcState): P
     });
     if (ui.ok) {
       const info = (await ui.json()) as OidcClaims;
-      if (info.sub === claims.sub) claims = { ...info, ...claims, email: claims.email ?? info.email, name: claims.name ?? info.name };
+      if (info.sub === claims.sub)
+        claims = {
+          ...info,
+          ...claims,
+          email: claims.email ?? info.email,
+          name: claims.name ?? info.name,
+        };
     }
   }
   return claims;

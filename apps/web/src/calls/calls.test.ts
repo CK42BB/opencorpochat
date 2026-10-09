@@ -14,7 +14,10 @@ describe('CandidateQueue', () => {
   it('buffers until the remote description exists, then flushes in order', async () => {
     let remote = false;
     const added: string[] = [];
-    const q = new CandidateQueue(() => remote, async (c) => void added.push(c.candidate ?? ''));
+    const q = new CandidateQueue(
+      () => remote,
+      async (c) => void added.push(c.candidate ?? ''),
+    );
     await q.push({ candidate: 'a' });
     await q.push({ candidate: 'b' });
     expect(added).toEqual([]);
@@ -34,8 +37,22 @@ describe('peersToOffer', () => {
       startedBy: 'u1',
       startedAt: '',
       participants: [
-        { userId: 'u1', connectionId: 'c1', joinedAt: '', audio: true, video: false, screen: false },
-        { userId: 'u2', connectionId: 'c2', joinedAt: '', audio: true, video: false, screen: false },
+        {
+          userId: 'u1',
+          connectionId: 'c1',
+          joinedAt: '',
+          audio: true,
+          video: false,
+          screen: false,
+        },
+        {
+          userId: 'u2',
+          connectionId: 'c2',
+          joinedAt: '',
+          audio: true,
+          video: false,
+          screen: false,
+        },
       ],
     };
     expect(peersToOffer(call, 'c2').map((p) => p.connectionId)).toEqual(['c1']);

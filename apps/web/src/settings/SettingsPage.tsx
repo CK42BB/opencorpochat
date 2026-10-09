@@ -2,10 +2,24 @@
 // Personal settings: profile, account security, notifications, preferences, sidebar,
 // scheduled items and integrations. Rendered at /settings/*.
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
-import { Bell, CalendarClock, KeyRound, LayoutList, Menu as MenuIcon, Palette, Plug, User } from 'lucide-react';
+import {
+  Bell,
+  CalendarClock,
+  KeyRound,
+  LayoutList,
+  Menu as MenuIcon,
+  Palette,
+  Plug,
+  User,
+} from 'lucide-react';
 import { useStore } from '../lib/store';
 import { t } from '../lib/i18n';
-import { AccountSection, NotificationsSection, PreferencesSection, ProfileSection } from './UserSections';
+import {
+  AccountSection,
+  NotificationsSection,
+  PreferencesSection,
+  ProfileSection,
+} from './UserSections';
 import { ScheduledSection, SidebarSectionsSection } from './OrganizeSections';
 import { IntegrationsSection } from './IntegrationsSection';
 import './settings.css';
@@ -24,7 +38,11 @@ export function SettingsPage() {
   return (
     <main className="main">
       <header className="page-header">
-        <button className="icon-btn mobile-only" onClick={() => window.dispatchEvent(new CustomEvent('ocpc:toggle-nav'))} aria-label={t('Open navigation')}>
+        <button
+          className="icon-btn mobile-only"
+          onClick={() => window.dispatchEvent(new CustomEvent('ocpc:toggle-nav'))}
+          aria-label={t('Open navigation')}
+        >
           <MenuIcon size={18} />
         </button>
         <h2>{t('Settings')}</h2>
@@ -34,7 +52,11 @@ export function SettingsPage() {
         <nav className="settings-nav" aria-label={t('Settings sections')}>
           <h4>{t('Your account')}</h4>
           {links.map(([path, label, icon]) => (
-            <NavLink key={path} to={`/settings/${path}`} className={({ isActive }) => (isActive ? 'active' : '')}>
+            <NavLink
+              key={path}
+              to={`/settings/${path}`}
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
               {icon}
               {label}
             </NavLink>

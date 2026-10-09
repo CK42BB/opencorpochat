@@ -65,8 +65,19 @@ export function Audit() {
     <>
       <SectionTitle title={t('Audit log')} />
       <div className="admin-filters">
-        <input className="input" placeholder={t('Action, e.g. auth. or user.')} aria-label={t('Filter by action')} value={action} onChange={(e) => setAction(e.target.value)} />
-        <select className="select" value={actorId} onChange={(e) => setActorId(e.target.value)} aria-label={t('Filter by person')}>
+        <input
+          className="input"
+          placeholder={t('Action, e.g. auth. or user.')}
+          aria-label={t('Filter by action')}
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+        />
+        <select
+          className="select"
+          value={actorId}
+          onChange={(e) => setActorId(e.target.value)}
+          aria-label={t('Filter by person')}
+        >
           <option value="">{t('Anyone')}</option>
           {people.map((u) => (
             <option key={u.id} value={u.id}>
@@ -93,7 +104,8 @@ export function Audit() {
               <tbody>
                 {entries.map((e) => {
                   const actor = e.actorId ? users[e.actorId] : undefined;
-                  const target = e.targetType === 'user' && e.targetId ? users[e.targetId] : undefined;
+                  const target =
+                    e.targetType === 'user' && e.targetId ? users[e.targetId] : undefined;
                   const hasMeta = Object.keys(e.metadata).length > 0;
                   return (
                     <tr key={e.id}>
@@ -103,7 +115,8 @@ export function Audit() {
                       <td>
                         {e.actorId ? (
                           <span className="row">
-                            <Avatar user={actor} size={20} /> <span className="small">{displayName(actor)}</span>
+                            <Avatar user={actor} size={20} />{' '}
+                            <span className="small">{displayName(actor)}</span>
                           </span>
                         ) : (
                           <span className="faint small">{t('System')}</span>
@@ -113,16 +126,27 @@ export function Audit() {
                         <code className="small">{e.action}</code>
                         {hasMeta && (
                           <div>
-                            <button className="btn btn-sm btn-ghost" style={{ padding: 0 }} onClick={() => toggle(e.id)} aria-expanded={open.has(e.id)}>
+                            <button
+                              className="btn btn-sm btn-ghost"
+                              style={{ padding: 0 }}
+                              onClick={() => toggle(e.id)}
+                              aria-expanded={open.has(e.id)}
+                            >
                               {open.has(e.id) ? t('Hide details') : t('Details')}
                             </button>
-                            {open.has(e.id) && <pre className="admin-json">{JSON.stringify(e.metadata, null, 2)}</pre>}
+                            {open.has(e.id) && (
+                              <pre className="admin-json">
+                                {JSON.stringify(e.metadata, null, 2)}
+                              </pre>
+                            )}
                           </div>
                         )}
                       </td>
                       <td className="small">
                         {target ? displayName(target) : e.targetType}
-                        {!target && e.targetId && <span className="faint"> {e.targetId.slice(-8)}</span>}
+                        {!target && e.targetId && (
+                          <span className="faint"> {e.targetId.slice(-8)}</span>
+                        )}
                       </td>
                       <td className="small faint">{e.ip ?? '—'}</td>
                     </tr>

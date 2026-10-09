@@ -38,9 +38,16 @@ export class MeshTransport implements CallTransport {
 
   /** Acquire the microphone. Failure is non-fatal: the user joins listen-only. */
   async init(): Promise<void> {
-    this.mic = await getMic(useCallStore.getState().micId || undefined);
+    const mic = await getMic(useCallStore.getState().micId || undefined);
+    if (this.closed) {
+      mic.stop();
+      return;
+    }
+    this.mic = mic;
     this.mic.enabled = !useCallStore.getState().muted;
     this.publishLocal();
+    // Peers may already be connected (we don't block signaling on the permission prompt).
+    await this.replaceOnAll('audio', this.mic);
   }
 
   private outgoingVideo() {
@@ -93,13 +100,19 @@ export class MeshTransport implements CallTransport {
       const stream = new MediaStream(peer.stream.getTracks());
       setRemote(connectionId, { userId, key: connectionId, stream });
       this.monitor.watch(connectionId, userId, stream);
-      e.track.onunmute = () => setRemote(connectionId, { userId, key: connectionId, stream: new MediaStream(peer.stream.getTracks()) });
+      e.track.onunmute = () =>
+        setRemote(connectionId, {
+          userId,
+          key: connectionId,
+          stream: new MediaStream(peer.stream.getTracks()),
+        });
     };
     pc.onnegotiationneeded = async () => {
       try {
         peer.makingOffer = true;
         await pc.setLocalDescription();
-        if (pc.localDescription) this.signal(connectionId, { kind: 'offer', sdp: pc.localDescription.sdp });
+        if (pc.localDescription)
+          this.signal(connectionId, { kind: 'offer', sdp: pc.localDescription.sdp });
       } catch (err) {
         console.warn('negotiation failed', err);
       } finally {
@@ -108,8 +121,9 @@ export class MeshTransport implements CallTransport {
     };
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'failed') pc.restartIce();
-      if (pc.connectionState === 'connected') useCallStore.setState({ status: 'connected' });
+      this.updateStatus();
     };
+    this.updateStatus();
 
     if (initiator) {
       pc.addTransceiver(this.mic ?? 'audio', { direction: 'sendrecv' });
@@ -132,11 +146,13 @@ export class MeshTransport implements CallTransport {
   async handleSignal(fromConnectionId: string, fromUserId: string, signal: CallSignal) {
     if (this.closed) return;
     if (signal.kind === 'media') return; // state also arrives via call.updated
-    const peer = this.peers.get(fromConnectionId) ?? this.connectTo(fromConnectionId, fromUserId, false);
+    const peer =
+      this.peers.get(fromConnectionId) ?? this.connectTo(fromConnectionId, fromUserId, false);
     const pc = peer.pc;
     try {
       if (signal.kind === 'offer' || signal.kind === 'answer') {
-        const collision = signal.kind === 'offer' && (peer.makingOffer || pc.signalingState !== 'stable');
+        const collision =
+          signal.kind === 'offer' && (peer.makingOffer || pc.signalingState !== 'stable');
         peer.ignoreOffer = !peer.polite && collision;
         if (peer.ignoreOffer) return;
         await pc.setRemoteDescription({ type: signal.kind, sdp: signal.sdp });
@@ -144,7 +160,8 @@ export class MeshTransport implements CallTransport {
         if (signal.kind === 'offer') {
           await this.attachLocal(peer);
           await pc.setLocalDescription();
-          if (pc.localDescription) this.signal(fromConnectionId, { kind: 'answer', sdp: pc.localDescription.sdp });
+          if (pc.localDescription)
+            this.signal(fromConnectionId, { kind: 'answer', sdp: pc.localDescription.sdp });
         }
       } else if (signal.kind === 'ice') {
         await peer.candidates.push(signal.candidate as RTCIceCandidateInit);
@@ -162,15 +179,19 @@ export class MeshTransport implements CallTransport {
   private removePeer(connectionId: string) {
     const peer = this.peers.get(connectionId);
     if (!peer) return;
-    peer.pc.close();
+    // Update the UI first; closing the connection can be slow on some platforms.
     this.peers.delete(connectionId);
-    this.monitor.unwatch(connectionId);
     setRemote(connectionId, null);
+    this.monitor.unwatch(connectionId);
+    this.updateStatus();
+    setTimeout(() => peer.pc.close(), 0);
   }
 
   private async replaceOnAll(kind: 'audio' | 'video', track: MediaStreamTrack | null) {
     for (const peer of this.peers.values()) {
-      const tr = peer.pc.getTransceivers().find((x) => x.receiver.track.kind === kind && x.direction !== 'stopped');
+      const tr = peer.pc
+        .getTransceivers()
+        .find((x) => x.receiver.track.kind === kind && x.direction !== 'stopped');
       if (tr) await tr.sender.replaceTrack(track).catch(() => {});
       else if (track) peer.pc.addTrack(track); // triggers (perfect) renegotiation
     }
@@ -178,7 +199,8 @@ export class MeshTransport implements CallTransport {
 
   private broadcastMedia() {
     const s = useCallStore.getState();
-    for (const id of this.peers.keys()) this.signal(id, { kind: 'media', audio: !s.muted, video: s.camera, screen: s.screen });
+    for (const id of this.peers.keys())
+      this.signal(id, { kind: 'media', audio: !s.muted, video: s.camera, screen: s.screen });
   }
 
   async setAudioEnabled(on: boolean) {
@@ -230,6 +252,46 @@ export class MeshTransport implements CallTransport {
       await this.replaceOnAll('video', this.outgoingVideo());
     }
     this.publishLocal();
+  }
+
+  /** "connected" once at least one peer is connected (or we're alone in the call). */
+  private updateStatus() {
+    const states = [...this.peers.values()].map((p) => p.pc.connectionState);
+    const connected = states.length === 0 || states.includes('connected');
+    useCallStore.setState({ status: connected ? 'connected' : 'connecting' });
+  }
+
+  /** Snapshot for troubleshooting: run `ocpcCallDebug()` in the browser console during a call. */
+  async debugInfo() {
+    const out = [];
+    for (const p of this.peers.values()) {
+      const stats = await p.pc.getStats();
+      const cands: string[] = [];
+      const pairs: string[] = [];
+      stats.forEach((r) => {
+        if (r.type === 'local-candidate' || r.type === 'remote-candidate')
+          cands.push(
+            `${r.type === 'local-candidate' ? 'L' : 'R'}:${r.candidateType}:${r.protocol}:${r.address}:${r.port}`,
+          );
+        if (r.type === 'candidate-pair') pairs.push(`${r.state}${r.nominated ? '*' : ''}`);
+      });
+      out.push({ ...this.peerInfo(p), candidates: cands, pairs });
+    }
+    return out;
+  }
+
+  private peerInfo(p: Peer) {
+    return {
+      connectionId: p.connectionId,
+      signaling: p.pc.signalingState,
+      ice: p.pc.iceConnectionState,
+      gathering: p.pc.iceGatheringState,
+      connection: p.pc.connectionState,
+      transceivers: p.pc
+        .getTransceivers()
+        .map((t) => `${t.receiver.track.kind}:${t.direction}:${t.currentDirection}`),
+      remoteTracks: p.stream.getTracks().map((t) => `${t.kind}:${t.readyState}`),
+    };
   }
 
   close() {

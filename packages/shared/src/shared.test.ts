@@ -7,8 +7,14 @@ import { canEditMessage, canPostInChannel, canViewChannel, canChangeRole } from 
 import type { Membership } from './entities.js';
 
 const member: Membership = {
-  channelId: 'c', userId: 'u', role: 'member', notifyLevel: 'all', muted: false, starred: false,
-  lastReadMessageId: null, joinedAt: '',
+  channelId: 'c',
+  userId: 'u',
+  role: 'member',
+  notifyLevel: 'all',
+  muted: false,
+  starred: false,
+  lastReadMessageId: null,
+  joinedAt: '',
 };
 
 describe('parseMentions', () => {
@@ -77,7 +83,11 @@ describe('permissions', () => {
     expect(canEditMessage(alice, msg, 5, 10 * 60_000)).toBe(false);
   });
   it('only owners grant ownership', () => {
-    expect(canChangeRole({ id: 'a', role: 'admin' }, { id: 'b', role: 'member' }, 'owner')).toBe(false);
-    expect(canChangeRole({ id: 'a', role: 'owner' }, { id: 'b', role: 'member' }, 'owner')).toBe(true);
+    expect(canChangeRole({ id: 'a', role: 'admin' }, { id: 'b', role: 'member' }, 'owner')).toBe(
+      false,
+    );
+    expect(canChangeRole({ id: 'a', role: 'owner' }, { id: 'b', role: 'member' }, 'owner')).toBe(
+      true,
+    );
   });
 });

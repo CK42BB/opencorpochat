@@ -16,7 +16,7 @@ The project exists to free small organizations from rising team-chat costs. A pe
 
 ## Consequences
 
-- Organizations can use, modify and self-host OpenCorpoChat freely. Internal use carries no obligation to publish changes unless users interact with a *modified* version over a network, in which case those users must be offered its source.
+- Organizations can use, modify and self-host OpenCorpoChat freely. Internal use carries no obligation to publish changes unless users interact with a _modified_ version over a network, in which case those users must be offered its source.
 - Anyone offering a modified hosted version must share their changes, which keeps improvements flowing back to the community.
 - Some companies have policies against AGPL software. We accept that trade-off.
 - Integrations (bots, webhooks) talk to OpenCorpoChat over its network API and are separate works. They can be under any license.

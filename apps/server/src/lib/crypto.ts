@@ -22,11 +22,19 @@ const KEYLEN = 64;
 /** Hash a password with scrypt. Format: scrypt$N$r$p$salt$hash (base64url). */
 export async function hashPassword(pw: string): Promise<string> {
   const salt = randomBytes(16);
-  const key = await scrypt(pw.normalize('NFKC'), salt, KEYLEN, { N, r: R, p: P, maxmem: 128 * N * R * 2 });
+  const key = await scrypt(pw.normalize('NFKC'), salt, KEYLEN, {
+    N,
+    r: R,
+    p: P,
+    maxmem: 128 * N * R * 2,
+  });
   return ['scrypt', N, R, P, salt.toString('base64url'), key.toString('base64url')].join('$');
 }
 
-export async function verifyPassword(pw: string, stored: string | null | undefined): Promise<boolean> {
+export async function verifyPassword(
+  pw: string,
+  stored: string | null | undefined,
+): Promise<boolean> {
   if (!stored) {
     // Spend comparable time to avoid user enumeration by timing.
     await hashPassword(pw);
@@ -37,12 +45,17 @@ export async function verifyPassword(pw: string, stored: string | null | undefin
   const expected = Buffer.from(keyB64, 'base64url');
   const nN = Number(n);
   const nR = Number(r);
-  const key = await scrypt(pw.normalize('NFKC'), Buffer.from(saltB64, 'base64url'), expected.length, {
-    N: nN,
-    r: nR,
-    p: Number(p),
-    maxmem: 128 * nN * nR * 2,
-  });
+  const key = await scrypt(
+    pw.normalize('NFKC'),
+    Buffer.from(saltB64, 'base64url'),
+    expected.length,
+    {
+      N: nN,
+      r: nR,
+      p: Number(p),
+      maxmem: 128 * nN * nR * 2,
+    },
+  );
   return timingSafeEqual(key, expected);
 }
 

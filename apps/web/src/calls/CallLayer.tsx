@@ -19,7 +19,8 @@ function RingModal() {
   const caller = useStore((s) => (ringing ? s.users[ringing.fromUserId] : undefined));
   const channel = useStore((s) => (ringing ? s.channels[ringing.call.channelId] : undefined));
   const me = useStore((s) => s.me);
-  const show = !!ringing && ringing.call.channelId !== activeChannel && ringing.fromUserId !== me?.id;
+  const show =
+    !!ringing && ringing.call.channelId !== activeChannel && ringing.fromUserId !== me?.id;
 
   useEffect(() => {
     if (!show || !ringing) return;
@@ -29,7 +30,12 @@ function RingModal() {
     let note: Notification | null = null;
     if (!document.hasFocus() && notificationPermission() === 'granted') {
       try {
-        note = new Notification(t('Incoming call'), { body: t('{name} is calling you', { name: displayName(caller) }), tag: `call-${ringing.call.id}`, icon: '/icon-192.png', requireInteraction: true });
+        note = new Notification(t('Incoming call'), {
+          body: t('{name} is calling you', { name: displayName(caller) }),
+          tag: `call-${ringing.call.id}`,
+          icon: '/icon-192.png',
+          requireInteraction: true,
+        });
         note.onclick = () => {
           window.focus();
           note?.close();
@@ -57,13 +63,20 @@ function RingModal() {
         </div>
         <h2 style={{ margin: '0 0 4px' }}>{displayName(caller)}</h2>
         <p className="muted" style={{ marginTop: 0 }}>
-          {isGroup && channel ? t('is calling {name}', { name: channelTitle(channel, me?.id) }) : t('is calling you…')}
+          {isGroup && channel
+            ? t('is calling {name}', { name: channelTitle(channel, me?.id) })
+            : t('is calling you…')}
         </p>
         <div className="row" style={{ justifyContent: 'center', gap: 16, marginTop: 16 }}>
           <button className="btn btn-danger" onClick={declineRing} aria-label={t('Decline call')}>
             <PhoneOff size={16} /> {t('Decline')}
           </button>
-          <button className="btn btn-primary" onClick={() => startCall(ringing.call.channelId)} aria-label={t('Accept call')} autoFocus>
+          <button
+            className="btn btn-primary"
+            onClick={() => startCall(ringing.call.channelId)}
+            aria-label={t('Accept call')}
+            autoFocus
+          >
             <Phone size={16} /> {t('Accept')}
           </button>
         </div>

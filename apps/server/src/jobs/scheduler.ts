@@ -10,16 +10,50 @@ import { sendDigests } from '../modules/notifications/email.js';
 import { publishUser } from '../modules/users/service.js';
 
 export async function sendScheduledMessages(ctx: Ctx) {
-  const due = await ctx.db.selectFrom('scheduled_messages').selectAll().where('send_at', '<=', nowIso()).limit(100).execute();
+  const due = await ctx.db
+    .selectFrom('scheduled_messages')
+    .selectAll()
+    .where('send_at', '<=', nowIso())
+    .limit(100)
+    .execute();
   for (const s of due) {
     await ctx.db.deleteFrom('scheduled_messages').where('id', '=', s.id).execute();
-    const channel = await ctx.db.selectFrom('channels').selectAll().where('id', '=', s.channel_id).executeTakeFirst();
-    const member = await ctx.db.selectFrom('channel_members').selectAll().where('channel_id', '=', s.channel_id).where('user_id', '=', s.user_id).executeTakeFirst();
-    const user = await ctx.db.selectFrom('users').selectAll().where('id', '=', s.user_id).executeTakeFirst();
+    const channel = await ctx.db
+      .selectFrom('channels')
+      .selectAll()
+      .where('id', '=', s.channel_id)
+      .executeTakeFirst();
+    const member = await ctx.db
+      .selectFrom('channel_members')
+      .selectAll()
+      .where('channel_id', '=', s.channel_id)
+      .where('user_id', '=', s.user_id)
+      .executeTakeFirst();
+    const user = await ctx.db
+      .selectFrom('users')
+      .selectAll()
+      .where('id', '=', s.user_id)
+      .executeTakeFirst();
     if (!channel || !member || !user || user.deactivated_at) continue;
-    if (!canPostInChannel({ id: user.id, role: user.role as never }, { kind: channel.kind as never, archived: !!channel.archived_at, isReadonly: !!channel.is_readonly }, { role: member.role } as never)) continue;
+    if (
+      !canPostInChannel(
+        { id: user.id, role: user.role as never },
+        {
+          kind: channel.kind as never,
+          archived: !!channel.archived_at,
+          isReadonly: !!channel.is_readonly,
+        },
+        { role: member.role } as never,
+      )
+    )
+      continue;
     try {
-      await createMessage(ctx, { channel, userId: s.user_id, body: s.body, threadRootId: s.thread_root_id });
+      await createMessage(ctx, {
+        channel,
+        userId: s.user_id,
+        body: s.body,
+        threadRootId: s.thread_root_id,
+      });
     } catch (err) {
       ctx.log.warn({ err }, 'scheduled message failed');
     }
@@ -27,15 +61,39 @@ export async function sendScheduledMessages(ctx: Ctx) {
 }
 
 export async function fireReminders(ctx: Ctx) {
-  const due = await ctx.db.selectFrom('reminders').selectAll().where('remind_at', '<=', nowIso()).limit(100).execute();
+  const due = await ctx.db
+    .selectFrom('reminders')
+    .selectAll()
+    .where('remind_at', '<=', nowIso())
+    .limit(100)
+    .execute();
   for (const r of due) {
     await ctx.db.deleteFrom('reminders').where('id', '=', r.id).execute();
-    const msg = r.message_id ? await ctx.db.selectFrom('messages').select(['channel_id']).where('id', '=', r.message_id).executeTakeFirst() : undefined;
+    const msg = r.message_id
+      ? await ctx.db
+          .selectFrom('messages')
+          .select(['channel_id'])
+          .where('id', '=', r.message_id)
+          .executeTakeFirst()
+      : undefined;
     const text = r.text || 'Reminder about a message';
     await recordNotification(
       ctx,
-      { user_id: r.user_id, kind: 'reminder', channel_id: msg?.channel_id ?? null, message_id: r.message_id, actor_id: null, text },
-      { push: { title: '⏰ Reminder', body: text, url: msg ? `/c/${msg.channel_id}#${r.message_id}` : '/activity' } },
+      {
+        user_id: r.user_id,
+        kind: 'reminder',
+        channel_id: msg?.channel_id ?? null,
+        message_id: r.message_id,
+        actor_id: null,
+        text,
+      },
+      {
+        push: {
+          title: '⏰ Reminder',
+          body: text,
+          url: msg ? `/c/${msg.channel_id}#${r.message_id}` : '/activity',
+        },
+      },
     );
   }
 }
@@ -45,16 +103,41 @@ export async function clearExpiredStatuses(ctx: Ctx) {
   const expired = await ctx.db
     .selectFrom('users')
     .select('id')
-    .where((eb) => eb.or([eb.and([eb('status_expires_at', 'is not', null), eb('status_expires_at', '<=', now)]), eb.and([eb('dnd_until', 'is not', null), eb('dnd_until', '<=', now)])]))
+    .where((eb) =>
+      eb.or([
+        eb.and([eb('status_expires_at', 'is not', null), eb('status_expires_at', '<=', now)]),
+        eb.and([eb('dnd_until', 'is not', null), eb('dnd_until', '<=', now)]),
+      ]),
+    )
     .execute();
   for (const { id } of expired) {
     await ctx.db
       .updateTable('users')
       .set((eb) => ({
-        status_emoji: eb.case().when('status_expires_at', '<=', now).then('').else(eb.ref('status_emoji')).end(),
-        status_text: eb.case().when('status_expires_at', '<=', now).then('').else(eb.ref('status_text')).end(),
-        status_expires_at: eb.case().when('status_expires_at', '<=', now).then(null).else(eb.ref('status_expires_at')).end(),
-        dnd_until: eb.case().when('dnd_until', '<=', now).then(null).else(eb.ref('dnd_until')).end(),
+        status_emoji: eb
+          .case()
+          .when('status_expires_at', '<=', now)
+          .then('')
+          .else(eb.ref('status_emoji'))
+          .end(),
+        status_text: eb
+          .case()
+          .when('status_expires_at', '<=', now)
+          .then('')
+          .else(eb.ref('status_text'))
+          .end(),
+        status_expires_at: eb
+          .case()
+          .when('status_expires_at', '<=', now)
+          .then(null)
+          .else(eb.ref('status_expires_at'))
+          .end(),
+        dnd_until: eb
+          .case()
+          .when('dnd_until', '<=', now)
+          .then(null)
+          .else(eb.ref('dnd_until'))
+          .end(),
       }))
       .where('id', '=', id)
       .execute();
@@ -77,10 +160,27 @@ export async function applyRetention(ctx: Ctx) {
       .where('message_id', '<', cutoff)
       .execute();
     for (const f of files) await ctx.storage.delete(f.storage_key).catch(() => {});
-    if (files.length) await ctx.db.deleteFrom('files').where('id', 'in', files.map((f) => f.id)).execute();
+    if (files.length)
+      await ctx.db
+        .deleteFrom('files')
+        .where(
+          'id',
+          'in',
+          files.map((f) => f.id),
+        )
+        .execute();
     // Delete replies first, then roots (thread_follows/reactions cascade via FK).
-    await ctx.db.deleteFrom('messages').where('channel_id', '=', c.id).where('id', '<', cutoff).where('thread_root_id', 'is not', null).execute();
-    await ctx.db.deleteFrom('messages').where('channel_id', '=', c.id).where('id', '<', cutoff).execute();
+    await ctx.db
+      .deleteFrom('messages')
+      .where('channel_id', '=', c.id)
+      .where('id', '<', cutoff)
+      .where('thread_root_id', 'is not', null)
+      .execute();
+    await ctx.db
+      .deleteFrom('messages')
+      .where('channel_id', '=', c.id)
+      .where('id', '<', cutoff)
+      .execute();
   }
 }
 
@@ -97,8 +197,19 @@ export async function cleanup(ctx: Ctx) {
     .where('created_at', '<', new Date(Date.now() - DAY).toISOString())
     .execute();
   for (const f of orphans) await ctx.storage.delete(f.storage_key).catch(() => {});
-  if (orphans.length) await ctx.db.deleteFrom('files').where('id', 'in', orphans.map((f) => f.id)).execute();
-  await ctx.db.deleteFrom('notifications').where('created_at', '<', new Date(Date.now() - 90 * DAY).toISOString()).execute();
+  if (orphans.length)
+    await ctx.db
+      .deleteFrom('files')
+      .where(
+        'id',
+        'in',
+        orphans.map((f) => f.id),
+      )
+      .execute();
+  await ctx.db
+    .deleteFrom('notifications')
+    .where('created_at', '<', new Date(Date.now() - 90 * DAY).toISOString())
+    .execute();
 }
 
 export function startScheduler(ctx: Ctx) {

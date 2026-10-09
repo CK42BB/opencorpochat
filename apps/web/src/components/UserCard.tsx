@@ -15,14 +15,25 @@ export async function openDm(userIds: string[]) {
   return ch;
 }
 
-export function UserCard({ userId, anchor, onClose }: { userId: string; anchor: HTMLElement | DOMRect; onClose: () => void }) {
+export function UserCard({
+  userId,
+  anchor,
+  onClose,
+}: {
+  userId: string;
+  anchor: HTMLElement | DOMRect;
+  onClose: () => void;
+}) {
   const user = useStore((s) => s.users[userId]);
   const me = useStore((s) => s.me);
   const presence = useStore((s) => s.presence[userId] ?? 'offline');
   const navigate = useNavigate();
   const [details, setDetails] = useState<{ email?: string; phone?: string } | null>(null);
   useEffect(() => {
-    api.get<{ email?: string; phone?: string }>(`/users/${userId}`).then(setDetails).catch(() => {});
+    api
+      .get<{ email?: string; phone?: string }>(`/users/${userId}`)
+      .then(setDetails)
+      .catch(() => {});
   }, [userId]);
   if (!user) return null;
   const message = async (call = false) => {
@@ -57,7 +68,11 @@ export function UserCard({ userId, anchor, onClose }: { userId: string; anchor: 
             {user.statusEmoji} {user.statusText}
           </div>
         )}
-        {user.deactivated && <div className="pill" style={{ margin: '0 16px 12px' }}>{t('Deactivated')}</div>}
+        {user.deactivated && (
+          <div className="pill" style={{ margin: '0 16px 12px' }}>
+            {t('Deactivated')}
+          </div>
+        )}
         {details?.email && !user.isBot && (
           <div className="small" style={{ padding: '0 16px 4px' }}>
             <span className="faint">{t('Email')}: </span>

@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { ChevronDown, Hash, Headphones, Info, Lock, Menu as MenuIcon, Phone, Pin, Users } from 'lucide-react';
+import {
+  ChevronDown,
+  Hash,
+  Headphones,
+  Info,
+  Lock,
+  Menu as MenuIcon,
+  Phone,
+  Pin,
+  Users,
+} from 'lucide-react';
 import type { Channel, MyChannel } from '@ocpc/shared';
 import { api } from '../lib/api';
 import { channelTitle, displayName, isDm, toastError, useStore } from '../lib/store';
@@ -81,7 +91,8 @@ export function ChannelView() {
   // Esc marks read / closes panels.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('.overlay, .popover')) return;
+      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('.overlay, .popover'))
+        return;
       if (threadId) closeThread();
       else if (details) setDetails(null);
     };
@@ -93,7 +104,9 @@ export function ChannelView() {
     if (preview === 'missing') {
       return (
         <main className="main">
-          <EmptyState title={t('Conversation not found')}>{t("It may have been deleted, or you don't have access.")}</EmptyState>
+          <EmptyState title={t('Conversation not found')}>
+            {t("It may have been deleted, or you don't have access.")}
+          </EmptyState>
         </main>
       );
     }
@@ -109,19 +122,40 @@ export function ChannelView() {
 
   const dm = isDm(channel);
   const title = channelTitle(channel, me.id);
-  const other = dm && channel.dmUserIds?.length === 2 ? users[channel.dmUserIds.find((id) => id !== me.id) ?? ''] : undefined;
+  const other =
+    dm && channel.dmUserIds?.length === 2
+      ? users[channel.dmUserIds.find((id) => id !== me.id) ?? '']
+      : undefined;
   const inCall = call?.participants.some((p) => p.userId === me.id);
 
   return (
     <>
       <main className="main" aria-label={title}>
         <header className="channel-header">
-          <button className="icon-btn mobile-only" onClick={toggleNav} aria-label={t('Open navigation')}>
+          <button
+            className="icon-btn mobile-only"
+            onClick={toggleNav}
+            aria-label={t('Open navigation')}
+          >
             <MenuIcon size={18} />
           </button>
-          <button className="title-btn" onClick={() => setDetails(details === 'about' ? null : 'about')} aria-label={t('Conversation details')}>
+          <button
+            className="title-btn"
+            onClick={() => setDetails(details === 'about' ? null : 'about')}
+            aria-label={t('Conversation details')}
+          >
             <h2 className="ellipsis">
-              {dm ? other ? <Avatar user={other} size={22} presence /> : <Users size={18} /> : channel.kind === 'private' ? <Lock size={18} /> : <Hash size={18} />}
+              {dm ? (
+                other ? (
+                  <Avatar user={other} size={22} presence />
+                ) : (
+                  <Users size={18} />
+                )
+              ) : channel.kind === 'private' ? (
+                <Lock size={18} />
+              ) : (
+                <Hash size={18} />
+              )}
               <span className="ellipsis">{title}</span>
               <ChevronDown size={16} className="faint" />
             </h2>
@@ -131,19 +165,38 @@ export function ChannelView() {
             {dm && other ? other.title || other.statusText : channel.topic}
           </span>
           {!dm && (
-            <button className="member-stack" onClick={() => setDetails(details === 'members' ? null : 'members')} aria-label={t('{n} members', { n: channel.memberCount })}>
+            <button
+              className="member-stack"
+              onClick={() => setDetails(details === 'members' ? null : 'members')}
+              aria-label={t('{n} members', { n: channel.memberCount })}
+            >
               <Users size={15} /> {channel.memberCount}
             </button>
           )}
-          <button className="icon-btn" onClick={() => setDetails(details === 'pins' ? null : 'pins')} aria-label={t('Pinned messages')} title={t('Pinned messages')}>
+          <button
+            className="icon-btn"
+            onClick={() => setDetails(details === 'pins' ? null : 'pins')}
+            aria-label={t('Pinned messages')}
+            title={t('Pinned messages')}
+          >
             <Pin size={17} />
           </button>
           {!channel.archived && (
-            <button className={`icon-btn ${inCall ? 'active' : ''}`} onClick={() => startCall(channel.id)} aria-label={dm ? t('Start a call') : t('Start a huddle')} title={dm ? t('Start a call') : t('Start a huddle')}>
+            <button
+              className={`icon-btn ${inCall ? 'active' : ''}`}
+              onClick={() => startCall(channel.id)}
+              aria-label={dm ? t('Start a call') : t('Start a huddle')}
+              title={dm ? t('Start a call') : t('Start a huddle')}
+            >
               {dm ? <Phone size={17} /> : <Headphones size={17} />}
             </button>
           )}
-          <button className={`icon-btn ${details ? 'active' : ''}`} onClick={() => setDetails(details ? null : 'about')} aria-label={t('Details')} title={t('Details')}>
+          <button
+            className={`icon-btn ${details ? 'active' : ''}`}
+            onClick={() => setDetails(details ? null : 'about')}
+            aria-label={t('Details')}
+            title={t('Details')}
+          >
             <Info size={17} />
           </button>
         </header>
@@ -151,7 +204,8 @@ export function ChannelView() {
           <div className="call-banner">
             <Headphones size={16} />
             <span className="grow">
-              {t('{n} in a call', { n: call.participants.length })}: {call.participants.map((p) => displayName(users[p.userId])).join(', ')}
+              {t('{n} in a call', { n: call.participants.length })}:{' '}
+              {call.participants.map((p) => displayName(users[p.userId])).join(', ')}
             </span>
             <button className="btn btn-sm btn-primary" onClick={() => startCall(channel.id)}>
               {t('Join')}
@@ -160,12 +214,22 @@ export function ChannelView() {
         )}
         <MessageList channel={channel} focusMessageId={focusMessageId} onOpenThread={openThread} />
         <TypingIndicator channelId={channel.id} />
-        <Composer channel={channel} placeholder={dm ? t('Message {name}', { name: title }) : t('Message #{name}', { name: channel.name })} />
+        <Composer
+          channel={channel}
+          placeholder={
+            dm ? t('Message {name}', { name: title }) : t('Message #{name}', { name: channel.name })
+          }
+        />
       </main>
       {threadId ? (
         <ThreadPanel key={threadId} rootId={threadId} onClose={closeThread} />
       ) : details ? (
-        <ChannelDetails channel={channel} tab={details} setTab={setDetails} onClose={() => setDetails(null)} />
+        <ChannelDetails
+          channel={channel}
+          tab={details}
+          setTab={setDetails}
+          onClose={() => setDetails(null)}
+        />
       ) : null}
     </>
   );
@@ -187,7 +251,16 @@ function ChannelPreview({ channel }: { channel: Channel }) {
   };
   const pseudo: MyChannel = {
     ...channel,
-    membership: { channelId: channel.id, userId: me.id, role: 'member', notifyLevel: 'mentions', muted: false, starred: false, lastReadMessageId: null, joinedAt: '' },
+    membership: {
+      channelId: channel.id,
+      userId: me.id,
+      role: 'member',
+      notifyLevel: 'mentions',
+      muted: false,
+      starred: false,
+      lastReadMessageId: null,
+      joinedAt: '',
+    },
     unreadCount: 0,
     mentionCount: 0,
   };

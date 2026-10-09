@@ -17,8 +17,14 @@ const decode = (s: string) =>
 
 function meta(html: string, keys: string[]) {
   for (const key of keys) {
-    const re1 = new RegExp(`<meta[^>]+(?:property|name)=["']${key}["'][^>]*content=["']([^"']*)["']`, 'i');
-    const re2 = new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*(?:property|name)=["']${key}["']`, 'i');
+    const re1 = new RegExp(
+      `<meta[^>]+(?:property|name)=["']${key}["'][^>]*content=["']([^"']*)["']`,
+      'i',
+    );
+    const re2 = new RegExp(
+      `<meta[^>]+content=["']([^"']*)["'][^>]*(?:property|name)=["']${key}["']`,
+      'i',
+    );
     const m = re1.exec(html) ?? re2.exec(html);
     if (m?.[1]) return decode(m[1]);
   }
@@ -30,7 +36,9 @@ export async function fetchPreview(url: string): Promise<LinkPreview | null> {
   if (res.status >= 400 || !res.contentType.includes('html')) return null;
   const html = res.body.toString('utf8');
   const head = html.slice(0, 200_000);
-  const title = meta(head, ['og:title', 'twitter:title']) || decode(/<title[^>]*>([^<]*)<\/title>/i.exec(head)?.[1] ?? '');
+  const title =
+    meta(head, ['og:title', 'twitter:title']) ||
+    decode(/<title[^>]*>([^<]*)<\/title>/i.exec(head)?.[1] ?? '');
   if (!title) return null;
   let image = meta(head, ['og:image', 'og:image:url', 'twitter:image']);
   try {
@@ -50,7 +58,11 @@ export async function fetchPreview(url: string): Promise<LinkPreview | null> {
 
 export async function unfurlMessage(ctx: Ctx, messageId: string) {
   if (!ctx.settings.get().linkPreviews) return;
-  const msg = await ctx.db.selectFrom('messages').selectAll().where('id', '=', messageId).executeTakeFirst();
+  const msg = await ctx.db
+    .selectFrom('messages')
+    .selectAll()
+    .where('id', '=', messageId)
+    .executeTakeFirst();
   if (!msg || msg.deleted_at || msg.kind === 'system' || msg.previews) return;
   const urls = extractUrls(msg.body, 3).filter((u) => !u.startsWith(ctx.config.publicUrl));
   if (!urls.length) return;
@@ -64,7 +76,15 @@ export async function unfurlMessage(ctx: Ctx, messageId: string) {
     }
   }
   if (!previews.length) return;
-  await ctx.db.updateTable('messages').set({ previews: JSON.stringify(previews) }).where('id', '=', messageId).execute();
-  const updated = await ctx.db.selectFrom('messages').selectAll().where('id', '=', messageId).executeTakeFirstOrThrow();
+  await ctx.db
+    .updateTable('messages')
+    .set({ previews: JSON.stringify(previews) })
+    .where('id', '=', messageId)
+    .execute();
+  const updated = await ctx.db
+    .selectFrom('messages')
+    .selectAll()
+    .where('id', '=', messageId)
+    .executeTakeFirstOrThrow();
   await publishMessage(ctx, updated, 'message.updated');
 }

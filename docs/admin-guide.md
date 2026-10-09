@@ -25,12 +25,12 @@ This guide is for the person who installs and looks after OpenCorpoChat. That's 
 
 ## 1. Choose an install path
 
-| Your situation | Use |
-|---|---|
-| "I just want to try it" | [Quick start](#2-quick-start-docker): one `docker run` command |
-| Small team (up to ~100 people), one server | [Docker Compose + HTTPS](#3-recommended-production-setup-docker-compose--https) (**recommended**) |
-| Larger team, big video meetings, or you want Postgres/S3 | [Full setup](#4-full-setup-postgres-s3-turn-livekit) |
-| No Docker allowed | [Bare metal](#5-bare-metal-no-docker) |
+| Your situation                                           | Use                                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| "I just want to try it"                                  | [Quick start](#2-quick-start-docker): one `docker run` command                                    |
+| Small team (up to ~100 people), one server               | [Docker Compose + HTTPS](#3-recommended-production-setup-docker-compose--https) (**recommended**) |
+| Larger team, big video meetings, or you want Postgres/S3 | [Full setup](#4-full-setup-postgres-s3-turn-livekit)                                              |
+| No Docker allowed                                        | [Bare metal](#5-bare-metal-no-docker)                                                             |
 
 **Server sizing:** 1 vCPU and 1 GB RAM handles a 50-person team comfortably. For 200 people, use 2 vCPU / 2 GB RAM. Add more if you run LiveKit for large calls on the same machine. Disk space mostly depends on how many files people upload.
 
@@ -71,12 +71,12 @@ Your data lives in the `ocpc-data` Docker volume: the SQLite database, uploaded 
 
 `deploy/compose/docker-compose.full.yml` adds:
 
-| Service | Why |
-|---|---|
-| PostgreSQL 17 | Better for large orgs and very large message histories |
-| MinIO | S3-compatible file storage (or point at AWS S3, Backblaze B2, Cloudflare R2…) |
-| coturn | TURN relay so calls work through strict firewalls and corporate NATs |
-| LiveKit | SFU for meetings with more than ~6 participants |
+| Service       | Why                                                                           |
+| ------------- | ----------------------------------------------------------------------------- |
+| PostgreSQL 17 | Better for large orgs and very large message histories                        |
+| MinIO         | S3-compatible file storage (or point at AWS S3, Backblaze B2, Cloudflare R2…) |
+| coturn        | TURN relay so calls work through strict firewalls and corporate NATs          |
+| LiveKit       | SFU for meetings with more than ~6 participants                               |
 
 Steps:
 
@@ -130,80 +130,82 @@ The server checks its configuration at startup and exits with a clear message if
 
 ### Core
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `8080` | HTTP port |
-| `HOST` | `0.0.0.0` | Interface to listen on |
-| `OCPC_PUBLIC_URL` | — | **Required in production.** The URL people use, e.g. `https://chat.example.com`. Used in links, emails, SSO redirects and push notifications. |
-| `OCPC_DATA_DIR` | `./data` (`/data` in Docker) | Where the SQLite database, uploaded files and generated secrets are stored |
-| `DATABASE_URL` | SQLite file `$OCPC_DATA_DIR/ocpc.db` | Set to `postgres://user:pass@host:5432/db` to use PostgreSQL |
-| `OCPC_SECRET` | auto-generated | Secret for signing tokens. If unset, one is generated and saved in the data directory. **Keep it safe; it's included in backups.** |
-| `OCPC_SOURCE_URL` | `https://github.com/opencorpochat/opencorpochat` | "Source code" link in the About dialog. If you modify OpenCorpoChat, the AGPL requires you to point this at your modified source. |
-| `OCPC_LOG_LEVEL` | `info` | `fatal`, `error`, `warn`, `info`, `debug`, `trace` |
-| `OCPC_MAX_UPLOAD_MB` | `100` | Maximum size of a single uploaded file |
-| `OCPC_TRUST_PROXY` | `false` | Set `true` when behind Caddy/nginx/a load balancer so the real client IPs are logged and rate-limited |
+| Variable             | Default                                          | Description                                                                                                                                   |
+| -------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`               | `8080`                                           | HTTP port                                                                                                                                     |
+| `HOST`               | `0.0.0.0`                                        | Interface to listen on                                                                                                                        |
+| `OCPC_PUBLIC_URL`    | —                                                | **Required in production.** The URL people use, e.g. `https://chat.example.com`. Used in links, emails, SSO redirects and push notifications. |
+| `OCPC_DATA_DIR`      | `./data` (`/data` in Docker)                     | Where the SQLite database, uploaded files and generated secrets are stored                                                                    |
+| `DATABASE_URL`       | SQLite file `$OCPC_DATA_DIR/ocpc.db`             | Set to `postgres://user:pass@host:5432/db` to use PostgreSQL                                                                                  |
+| `OCPC_SECRET`        | auto-generated                                   | Secret for signing tokens. If unset, one is generated and saved in the data directory. **Keep it safe; it's included in backups.**            |
+| `OCPC_SOURCE_URL`    | `https://github.com/opencorpochat/opencorpochat` | "Source code" link in the About dialog. If you modify OpenCorpoChat, the AGPL requires you to point this at your modified source.             |
+| `OCPC_LOG_LEVEL`     | `info`                                           | `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                                                                            |
+| `OCPC_MAX_UPLOAD_MB` | `100`                                            | Maximum size of a single uploaded file                                                                                                        |
+| `OCPC_TRUST_PROXY`   | `false`                                          | Set `true` when behind Caddy/nginx/a load balancer so the real client IPs are logged and rate-limited                                         |
 
 ### File storage (S3-compatible)
 
 If `S3_BUCKET` is unset, files are stored on local disk in `$OCPC_DATA_DIR/files`.
 
-| Variable | Description |
-|---|---|
-| `S3_ENDPOINT` | Endpoint URL, e.g. `https://s3.eu-central-1.amazonaws.com` or `http://minio:9000` |
-| `S3_REGION` | Region, e.g. `us-east-1` |
-| `S3_BUCKET` | Bucket name (must already exist) |
-| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Credentials |
-| `S3_FORCE_PATH_STYLE` | `true` for MinIO and most non-AWS providers |
+| Variable                                    | Description                                                                       |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| `S3_ENDPOINT`                               | Endpoint URL, e.g. `https://s3.eu-central-1.amazonaws.com` or `http://minio:9000` |
+| `S3_REGION`                                 | Region, e.g. `us-east-1`                                                          |
+| `S3_BUCKET`                                 | Bucket name (must already exist)                                                  |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Credentials                                                                       |
+| `S3_FORCE_PATH_STYLE`                       | `true` for MinIO and most non-AWS providers                                       |
 
 ### Email
 
-| Variable | Description |
-|---|---|
-| `SMTP_URL` | e.g. `smtps://user:password@smtp.example.com:465` or `smtp://user:password@host:587` (STARTTLS). URL-encode special characters in the password. |
-| `SMTP_FROM` | Sender, e.g. `"OpenCorpoChat <chat@example.com>"` |
+| Variable    | Description                                                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SMTP_URL`  | e.g. `smtps://user:password@smtp.example.com:465` or `smtp://user:password@host:587` (STARTTLS). URL-encode special characters in the password. |
+| `SMTP_FROM` | Sender, e.g. `"OpenCorpoChat <chat@example.com>"`                                                                                               |
 
 ### Single sign-on (OIDC)
 
-| Variable | Default | Description |
-|---|---|---|
-| `OIDC_ISSUER` | — | Your provider's issuer URL |
-| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | — | From your provider |
-| `OIDC_BUTTON_LABEL` | `Sign in with SSO` | Text on the login button |
-| `OIDC_AUTO_CREATE` | `true` | Create an account automatically the first time someone signs in |
-| `OIDC_ALLOWED_DOMAINS` | — | Comma-separated email domains allowed to sign in, e.g. `example.com,example.org` |
+| Variable                                | Default            | Description                                                                      |
+| --------------------------------------- | ------------------ | -------------------------------------------------------------------------------- |
+| `OIDC_ISSUER`                           | —                  | Your provider's issuer URL                                                       |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | —                  | From your provider                                                               |
+| `OIDC_BUTTON_LABEL`                     | `Sign in with SSO` | Text on the login button                                                         |
+| `OIDC_AUTO_CREATE`                      | `true`             | Create an account automatically the first time someone signs in                  |
+| `OIDC_ALLOWED_DOMAINS`                  | —                  | Comma-separated email domains allowed to sign in, e.g. `example.com,example.org` |
 
 ### Calls
 
-| Variable | Description |
-|---|---|
-| `STUN_URLS` | Comma-separated STUN URLs, e.g. `stun:turn.example.com:3478`. No public STUN server is used unless you configure one. |
-| `TURN_URLS` | Comma-separated TURN URLs, e.g. `turn:turn.example.com:3478?transport=udp,turns:turn.example.com:5349?transport=tcp` |
-| `TURN_SECRET` | Shared secret matching coturn's `static-auth-secret`. OpenCorpoChat gives each user short-lived TURN credentials. |
-| `LIVEKIT_URL` | e.g. `wss://livekit.example.com`. When set, large calls use LiveKit. |
-| `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | Must match the LiveKit server's keys |
+| Variable                                 | Description                                                                                                                                                                      |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `STUN_URLS`                              | Comma-separated STUN URLs, e.g. `stun:turn.example.com:3478`. If empty, browsers use the built-in STUN server. No third-party STUN server is ever used unless you configure one. |
+| `OCPC_STUN_PORT`                         | UDP port of the built-in STUN server (default `3478`; `0` disables it).                                                                                                          |
+| `OCPC_STUN_HOST`                         | Hostname browsers use to reach the built-in STUN server (default: host of `OCPC_PUBLIC_URL`).                                                                                    |
+| `TURN_URLS`                              | Comma-separated TURN URLs, e.g. `turn:turn.example.com:3478?transport=udp,turns:turn.example.com:5349?transport=tcp`                                                             |
+| `TURN_SECRET`                            | Shared secret matching coturn's `static-auth-secret`. OpenCorpoChat gives each user short-lived TURN credentials.                                                                |
+| `LIVEKIT_URL`                            | e.g. `wss://livekit.example.com`. When set, large calls use LiveKit.                                                                                                             |
+| `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | Must match the LiveKit server's keys                                                                                                                                             |
 
 ### Web Push
 
-| Variable | Description |
-|---|---|
+| Variable                                 | Description                                                                                                       |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Keys that identify your server to browser push services. Auto-generated and saved in the data directory if unset. |
-| `VAPID_SUBJECT` | Contact for push services, e.g. `mailto:admin@example.com` (defaults to `OCPC_PUBLIC_URL`) |
+| `VAPID_SUBJECT`                          | Contact for push services, e.g. `mailto:admin@example.com` (defaults to `OCPC_PUBLIC_URL`)                        |
 
 ## 8. The `ocpc` command-line tool
 
 In Docker, run commands with `docker exec -it ocpc ocpc <command>`. On bare metal, use `node apps/server/dist/cli.js <command>` from the install directory.
 
-| Command | What it does |
-|---|---|
-| `ocpc migrate` | Apply database migrations. This also happens automatically at startup. |
-| `ocpc create-admin --email E --username U --password P` | Create an owner/admin account (useful if you skipped the wizard or got locked out) |
-| `ocpc reset-password --email E` | Set a new password for a user (it prompts for or prints one) |
-| `ocpc backup --out FILE` | Write a consistent backup of the database, files and secrets |
-| `ocpc restore --in FILE` | Restore a backup into an **empty** data directory or database |
-| `ocpc export --out FILE` | Export the whole organization (messages, channels, users, files) in the documented JSON format |
-| `ocpc import-slack --in export.zip` | Import channels, users and messages from a Slack-format workspace export archive |
-| `ocpc generate-vapid` | Print a new pair of Web Push keys |
-| `ocpc --version` | Print the version |
+| Command                                                 | What it does                                                                                   |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `ocpc migrate`                                          | Apply database migrations. This also happens automatically at startup.                         |
+| `ocpc create-admin --email E --username U --password P` | Create an owner/admin account (useful if you skipped the wizard or got locked out)             |
+| `ocpc reset-password --email E`                         | Set a new password for a user (it prompts for or prints one)                                   |
+| `ocpc backup --out FILE`                                | Write a consistent backup of the database, files and secrets                                   |
+| `ocpc restore --in FILE`                                | Restore a backup into an **empty** data directory or database                                  |
+| `ocpc export --out FILE`                                | Export the whole organization (messages, channels, users, files) in the documented JSON format |
+| `ocpc import-slack --in export.zip`                     | Import channels, users and messages from a Slack-format workspace export archive               |
+| `ocpc generate-vapid`                                   | Print a new pair of Web Push keys                                                              |
+| `ocpc --version`                                        | Print the version                                                                              |
 
 ## 9. Backups and restore
 
@@ -257,7 +259,8 @@ Database migrations run automatically at startup inside a transaction. If one fa
 OpenCorpoChat calls use **WebRTC**, which is built into browsers.
 
 - **Small calls (up to ~6 people)** connect people's browsers directly to each other ("mesh"). The server only helps them find each other.
-- **Through firewalls:** when two people can't connect directly (common in offices and on mobile networks), traffic goes through a **TURN** relay. Without TURN, *some calls will fail to connect*. For production, set up TURN.
+- **Built-in STUN:** the server answers STUN requests on **UDP 3478** by default, so most home and office networks connect without any third-party service. Open `3478/udp` in your firewall (the Docker Compose files publish it). Use `OCPC_STUN_PORT` to change the port (`0` disables it) and `OCPC_STUN_HOST` to set the hostname browsers use (default: the host in `OCPC_PUBLIC_URL`).
+- **Through firewalls:** when two people can't connect directly (common in offices and on mobile networks), traffic goes through a **TURN** relay. Without TURN, _some calls will fail to connect_. For production, set up TURN.
 - **Large meetings:** with LiveKit configured, larger calls go through a LiveKit media server. Each participant then only uploads their video once.
 
 ### Setting up TURN (coturn)
@@ -266,7 +269,8 @@ OpenCorpoChat calls use **WebRTC**, which is built into browsers.
 2. Generate a secret: `openssl rand -hex 32`. Put it in coturn (`static-auth-secret=`) **and** in OpenCorpoChat (`TURN_SECRET=`).
 3. Open the ports: 3478 tcp+udp, 5349 tcp (TLS), and 49160–49200 udp (relay range).
 4. Set `TURN_URLS` (and usually `STUN_URLS`) in OpenCorpoChat and restart it.
-5. **Test it:** start a call between a laptop on office Wi-Fi and a phone on mobile data. If it connects and you can see each other, TURN is working.
+5. **Troubleshoot:** in the call window, open **Device settings → Call diagnostics** to see whether host, STUN (srflx) and TURN (relay) candidates are found. During a call, running `ocpcCallDebug()` in the browser console shows each peer's ICE state and candidates.
+6. **Test it:** start a call between a laptop on office Wi-Fi and a phone on mobile data. If it connects and you can see each other, TURN is working.
 
 > For very restrictive networks that only allow HTTPS, run TURN over TLS on port 443 on a dedicated IP, and add `turns:turn.example.com:443?transport=tcp` to `TURN_URLS`.
 
@@ -286,13 +290,14 @@ OpenCorpoChat supports any **OpenID Connect** provider. In your provider:
   ```
 
   For example `https://chat.example.com/api/v1/auth/oidc/callback`.
+
 - Request the scopes `openid email profile`.
 
 Then set `OIDC_ISSUER`, `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`, and restart. A "Sign in with SSO" button appears on the login page.
 
 If someone signs in with SSO and an existing account has the same **verified** email, the SSO login is linked to that account.
 
-To make SSO the *only* way to log in, turn on **Admin → Authentication → SSO only**. Keep at least one owner with a password as a break-glass account in case your identity provider has an outage.
+To make SSO the _only_ way to log in, turn on **Admin → Authentication → SSO only**. Keep at least one owner with a password as a break-glass account in case your identity provider has an outage.
 
 ### Google Workspace
 
@@ -309,7 +314,7 @@ To make SSO the *only* way to log in, turn on **Admin → Authentication → SSO
 
 ### Microsoft Entra ID
 
-1. In the Entra admin center, go to **App registrations → New registration**. Choose the *Web* platform and use the redirect URI above.
+1. In the Entra admin center, go to **App registrations → New registration**. Choose the _Web_ platform and use the redirect URI above.
 2. Under **Certificates & secrets**, create a client secret.
 3. Set:
 
@@ -321,7 +326,7 @@ To make SSO the *only* way to log in, turn on **Admin → Authentication → SSO
 
 ### Keycloak / Authentik / Okta
 
-Create an OIDC client of type *confidential* with the redirect URI above. Then use the realm or application issuer URL as `OIDC_ISSUER`, for example `https://sso.example.com/realms/acme` for Keycloak or `https://acme.okta.com` for Okta.
+Create an OIDC client of type _confidential_ with the redirect URI above. Then use the realm or application issuer URL as `OIDC_ISSUER`, for example `https://sso.example.com/realms/acme` for Keycloak or `https://acme.okta.com` for Okta.
 
 ## 13. Email (SMTP)
 
@@ -341,7 +346,7 @@ Web Push works out of the box. The first time it starts, OpenCorpoChat generates
 Things to know:
 
 - Web Push requires **HTTPS**.
-- On **iPhone/iPad**, notifications only work after the user adds OpenCorpoChat to their home screen (Share → *Add to Home Screen*). That's a platform rule.
+- On **iPhone/iPad**, notifications only work after the user adds OpenCorpoChat to their home screen (Share → _Add to Home Screen_). That's a platform rule.
 - Push messages are delivered through each browser vendor's push service, which is how Web Push works for every website. The content is encrypted end-to-end between your server and the browser, so the push service can't read it.
 - **Don't change the VAPID keys** after people have subscribed. Doing so silently breaks their notifications until they re-enable them.
 

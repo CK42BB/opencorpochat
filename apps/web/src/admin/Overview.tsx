@@ -46,14 +46,22 @@ function MessagesChart({ byDay }: { byDay: Record<string, number> }) {
   const total = data.reduce((s, d) => s + d.n, 0);
   const peak = data.reduce((a, b) => (b.n > a.n ? b : a), data[0]!);
   const ticks = [0, Math.round(max / 2), max];
-  const short = (day: string) => new Date(day + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const short = (day: string) =>
+    new Date(day + 'T00:00:00Z').toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
   return (
     <figure style={{ margin: 0 }}>
       <svg
         className="admin-chart"
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={t('Messages per day over the last 30 days: {total} in total, peak of {n} on {day}.', { total, n: peak.n, day: short(peak.day) })}
+        aria-label={t(
+          'Messages per day over the last 30 days: {total} in total, peak of {n} on {day}.',
+          { total, n: peak.n, day: short(peak.day) },
+        )}
       >
         {ticks.map((v) => {
           const y = padT + plotH - (v / max) * plotH;
@@ -69,14 +77,28 @@ function MessagesChart({ byDay }: { byDay: Record<string, number> }) {
         {data.map((d, i) => {
           const h = (d.n / max) * plotH;
           return (
-            <rect key={d.day} className="bar" x={padL + i * bw + 1} y={padT + plotH - h} width={Math.max(1, bw - 2)} height={h} rx={2}>
+            <rect
+              key={d.day}
+              className="bar"
+              x={padL + i * bw + 1}
+              y={padT + plotH - h}
+              width={Math.max(1, bw - 2)}
+              height={h}
+              rx={2}
+            >
               <title>{`${short(d.day)}: ${d.n}`}</title>
             </rect>
           );
         })}
         {data.map((d, i) =>
-          i % 7 === 0 || i === data.length - 1 ? (
-            <text key={d.day} className="axis" x={padL + i * bw + bw / 2} y={H - 6} textAnchor="middle">
+          (data.length - 1 - i) % 7 === 0 ? (
+            <text
+              key={d.day}
+              className="axis"
+              x={padL + i * bw + bw / 2}
+              y={H - 6}
+              textAnchor="middle"
+            >
               {short(d.day)}
             </text>
           ) : null,
@@ -110,7 +132,10 @@ export function Overview() {
   const sourceUrl = useStore((s) => s.info?.sourceUrl) ?? '';
   useEffect(() => {
     api.get<Stats>('/admin/stats').then(setStats).catch(toastError);
-    api.get<{ server: ServerInfoFlags }>('/admin/settings').then((r) => setServer(r.server)).catch(toastError);
+    api
+      .get<{ server: ServerInfoFlags }>('/admin/settings')
+      .then((r) => setServer(r.server))
+      .catch(toastError);
   }, []);
   const testEmail = async () => {
     setSending(true);
@@ -137,11 +162,58 @@ export function Overview() {
   const guide = `${sourceUrl.replace(/\/+$/, '')}/blob/main/docs/admin-guide.md`;
   const checks: { ok: boolean; label: string; hint: React.ReactNode }[] = server
     ? [
-        { ok: server.smtp, label: t('Email (SMTP)'), hint: <>{t('Set')} <code>SMTP_URL</code> {t('and')} <code>SMTP_FROM</code> {t('to send invites, reset links and missed-message digests.')}</> },
-        { ok: server.oidc, label: t('Single sign-on (OIDC)'), hint: <>{t('Set')} <code>OIDC_ISSUER</code>, <code>OIDC_CLIENT_ID</code> {t('and')} <code>OIDC_CLIENT_SECRET</code>.</> },
-        { ok: server.s3, label: t('S3 file storage'), hint: <>{t('Optional. Set')} <code>S3_BUCKET</code> {t('(and credentials) to store files in S3-compatible storage instead of local disk.')}</> },
-        { ok: server.turn, label: t('TURN relay for calls'), hint: <>{t('Set')} <code>TURN_URLS</code> {t('and')} <code>TURN_SECRET</code> {t('so calls work across firewalls and NAT.')}</> },
-        { ok: server.livekit, label: t('LiveKit (large meetings)'), hint: <>{t('Optional. Set')} <code>LIVEKIT_URL</code>, <code>LIVEKIT_API_KEY</code> {t('and')} <code>LIVEKIT_API_SECRET</code> {t('for calls with more than 8 people.')}</> },
+        {
+          ok: server.smtp,
+          label: t('Email (SMTP)'),
+          hint: (
+            <>
+              {t('Set')} <code>SMTP_URL</code> {t('and')} <code>SMTP_FROM</code>{' '}
+              {t('to send invites, reset links and missed-message digests.')}
+            </>
+          ),
+        },
+        {
+          ok: server.oidc,
+          label: t('Single sign-on (OIDC)'),
+          hint: (
+            <>
+              {t('Set')} <code>OIDC_ISSUER</code>, <code>OIDC_CLIENT_ID</code> {t('and')}{' '}
+              <code>OIDC_CLIENT_SECRET</code>.
+            </>
+          ),
+        },
+        {
+          ok: server.s3,
+          label: t('S3 file storage'),
+          hint: (
+            <>
+              {t('Optional. Set')} <code>S3_BUCKET</code>{' '}
+              {t(
+                '(and credentials) to store files in S3-compatible storage instead of local disk.',
+              )}
+            </>
+          ),
+        },
+        {
+          ok: server.turn,
+          label: t('TURN relay for calls'),
+          hint: (
+            <>
+              {t('Set')} <code>TURN_URLS</code> {t('and')} <code>TURN_SECRET</code>{' '}
+              {t('so calls work across firewalls and NAT.')}
+            </>
+          ),
+        },
+        {
+          ok: server.livekit,
+          label: t('LiveKit (large meetings)'),
+          hint: (
+            <>
+              {t('Optional. Set')} <code>LIVEKIT_URL</code>, <code>LIVEKIT_API_KEY</code> {t('and')}{' '}
+              <code>LIVEKIT_API_SECRET</code> {t('for calls with more than 8 people.')}
+            </>
+          ),
+        },
       ]
     : [];
   return (
@@ -163,13 +235,19 @@ export function Overview() {
         <div className="card">
           <h3>{t('Server configuration')}</h3>
           <p className="muted small" style={{ marginTop: 0 }}>
-            {t('Public URL')}: <code>{server.publicUrl}</code> · {t('Database')}: <strong>{server.database}</strong> · {t('Upload limit')}: {server.maxUploadCapMb} MB
+            {t('Public URL')}: <code>{server.publicUrl}</code> · {t('Database')}:{' '}
+            <strong>{server.database}</strong> · {t('Upload limit')}: {server.maxUploadCapMb} MB
           </p>
           {checks.map((c) => (
             <div key={c.label} className="admin-check">
-              {c.ok ? <CheckCircle2 size={18} className="ok" aria-label={t('Enabled')} /> : <Circle size={18} className="off" aria-label={t('Not configured')} />}
+              {c.ok ? (
+                <CheckCircle2 size={18} className="ok" aria-label={t('Enabled')} />
+              ) : (
+                <Circle size={18} className="off" aria-label={t('Not configured')} />
+              )}
               <div className="grow">
-                <strong>{c.label}</strong> <span className="faint small">{c.ok ? t('enabled') : t('not configured')}</span>
+                <strong>{c.label}</strong>{' '}
+                <span className="faint small">{c.ok ? t('enabled') : t('not configured')}</span>
                 {!c.ok && <div className="small muted admin-hint">{c.hint}</div>}
               </div>
               {c.label === t('Email (SMTP)') && c.ok && (

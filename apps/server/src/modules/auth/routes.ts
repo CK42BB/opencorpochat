@@ -35,12 +35,19 @@ import { clearSessionCookie, createSession } from './sessions.js';
 const LOGIN_LIMIT = { max: 10, timeWindow: '5 minutes' };
 
 export async function userCount(ctx: Ctx) {
-  const r = await ctx.db.selectFrom('users').select((eb) => eb.fn.countAll<number>().as('n')).executeTakeFirst();
+  const r = await ctx.db
+    .selectFrom('users')
+    .select((eb) => eb.fn.countAll<number>().as('n'))
+    .executeTakeFirst();
   return Number(r?.n ?? 0);
 }
 
 export async function findInvite(ctx: Ctx, code: string) {
-  const inv = await ctx.db.selectFrom('invites').selectAll().where('code_hash', '=', sha256(code)).executeTakeFirst();
+  const inv = await ctx.db
+    .selectFrom('invites')
+    .selectAll()
+    .where('code_hash', '=', sha256(code))
+    .executeTakeFirst();
   if (!inv || inv.revoked_at) return null;
   if (inv.expires_at && inv.expires_at < nowIso()) return null;
   if (inv.max_uses != null && inv.uses >= inv.max_uses) return null;
@@ -135,15 +142,24 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
       const user = await findUserByLogin(ctx, body.login);
       const ok = await verifyPassword(body.password, user?.password_hash);
       if (!user || !ok || user.role === 'bot') {
-        await audit(ctx, { actorId: user?.id ?? null, action: 'auth.login_failed', targetType: 'user', targetId: user?.id, ip: req.ip, metadata: { login: body.login } });
+        await audit(ctx, {
+          actorId: user?.id ?? null,
+          action: 'auth.login_failed',
+          targetType: 'user',
+          targetId: user?.id,
+          ip: req.ip,
+          metadata: { login: body.login },
+        });
         throw new HttpError(401, 'invalid_credentials', 'Incorrect email/username or password');
       }
-      if (user.deactivated_at) throw new HttpError(403, 'deactivated', 'This account has been deactivated');
+      if (user.deactivated_at)
+        throw new HttpError(403, 'deactivated', 'This account has been deactivated');
       if (ctx.settings.get().ssoOnly && ctx.config.oidc && user.role !== 'owner') {
         throw new HttpError(403, 'sso_only', 'Password sign-in is disabled. Use single sign-on.');
       }
       if (user.totp_enabled) {
-        if (!body.totp) throw new HttpError(401, 'totp_required', 'Enter your two-factor authentication code');
+        if (!body.totp)
+          throw new HttpError(401, 'totp_required', 'Enter your two-factor authentication code');
         let passed = verifyTotp(user.totp_secret ?? '', body.totp);
         if (!passed) {
           // Recovery codes are single-use.
@@ -161,7 +177,13 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
         if (!passed) throw new HttpError(401, 'totp_invalid', 'That two-factor code is not valid');
       }
       await createSession(ctx, user.id, req, reply);
-      await audit(ctx, { actorId: user.id, action: 'auth.login', targetType: 'user', targetId: user.id, ip: req.ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'auth.login',
+        targetType: 'user',
+        targetId: user.id,
+        ip: req.ip,
+      });
       return { me: toMe(user) };
     },
   });
@@ -205,11 +227,16 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ body, req, reply }) => {
       const inv = await findInvite(ctx, body.inviteCode);
       if (!inv) throw badRequest('This invite link is invalid or has expired');
-      if (inv.email && inv.email !== body.email) throw badRequest('This invite is for a different email address');
-      if (!inv.email && !emailDomainAllowed(ctx, body.email)) throw badRequest('Sign-ups are restricted to approved email domains');
-      if (inv.role === 'guest' && !ctx.settings.get().guestsEnabled) throw forbidden('Guest accounts are disabled');
-      if (ctx.settings.get().ssoOnly && ctx.config.oidc) throw forbidden('Accounts are created through single sign-on');
-      if (await findUserByLogin(ctx, body.email)) throw conflict('An account with that email already exists');
+      if (inv.email && inv.email !== body.email)
+        throw badRequest('This invite is for a different email address');
+      if (!inv.email && !emailDomainAllowed(ctx, body.email))
+        throw badRequest('Sign-ups are restricted to approved email domains');
+      if (inv.role === 'guest' && !ctx.settings.get().guestsEnabled)
+        throw forbidden('Guest accounts are disabled');
+      if (ctx.settings.get().ssoOnly && ctx.config.oidc)
+        throw forbidden('Accounts are created through single sign-on');
+      if (await findUserByLogin(ctx, body.email))
+        throw conflict('An account with that email already exists');
       if (await isUsernameTaken(ctx, body.username)) throw conflict('That username is taken');
       const user = await insertUser(ctx, {
         email: body.email,
@@ -218,9 +245,20 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
         role: inv.role as 'member',
         passwordHash: await hashPassword(body.password),
       });
-      await ctx.db.updateTable('invites').set((eb) => ({ uses: eb('uses', '+', 1) })).where('id', '=', inv.id).execute();
+      await ctx.db
+        .updateTable('invites')
+        .set((eb) => ({ uses: eb('uses', '+', 1) }))
+        .where('id', '=', inv.id)
+        .execute();
       await joinDefaultChannels(ctx, user.id, json<string[]>(inv.channel_ids, []));
-      await audit(ctx, { actorId: user.id, action: 'user.registered', targetType: 'user', targetId: user.id, ip: req.ip, metadata: { inviteId: inv.id, role: inv.role } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'user.registered',
+        targetType: 'user',
+        targetId: user.id,
+        ip: req.ip,
+        metadata: { inviteId: inv.id, role: inv.role },
+      });
       await createSession(ctx, user.id, req, reply);
       return { me: toMe(user) };
     },
@@ -234,15 +272,28 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     body: ChangePasswordInput,
     rateLimit: LOGIN_LIMIT,
     handler: async ({ body, user, auth, ip }) => {
-      if (user.password_hash && !(await verifyPassword(body.currentPassword ?? '', user.password_hash))) {
+      if (
+        user.password_hash &&
+        !(await verifyPassword(body.currentPassword ?? '', user.password_hash))
+      ) {
         throw new HttpError(401, 'invalid_credentials', 'Your current password is incorrect');
       }
-      await ctx.db.updateTable('users').set({ password_hash: await hashPassword(body.newPassword) }).where('id', '=', user.id).execute();
+      await ctx.db
+        .updateTable('users')
+        .set({ password_hash: await hashPassword(body.newPassword) })
+        .where('id', '=', user.id)
+        .execute();
       // Sign out every other session.
       let q = ctx.db.deleteFrom('sessions').where('user_id', '=', user.id);
       if (auth.sessionId) q = q.where('id', '!=', auth.sessionId);
       await q.execute();
-      await audit(ctx, { actorId: user.id, action: 'auth.password_changed', targetType: 'user', targetId: user.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'auth.password_changed',
+        targetType: 'user',
+        targetId: user.id,
+        ip,
+      });
     },
   });
 
@@ -256,7 +307,10 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
       const secret = generateTotpSecret();
       const label = encodeURIComponent(`${ctx.settings.get().name}:${user.email}`);
       const issuer = encodeURIComponent(ctx.settings.get().name);
-      return { secret, uri: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30` };
+      return {
+        secret,
+        uri: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`,
+      };
     },
   });
 
@@ -267,14 +321,25 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['auth'],
     body: TotpEnableInput,
     handler: async ({ body, user, ip }) => {
-      if (!verifyTotp(body.secret, body.code)) throw badRequest('That code is not valid. Check your device clock and try again.');
+      if (!verifyTotp(body.secret, body.code))
+        throw badRequest('That code is not valid. Check your device clock and try again.');
       const codes = generateRecoveryCodes();
       await ctx.db
         .updateTable('users')
-        .set({ totp_secret: body.secret, totp_enabled: 1, recovery_codes: JSON.stringify(codes.map((c) => sha256(c))) })
+        .set({
+          totp_secret: body.secret,
+          totp_enabled: 1,
+          recovery_codes: JSON.stringify(codes.map((c) => sha256(c))),
+        })
         .where('id', '=', user.id)
         .execute();
-      await audit(ctx, { actorId: user.id, action: 'auth.2fa_enabled', targetType: 'user', targetId: user.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'auth.2fa_enabled',
+        targetType: 'user',
+        targetId: user.id,
+        ip,
+      });
       return { recoveryCodes: codes };
     },
   });
@@ -286,14 +351,22 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['auth'],
     body: TotpDisableInput,
     handler: async ({ body, user, ip }) => {
-      if (ctx.settings.get().require2fa) throw forbidden('Your organization requires two-factor authentication');
-      if (!user.totp_enabled || !verifyTotp(user.totp_secret ?? '', body.code)) throw badRequest('That code is not valid');
+      if (ctx.settings.get().require2fa)
+        throw forbidden('Your organization requires two-factor authentication');
+      if (!user.totp_enabled || !verifyTotp(user.totp_secret ?? '', body.code))
+        throw badRequest('That code is not valid');
       await ctx.db
         .updateTable('users')
         .set({ totp_secret: null, totp_enabled: 0, recovery_codes: null })
         .where('id', '=', user.id)
         .execute();
-      await audit(ctx, { actorId: user.id, action: 'auth.2fa_disabled', targetType: 'user', targetId: user.id, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'auth.2fa_disabled',
+        targetType: 'user',
+        targetId: user.id,
+        ip,
+      });
     },
   });
 
@@ -328,7 +401,11 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     summary: 'Revoke one of your sessions',
     tags: ['auth'],
     handler: async ({ user, params }) => {
-      await ctx.db.deleteFrom('sessions').where('id', '=', params.id!).where('user_id', '=', user.id).execute();
+      await ctx.db
+        .deleteFrom('sessions')
+        .where('id', '=', params.id!)
+        .where('user_id', '=', user.id)
+        .execute();
       ctx.hub.kick({ sessionId: params.id! });
     },
   });
@@ -343,11 +420,16 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     query: z.object({ returnTo: z.string().max(500).optional() }),
     handler: async ({ reply, query }) => {
       if (!ctx.config.oidc) throw notFound('SSO');
-      const returnTo = query.returnTo?.startsWith('/') && !query.returnTo.startsWith('//') ? query.returnTo : '/';
+      const returnTo =
+        query.returnTo?.startsWith('/') && !query.returnTo.startsWith('//') ? query.returnTo : '/';
       const { url, state } = await startOidc(ctx.config, returnTo);
       await ctx.db
         .insertInto('kv')
-        .values({ key: `oidc:${state.state}`, value: JSON.stringify(state), expires_at: isoIn(10 * 60_000) })
+        .values({
+          key: `oidc:${state.state}`,
+          value: JSON.stringify(state),
+          expires_at: isoIn(10 * 60_000),
+        })
         .execute();
       reply.setCookie('ocpc_oidc', state.state, {
         path: '/api/v1/auth/oidc',
@@ -366,15 +448,25 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     summary: 'Single sign-on callback (browser redirect)',
     tags: ['auth'],
     auth: 'none',
-    query: z.object({ code: z.string().max(4000).optional(), state: z.string().max(200).optional(), error: z.string().max(200).optional() }),
+    query: z.object({
+      code: z.string().max(4000).optional(),
+      state: z.string().max(200).optional(),
+      error: z.string().max(200).optional(),
+    }),
     handler: async ({ req, reply, query }) => {
       const fail = (msg: string) => reply.redirect(`/login?error=${encodeURIComponent(msg)}`);
       if (!ctx.config.oidc) throw notFound('SSO');
       if (query.error) return fail(`Sign-in was cancelled (${query.error})`);
-      if (!query.code || !query.state || req.cookies.ocpc_oidc !== query.state) return fail('Sign-in session expired. Please try again.');
-      const kv = await ctx.db.selectFrom('kv').selectAll().where('key', '=', `oidc:${query.state}`).executeTakeFirst();
+      if (!query.code || !query.state || req.cookies.ocpc_oidc !== query.state)
+        return fail('Sign-in session expired. Please try again.');
+      const kv = await ctx.db
+        .selectFrom('kv')
+        .selectAll()
+        .where('key', '=', `oidc:${query.state}`)
+        .executeTakeFirst();
       await ctx.db.deleteFrom('kv').where('key', '=', `oidc:${query.state}`).execute();
-      if (!kv || (kv.expires_at && kv.expires_at < nowIso())) return fail('Sign-in session expired. Please try again.');
+      if (!kv || (kv.expires_at && kv.expires_at < nowIso()))
+        return fail('Sign-in session expired. Please try again.');
       let claims;
       try {
         claims = await finishOidc(ctx.config, query.code, JSON.parse(kv.value) as OidcState);
@@ -391,14 +483,24 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
         .where('provider', '=', provider)
         .where('subject', '=', claims.sub)
         .executeTakeFirst();
-      let user = ident ? await ctx.db.selectFrom('users').selectAll().where('id', '=', ident.user_id).executeTakeFirst() : undefined;
+      let user = ident
+        ? await ctx.db
+            .selectFrom('users')
+            .selectAll()
+            .where('id', '=', ident.user_id)
+            .executeTakeFirst()
+        : undefined;
       if (!user && email) {
         if (claims.email_verified === false) return fail('Your SSO email address is not verified.');
         const domains = ctx.config.oidc.allowedDomains;
-        if (domains.length && !domains.includes(email.split('@')[1] ?? '')) return fail('Your email domain is not allowed here.');
+        if (domains.length && !domains.includes(email.split('@')[1] ?? ''))
+          return fail('Your email domain is not allowed here.');
         user = await findUserByLogin(ctx, email);
         if (!user && ctx.config.oidc.autoCreate) {
-          let base = (claims.preferred_username ?? email.split('@')[0] ?? 'user').toLowerCase().replace(/@.*/, '').replace(/[^a-z0-9._-]/g, '');
+          let base = (claims.preferred_username ?? email.split('@')[0] ?? 'user')
+            .toLowerCase()
+            .replace(/@.*/, '')
+            .replace(/[^a-z0-9._-]/g, '');
           if (base.length < 2) base = `user${base}`;
           base = base.slice(0, 28);
           let username = base;
@@ -406,12 +508,21 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
           user = await insertUser(ctx, {
             email,
             username,
-            displayName: claims.name ?? ([claims.given_name, claims.family_name].filter(Boolean).join(' ') || username),
+            displayName:
+              claims.name ??
+              ([claims.given_name, claims.family_name].filter(Boolean).join(' ') || username),
             role: 'member',
             passwordHash: null,
           });
           await joinDefaultChannels(ctx, user.id);
-          await audit(ctx, { actorId: user.id, action: 'user.registered', targetType: 'user', targetId: user.id, ip: req.ip, metadata: { via: 'oidc' } });
+          await audit(ctx, {
+            actorId: user.id,
+            action: 'user.registered',
+            targetType: 'user',
+            targetId: user.id,
+            ip: req.ip,
+            metadata: { via: 'oidc' },
+          });
         }
         if (user) {
           await ctx.db
@@ -424,9 +535,15 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
       if (!user) return fail('No account exists for you yet. Ask an administrator for an invite.');
       if (user.deactivated_at) return fail('This account has been deactivated.');
       await createSession(ctx, user.id, req, reply);
-      await audit(ctx, { actorId: user.id, action: 'auth.login', targetType: 'user', targetId: user.id, ip: req.ip, metadata: { via: 'oidc' } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'auth.login',
+        targetType: 'user',
+        targetId: user.id,
+        ip: req.ip,
+        metadata: { via: 'oidc' },
+      });
       return reply.redirect(st.returnTo || '/');
     },
   });
 }
-

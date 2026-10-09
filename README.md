@@ -33,18 +33,18 @@ Run it on a $10 VPS or a spare office machine.
 
 ## Features
 
-| | |
-|---|---|
-| **Conversations** | Public and private channels, DMs and group DMs, announcement (read-only) channels, default channels, archiving, starring, muting, custom sidebar sections |
-| **Messaging** | Markdown, code highlighting, threads (with "also send to channel"), emoji reactions and custom emoji, @mentions, @here/@channel and @group mentions, edits, deletes, pins, saved items, polls, forwarding, link previews, scheduled messages, reminders, drafts, typing indicators |
-| **Files** | Drag-and-drop or paste uploads with image, video, audio and PDF previews, stored on local disk or any S3-compatible store |
-| **Search** | Full-text search with `in:`, `from:`, `before:`, `after:`, `has:file`, `is:thread` and more, plus a Ctrl/⌘-K quick switcher |
-| **Notifications** | Unread and mention badges, activity feed, desktop notifications and Web Push (installable PWA), email digests for missed messages, keywords, Do Not Disturb and working-hours schedule, statuses |
-| **Calls** | 1:1 calls and channel huddles with screen sharing over WebRTC, TURN support, an optional LiveKit SFU for larger meetings, and a built-in connection diagnostics page |
-| **Integrations** | REST API with an OpenAPI spec, realtime WebSocket API, bot accounts, scoped API tokens, incoming and outgoing webhooks (HMAC-signed), custom slash commands |
-| **Identity & security** | Invite links, guest accounts, OpenID Connect SSO (Google, Microsoft Entra, Okta, Keycloak, Authentik…), TOTP 2FA (can be required org-wide), session management, rate limiting, strict CSP |
-| **Admin & compliance** | Admin console, usage stats (computed locally), audit log, retention policies, per-person data export and erasure, full org export, import from Slack-format export archives, backup and restore CLI |
-| **Accessibility & i18n** | Keyboard-first (press `?`), screen-reader live regions, light and dark themes, compact mode, translation-ready UI |
+|                          |                                                                                                                                                                                                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Conversations**        | Public and private channels, DMs and group DMs, announcement (read-only) channels, default channels, archiving, starring, muting, custom sidebar sections                                                                                                                          |
+| **Messaging**            | Markdown, code highlighting, threads (with "also send to channel"), emoji reactions and custom emoji, @mentions, @here/@channel and @group mentions, edits, deletes, pins, saved items, polls, forwarding, link previews, scheduled messages, reminders, drafts, typing indicators |
+| **Files**                | Drag-and-drop or paste uploads with image, video, audio and PDF previews, stored on local disk or any S3-compatible store                                                                                                                                                          |
+| **Search**               | Full-text search with `in:`, `from:`, `before:`, `after:`, `has:file`, `is:thread` and more, plus a Ctrl/⌘-K quick switcher                                                                                                                                                        |
+| **Notifications**        | Unread and mention badges, activity feed, desktop notifications and Web Push (installable PWA), email digests for missed messages, keywords, Do Not Disturb and working-hours schedule, statuses                                                                                   |
+| **Calls**                | 1:1 calls and channel huddles with screen sharing over WebRTC, TURN support, an optional LiveKit SFU for larger meetings, and a built-in connection diagnostics page                                                                                                               |
+| **Integrations**         | REST API with an OpenAPI spec, realtime WebSocket API, bot accounts, scoped API tokens, incoming and outgoing webhooks (HMAC-signed), custom slash commands                                                                                                                        |
+| **Identity & security**  | Invite links, guest accounts, OpenID Connect SSO (Google, Microsoft Entra, Okta, Keycloak, Authentik…), TOTP 2FA (can be required org-wide), session management, rate limiting, strict CSP                                                                                         |
+| **Admin & compliance**   | Admin console, usage stats (computed locally), audit log, retention policies, per-person data export and erasure, full org export, import from Slack-format export archives, backup and restore CLI                                                                                |
+| **Accessibility & i18n** | Keyboard-first (press `?`), screen-reader live regions, light and dark themes, compact mode, translation-ready UI                                                                                                                                                                  |
 
 ## Quick start
 

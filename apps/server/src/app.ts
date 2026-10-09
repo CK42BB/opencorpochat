@@ -57,7 +57,10 @@ const CSP = [
   "object-src 'none'",
 ].join('; ');
 
-export async function buildApp(config: Config, opts: { scheduler?: boolean; logger?: boolean } = {}): Promise<BuiltApp> {
+export async function buildApp(
+  config: Config,
+  opts: { scheduler?: boolean; logger?: boolean } = {},
+): Promise<BuiltApp> {
   const app = Fastify({
     logger: opts.logger === false ? false : { level: config.logLevel },
     trustProxy: config.trustProxy,
@@ -82,10 +85,15 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
     events: { onMessageCreated: [] },
   };
   ctx.hub = new Hub((channelId) => memberIds(ctx, channelId));
-  ctx.hub.onPresenceChange = (userId, presence) => ctx.hub.broadcast('presence', { userId, presence });
+  ctx.hub.onPresenceChange = (userId, presence) =>
+    ctx.hub.broadcast('presence', { userId, presence });
   ctx.hub.onDisconnect = (conn) => onConnectionClosed(ctx, conn);
   // Initialise DND state for presence.
-  const dnd = await ctx.db.selectFrom('users').select('id').where('dnd_until', '>', nowIso()).execute();
+  const dnd = await ctx.db
+    .selectFrom('users')
+    .select('id')
+    .where('dnd_until', '>', nowIso())
+    .execute();
   for (const u of dnd) ctx.hub.dndUsers.add(u.id);
 
   ctx.events.onMessageCreated.push(
@@ -105,15 +113,21 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     reply.header('X-Frame-Options', 'DENY');
-    reply.header('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self), geolocation=()');
+    reply.header(
+      'Permissions-Policy',
+      'camera=(self), microphone=(self), display-capture=(self), geolocation=()',
+    );
     if (!reply.hasHeader('Content-Security-Policy')) reply.header('Content-Security-Policy', CSP);
     if (config.secureCookies) reply.header('Strict-Transport-Security', 'max-age=31536000');
-    if (req.url.startsWith('/api/') && !reply.hasHeader('Cache-Control')) reply.header('Cache-Control', 'no-store');
+    if (req.url.startsWith('/api/') && !reply.hasHeader('Cache-Control'))
+      reply.header('Cache-Control', 'no-store');
   });
 
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof HttpError) {
-      return reply.code(err.statusCode).send({ error: err.code, message: err.message, details: err.details });
+      return reply
+        .code(err.statusCode)
+        .send({ error: err.code, message: err.message, details: err.details });
     }
     const e = err as { statusCode?: number; code?: string; message?: string };
     const status = e.statusCode && e.statusCode >= 400 && e.statusCode < 600 ? e.statusCode : 500;
@@ -123,7 +137,7 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
     }
     return reply.code(status).send({
       error: status === 429 ? 'rate_limited' : status >= 500 ? 'internal' : 'bad_request',
-      message: status >= 500 ? 'Something went wrong on the server' : e.message ?? 'Bad request',
+      message: status >= 500 ? 'Something went wrong on the server' : (e.message ?? 'Bad request'),
     });
   });
 
@@ -165,7 +179,9 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
       gatewayRoutes(api, ctx);
       const spec = buildOpenApi(ctx.routeDocs, config.publicUrl);
       api.get('/openapi.json', async () => spec);
-      api.all('/*', async (_req, reply) => reply.code(404).send({ error: 'not_found', message: 'Unknown API route' }));
+      api.all('/*', async (_req, reply) =>
+        reply.code(404).send({ error: 'not_found', message: 'Unknown API route' }),
+      );
     },
     { prefix: '/api/v1' },
   );
@@ -176,7 +192,8 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
       root: config.webDir,
       wildcard: false,
       setHeaders: (res, filePath) => {
-        if (filePath.includes(`${path.sep}assets${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        if (filePath.includes(`${path.sep}assets${path.sep}`))
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         else res.setHeader('Cache-Control', 'no-cache');
       },
     });
@@ -193,7 +210,9 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
     app.get('/', async (_req, reply) =>
       reply
         .type('text/html')
-        .send('<h1>OpenCorpoChat API is running</h1><p>The web client is not built. Run <code>pnpm build</code>, or use <code>pnpm dev</code> and open http://localhost:5173.</p>'),
+        .send(
+          '<h1>OpenCorpoChat API is running</h1><p>The web client is not built. Run <code>pnpm build</code>, or use <code>pnpm dev</code> and open http://localhost:5173.</p>',
+        ),
     );
   }
 

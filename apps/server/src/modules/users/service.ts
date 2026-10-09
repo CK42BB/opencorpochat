@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { DEFAULT_PREFERENCES, type Me, type Role, type User, type UserPreferences } from '@ocpc/shared';
+import {
+  DEFAULT_PREFERENCES,
+  type Me,
+  type Role,
+  type User,
+  type UserPreferences,
+} from '@ocpc/shared';
 import type { Ctx } from '../../context.js';
 import { bool, json } from '../../db/index.js';
 import type { UsersTable } from '../../db/schema.js';
@@ -93,7 +99,9 @@ export async function isUsernameTaken(ctx: Ctx, username: string, exceptId?: str
   let q = ctx.db.selectFrom('users').select('id').where('username', '=', username);
   if (exceptId) q = q.where('id', '!=', exceptId);
   const groupQ = ctx.db.selectFrom('user_groups').select('id').where('handle', '=', username);
-  return !!(await q.executeTakeFirst()) || !!(await groupQ.executeTakeFirst()) || RESERVED.has(username);
+  return (
+    !!(await q.executeTakeFirst()) || !!(await groupQ.executeTakeFirst()) || RESERVED.has(username)
+  );
 }
 
 const RESERVED = new Set(['channel', 'here', 'everyone', 'admin', 'system', 'ocpc']);

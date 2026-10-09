@@ -14,8 +14,14 @@ let general: any;
 beforeAll(async () => {
   srv = await startTestServer();
   owner = await setupOrg(srv);
-  ({ client: alice, me: { id: aliceId } } = await invite(owner, srv, 'alice'));
-  ({ client: bob, me: { id: bobId } } = await invite(owner, srv, 'bob'));
+  ({
+    client: alice,
+    me: { id: aliceId },
+  } = await invite(owner, srv, 'alice'));
+  ({
+    client: bob,
+    me: { id: bobId },
+  } = await invite(owner, srv, 'bob'));
   const boot = await owner.get('/bootstrap');
   general = boot.body.channels.find((c: any) => c.name === 'general');
 });
@@ -26,7 +32,13 @@ describe('setup & auth', () => {
     const info = await new Client(srv).get('/info');
     expect(info.body.setupRequired).toBe(false);
     expect(info.body.orgName).toBe('Acme');
-    const again = await new Client(srv).post('/setup', { orgName: 'x', email: 'x@x.io', username: 'xx', displayName: 'x', password: 'correct-horse-battery' });
+    const again = await new Client(srv).post('/setup', {
+      orgName: 'x',
+      email: 'x@x.io',
+      username: 'xx',
+      displayName: 'x',
+      password: 'correct-horse-battery',
+    });
     expect(again.status).toBe(409);
   });
 
@@ -38,7 +50,9 @@ describe('setup & auth', () => {
 
   it('rejects bad passwords and requires auth', async () => {
     const c = new Client(srv);
-    expect((await c.post('/auth/login', { login: 'alice', password: 'wrong-password' })).status).toBe(401);
+    expect(
+      (await c.post('/auth/login', { login: 'alice', password: 'wrong-password' })).status,
+    ).toBe(401);
     expect((await c.get('/bootstrap')).status).toBe(401);
   });
 
@@ -50,24 +64,52 @@ describe('setup & auth', () => {
   it('supports TOTP two-factor login', async () => {
     const { client: carol } = await invite(owner, srv, 'carol');
     const setup = await carol.post('/auth/totp/setup');
-    const enable = await carol.post('/auth/totp/enable', { secret: setup.body.secret, code: totpCode(setup.body.secret) });
+    const enable = await carol.post('/auth/totp/enable', {
+      secret: setup.body.secret,
+      code: totpCode(setup.body.secret),
+    });
     expect(enable.status).toBe(200);
     expect(enable.body.recoveryCodes).toHaveLength(10);
     const fresh = new Client(srv);
-    const noCode = await fresh.post('/auth/login', { login: 'carol', password: 'correct-horse-battery' });
+    const noCode = await fresh.post('/auth/login', {
+      login: 'carol',
+      password: 'correct-horse-battery',
+    });
     expect(noCode.body.error).toBe('totp_required');
-    const ok = await fresh.post('/auth/login', { login: 'carol', password: 'correct-horse-battery', totp: totpCode(setup.body.secret) });
+    const ok = await fresh.post('/auth/login', {
+      login: 'carol',
+      password: 'correct-horse-battery',
+      totp: totpCode(setup.body.secret),
+    });
     expect(ok.status).toBe(200);
     // Recovery codes work exactly once.
     const code = enable.body.recoveryCodes[0];
-    expect((await new Client(srv).post('/auth/login', { login: 'carol', password: 'correct-horse-battery', totp: code })).status).toBe(200);
-    expect((await new Client(srv).post('/auth/login', { login: 'carol', password: 'correct-horse-battery', totp: code })).status).toBe(401);
+    expect(
+      (
+        await new Client(srv).post('/auth/login', {
+          login: 'carol',
+          password: 'correct-horse-battery',
+          totp: code,
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await new Client(srv).post('/auth/login', {
+          login: 'carol',
+          password: 'correct-horse-battery',
+          totp: code,
+        })
+      ).status,
+    ).toBe(401);
   });
 });
 
 describe('messaging', () => {
   it('posts, mentions, unread and mention counts', async () => {
-    const r = await alice.post(`/channels/${general.id}/messages`, { body: 'Hello @bob :wave: see https://example.invalid' });
+    const r = await alice.post(`/channels/${general.id}/messages`, {
+      body: 'Hello @bob :wave: see https://example.invalid',
+    });
     expect(r.status).toBe(200);
     expect(r.body.body).toBe('Hello @bob 👋 see https://example.invalid');
     const boot = await bob.get('/bootstrap');
@@ -76,7 +118,9 @@ describe('messaging', () => {
     expect(g.mentionCount).toBe(1);
     await new Promise((r) => setTimeout(r, 50));
     const notes = await bob.get('/notifications');
-    expect(notes.body.some((n: any) => n.kind === 'mention' && n.messageId === r.body.id)).toBe(true);
+    expect(notes.body.some((n: any) => n.kind === 'mention' && n.messageId === r.body.id)).toBe(
+      true,
+    );
     await bob.post(`/channels/${general.id}/read`, { messageId: r.body.id });
     const after = (await bob.get('/bootstrap')).body.channels.find((c: any) => c.id === general.id);
     expect(after.unreadCount).toBe(0);
@@ -84,8 +128,12 @@ describe('messaging', () => {
   });
 
   it('threads, reactions, pins, saves, edits and deletes', async () => {
-    const root = (await alice.post(`/channels/${general.id}/messages`, { body: 'Thread root' })).body;
-    const reply = await bob.post(`/channels/${general.id}/messages`, { body: 'A reply', threadRootId: root.id });
+    const root = (await alice.post(`/channels/${general.id}/messages`, { body: 'Thread root' }))
+      .body;
+    const reply = await bob.post(`/channels/${general.id}/messages`, {
+      body: 'A reply',
+      threadRootId: root.id,
+    });
     expect(reply.status).toBe(200);
     const thread = await alice.get(`/messages/${root.id}/thread`);
     expect(thread.body.root.replyCount).toBe(1);
@@ -147,11 +195,16 @@ describe('messaging', () => {
     const ch = await owner.post('/channels', { name: 'announcements', isReadonly: true });
     await alice.post(`/channels/${ch.body.id}/join`);
     expect((await alice.post(`/channels/${ch.body.id}/messages`, { body: 'hi' })).status).toBe(403);
-    expect((await owner.post(`/channels/${ch.body.id}/messages`, { body: 'Company update' })).status).toBe(200);
+    expect(
+      (await owner.post(`/channels/${ch.body.id}/messages`, { body: 'Company update' })).status,
+    ).toBe(200);
   });
 
   it('polls', async () => {
-    const m = await alice.post(`/channels/${general.id}/messages`, { body: '', poll: { question: 'Lunch?', options: ['Pizza', 'Tacos'] } });
+    const m = await alice.post(`/channels/${general.id}/messages`, {
+      body: '',
+      poll: { question: 'Lunch?', options: ['Pizza', 'Tacos'] },
+    });
     expect(m.body.poll.options).toHaveLength(2);
     await bob.post(`/messages/${m.body.id}/vote`, { optionIds: ['2'] });
     const after = await alice.get(`/messages/${m.body.id}`);
@@ -161,14 +214,20 @@ describe('messaging', () => {
 
 describe('search', () => {
   it('finds messages with text and filters, respecting access', async () => {
-    await alice.post(`/channels/${general.id}/messages`, { body: 'The quarterly budget review is Friday' });
+    await alice.post(`/channels/${general.id}/messages`, {
+      body: 'The quarterly budget review is Friday',
+    });
     const priv = await alice.post('/channels', { name: 'budget-private', kind: 'private' });
     await alice.post(`/channels/${priv.body.id}/messages`, { body: 'confidential budget numbers' });
     const r = await bob.get(`/search?q=${encodeURIComponent('budget')}`);
-    expect(r.body.messages.map((m: any) => m.body)).toEqual(['The quarterly budget review is Friday']);
+    expect(r.body.messages.map((m: any) => m.body)).toEqual([
+      'The quarterly budget review is Friday',
+    ]);
     const prefix = await alice.get(`/search?q=${encodeURIComponent('quarter')}`);
     expect(prefix.body.messages.length).toBe(1);
-    const filtered = await alice.get(`/search?q=${encodeURIComponent('budget from:@alice in:#budget-private')}`);
+    const filtered = await alice.get(
+      `/search?q=${encodeURIComponent('budget from:@alice in:#budget-private')}`,
+    );
     expect(filtered.body.messages.map((m: any) => m.body)).toEqual(['confidential budget numbers']);
   });
 });
@@ -177,13 +236,18 @@ describe('files', () => {
   it('uploads, attaches and enforces access', async () => {
     const boundary = '----ocpc';
     const payload = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="notes.txt"\r\nContent-Type: text/plain\r\n\r\nhello file\r\n--${boundary}--\r\n`;
-    const up = await alice.req('POST', '/files', payload, { 'content-type': `multipart/form-data; boundary=${boundary}` });
+    const up = await alice.req('POST', '/files', payload, {
+      'content-type': `multipart/form-data; boundary=${boundary}`,
+    });
     expect(up.status).toBe(200);
     expect(up.body.size).toBe(10);
     // Not visible to others until attached.
     expect((await bob.get(`/files/${up.body.id}/notes.txt`)).status).toBe(404);
     const priv = await alice.post('/channels', { name: 'files-private', kind: 'private' });
-    const msg = await alice.post(`/channels/${priv.body.id}/messages`, { body: 'see attached', fileIds: [up.body.id] });
+    const msg = await alice.post(`/channels/${priv.body.id}/messages`, {
+      body: 'see attached',
+      fileIds: [up.body.id],
+    });
     expect(msg.body.files[0].name).toBe('notes.txt');
     const dl = await alice.get(`/files/${up.body.id}/notes.txt`);
     expect(dl.raw.body).toBe('hello file');
@@ -208,14 +272,26 @@ describe('guests', () => {
 
 describe('integrations', () => {
   it('incoming webhooks post into a channel', async () => {
-    const hook = await alice.post('/webhooks', { kind: 'incoming', name: 'CI', channelId: general.id });
+    const hook = await alice.post('/webhooks', {
+      kind: 'incoming',
+      name: 'CI',
+      channelId: general.id,
+    });
     const url = new URL(hook.body.postUrl);
-    const res = await srv.app.inject({ method: 'POST', url: url.pathname, payload: { text: 'Build passed ✅', username: 'CI Bot' } });
+    const res = await srv.app.inject({
+      method: 'POST',
+      url: url.pathname,
+      payload: { text: 'Build passed ✅', username: 'CI Bot' },
+    });
     expect(res.statusCode).toBe(200);
     const list = await alice.get(`/channels/${general.id}/messages?limit=1`);
     expect(list.body.messages[0].body).toBe('Build passed ✅');
     expect(list.body.messages[0].asName).toBe('CI Bot');
-    const bad = await srv.app.inject({ method: 'POST', url: url.pathname.replace(/[^/]+$/, 'wrong'), payload: { text: 'x' } });
+    const bad = await srv.app.inject({
+      method: 'POST',
+      url: url.pathname.replace(/[^/]+$/, 'wrong'),
+      payload: { text: 'x' },
+    });
     expect(bad.statusCode).toBe(401);
   });
 
@@ -233,18 +309,28 @@ describe('integrations', () => {
     expect(r.status).toBe(200);
     await owner.post(`/channels/${general.id}/members`, { userIds: [r.body.bot.id] });
     const anon = new Client(srv);
-    const post = await anon.req('POST', `/channels/${general.id}/messages`, { body: 'Deployed v1.2' }, { authorization: `Bearer ${r.body.token.token}` });
+    const post = await anon.req(
+      'POST',
+      `/channels/${general.id}/messages`,
+      { body: 'Deployed v1.2' },
+      { authorization: `Bearer ${r.body.token.token}` },
+    );
     expect(post.status).toBe(200);
     expect(post.body.kind).toBe('bot');
   });
 
   it('slash commands: /remind, /status, unknown', async () => {
-    const r = await alice.post('/commands/run', { channelId: general.id, text: '/remind me in 10m to stretch' });
+    const r = await alice.post('/commands/run', {
+      channelId: general.id,
+      text: '/remind me in 10m to stretch',
+    });
     expect(r.body.ephemeral).toMatch(/stretch/);
     expect((await alice.get('/reminders')).body[0].text).toBe('stretch');
     await alice.post('/commands/run', { channelId: general.id, text: '/status :coffee: Brewing' });
     expect((await alice.get('/me')).body.statusEmoji).toBe('☕');
-    expect((await alice.post('/commands/run', { channelId: general.id, text: '/nope' })).status).toBe(404);
+    expect(
+      (await alice.post('/commands/run', { channelId: general.id, text: '/nope' })).status,
+    ).toBe(404);
   });
 });
 
@@ -262,8 +348,15 @@ describe('admin', () => {
   });
 
   it('exports NDJSON and records an audit trail', async () => {
-    const res = await srv.app.inject({ method: 'GET', url: '/api/v1/admin/export', headers: { cookie: owner.cookie } });
-    const lines = res.body.trim().split('\n').map((l) => JSON.parse(l));
+    const res = await srv.app.inject({
+      method: 'GET',
+      url: '/api/v1/admin/export',
+      headers: { cookie: owner.cookie },
+    });
+    const lines = res.body
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l));
     expect(lines[0].type).toBe('meta');
     expect(lines.some((l: any) => l.type === 'message')).toBe(true);
     expect(JSON.stringify(lines)).not.toMatch(/password_hash|scrypt\$/);

@@ -10,7 +10,12 @@ import { UserMultiPicker } from '../components/modals';
 import { SectionTitle } from './common';
 
 function GroupModal({ group, onClose }: { group: UserGroup | null; onClose: () => void }) {
-  const [form, setForm] = useState({ handle: group?.handle ?? '', name: group?.name ?? '', description: group?.description ?? '', memberIds: group?.memberIds ?? [] });
+  const [form, setForm] = useState({
+    handle: group?.handle ?? '',
+    name: group?.name ?? '',
+    description: group?.description ?? '',
+    memberIds: group?.memberIds ?? [],
+  });
   const [busy, setBusy] = useState(false);
   const valid = USERNAME_RE.test(form.handle) && form.name.trim();
   const save = async () => {
@@ -43,20 +48,43 @@ function GroupModal({ group, onClose }: { group: UserGroup | null; onClose: () =
     >
       <div className="field">
         <label htmlFor="g-handle">{t('Handle')}</label>
-        <input id="g-handle" className="input" value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value.toLowerCase() })} placeholder="design" />
-        <span className="hint">{t('People mention the group with @{handle}.', { handle: form.handle || 'handle' })}</span>
+        <input
+          id="g-handle"
+          className="input"
+          value={form.handle}
+          onChange={(e) => setForm({ ...form, handle: e.target.value.toLowerCase() })}
+          placeholder="design"
+        />
+        <span className="hint">
+          {t('People mention the group with @{handle}.', { handle: form.handle || 'handle' })}
+        </span>
       </div>
       <div className="field">
         <label htmlFor="g-name">{t('Name')}</label>
-        <input id="g-name" className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('Design team')} />
+        <input
+          id="g-name"
+          className="input"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          placeholder={t('Design team')}
+        />
       </div>
       <div className="field">
         <label htmlFor="g-desc">{t('Description')}</label>
-        <input id="g-desc" className="input" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} />
+        <input
+          id="g-desc"
+          className="input"
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          maxLength={300}
+        />
       </div>
       <div className="field">
         <span className="label">{t('Members')}</span>
-        <UserMultiPicker selected={form.memberIds} onChange={(memberIds) => setForm({ ...form, memberIds })} />
+        <UserMultiPicker
+          selected={form.memberIds}
+          onChange={(memberIds) => setForm({ ...form, memberIds })}
+        />
       </div>
     </Modal>
   );
@@ -68,7 +96,14 @@ export function Groups() {
   const [editing, setEditing] = useState<UserGroup | null | 'new'>(null);
   const list = Object.values(groups).sort((a, b) => a.handle.localeCompare(b.handle));
   const remove = async (g: UserGroup) => {
-    if (!(await confirmDialog({ title: t('Delete @{handle}?', { handle: g.handle }), confirmLabel: t('Delete'), danger: true }))) return;
+    if (
+      !(await confirmDialog({
+        title: t('Delete @{handle}?', { handle: g.handle }),
+        confirmLabel: t('Delete'),
+        danger: true,
+      }))
+    )
+      return;
     try {
       await api.del(`/groups/${g.id}`);
     } catch (err) {
@@ -97,20 +132,34 @@ export function Groups() {
                 </div>
                 <div className="faint small ellipsis">
                   {plural(g.memberIds.length, '{n} member', '{n} members')}
-                  {g.memberIds.length > 0 && `: ${g.memberIds.slice(0, 6).map((id) => displayName(users[id])).join(', ')}${g.memberIds.length > 6 ? '…' : ''}`}
+                  {g.memberIds.length > 0 &&
+                    `: ${g.memberIds
+                      .slice(0, 6)
+                      .map((id) => displayName(users[id]))
+                      .join(', ')}${g.memberIds.length > 6 ? '…' : ''}`}
                 </div>
               </div>
-              <button className="icon-btn" onClick={() => setEditing(g)} aria-label={t('Edit @{handle}', { handle: g.handle })}>
+              <button
+                className="icon-btn"
+                onClick={() => setEditing(g)}
+                aria-label={t('Edit @{handle}', { handle: g.handle })}
+              >
                 <Pencil size={16} />
               </button>
-              <button className="icon-btn" onClick={() => remove(g)} aria-label={t('Delete @{handle}', { handle: g.handle })}>
+              <button
+                className="icon-btn"
+                onClick={() => remove(g)}
+                aria-label={t('Delete @{handle}', { handle: g.handle })}
+              >
                 <Trash2 size={16} />
               </button>
             </div>
           ))}
         </div>
       )}
-      {editing && <GroupModal group={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
+      {editing && (
+        <GroupModal group={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />
+      )}
     </>
   );
 }

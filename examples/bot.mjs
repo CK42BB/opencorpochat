@@ -9,11 +9,17 @@ if (!token) throw new Error('Set OCPC_TOKEN to a bot token');
 const api = (path, init = {}) =>
   fetch(`${base}/api/v1${path}`, {
     ...init,
-    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', ...(init.headers ?? {}) },
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      ...(init.headers ?? {}),
+    },
   }).then((r) => r.json());
 
 const me = await api('/me');
-const ws = new WebSocket(`${base.replace(/^http/, 'ws')}/api/v1/ws?token=${encodeURIComponent(token)}`);
+const ws = new WebSocket(
+  `${base.replace(/^http/, 'ws')}/api/v1/ws?token=${encodeURIComponent(token)}`,
+);
 ws.onopen = () => console.log(`connected as @${me.username}`);
 ws.onmessage = async (ev) => {
   const e = JSON.parse(ev.data);

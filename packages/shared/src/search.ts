@@ -16,7 +16,15 @@ export interface SearchQuery {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function parseSearchQuery(raw: string): SearchQuery {
-  const q: SearchQuery = { text: '', inChannels: [], fromUsers: [], before: null, after: null, has: [], is: [] };
+  const q: SearchQuery = {
+    text: '',
+    inChannels: [],
+    fromUsers: [],
+    before: null,
+    after: null,
+    has: [],
+    is: [],
+  };
   const words: string[] = [];
   // Respect "quoted phrases".
   const tokens = raw.match(/"[^"]*"|\S+/g) ?? [];

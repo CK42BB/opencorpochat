@@ -10,7 +10,11 @@ import { AddMembersModal } from './modals';
 
 function createdLabel(iso: string) {
   const d = formatDay(iso);
-  return d === t('Today') ? t('today') : d === t('Yesterday') ? t('yesterday') : t('on {date}', { date: d });
+  return d === t('Today')
+    ? t('today')
+    : d === t('Yesterday')
+      ? t('yesterday')
+      : t('on {date}', { date: d });
 }
 
 export function ChannelIntro({ channel }: { channel: MyChannel }) {
@@ -32,7 +36,9 @@ export function ChannelIntro({ channel }: { channel: MyChannel }) {
           {others.length === 0
             ? t('This is your space. Draft messages, keep notes, or save links for later.')
             : others.length === 1
-              ? t('This is the very beginning of your direct message history with {name}.', { name: displayName(first) })
+              ? t('This is the very beginning of your direct message history with {name}.', {
+                  name: displayName(first),
+                })
               : t('This is the very beginning of your group conversation.')}
         </p>
       </div>
@@ -47,7 +53,10 @@ export function ChannelIntro({ channel }: { channel: MyChannel }) {
       </h3>
       <p className="muted">
         {creator
-          ? t('{name} created this channel {date}.', { name: displayName(creator), date: createdLabel(channel.createdAt) })
+          ? t('{name} created this channel {date}.', {
+              name: displayName(creator),
+              date: createdLabel(channel.createdAt),
+            })
           : t('This channel was created {date}.', { date: createdLabel(channel.createdAt) })}{' '}
         {channel.description || t('This is the very beginning of #{name}.', { name: channel.name })}
       </p>

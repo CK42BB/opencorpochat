@@ -40,15 +40,15 @@ On first visit you'll see the **setup wizard**, which creates the owner account.
 
 ### Common commands
 
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Run server and web client with hot reload |
-| `pnpm test` | Run all unit/integration tests (Vitest) |
-| `pnpm typecheck` | Type-check every package |
-| `pnpm lint` | ESLint |
-| `pnpm format` | Format with Prettier (`pnpm format:check` to verify) |
-| `pnpm build` | Production build (shared → web → server) |
-| `pnpm licenses:check` | Verify all dependency licenses are AGPL-compatible |
+| Command               | What it does                                         |
+| --------------------- | ---------------------------------------------------- |
+| `pnpm dev`            | Run server and web client with hot reload            |
+| `pnpm test`           | Run all unit/integration tests (Vitest)              |
+| `pnpm typecheck`      | Type-check every package                             |
+| `pnpm lint`           | ESLint                                               |
+| `pnpm format`         | Format with Prettier (`pnpm format:check` to verify) |
+| `pnpm build`          | Production build (shared → web → server)             |
+| `pnpm licenses:check` | Verify all dependency licenses are AGPL-compatible   |
 
 ### Testing against PostgreSQL
 

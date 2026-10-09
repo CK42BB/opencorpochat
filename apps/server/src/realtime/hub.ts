@@ -105,7 +105,12 @@ export class Hub {
     if (c) this.send(c, type, data);
   }
 
-  sendToUsers<K extends ServerEventType>(userIds: Iterable<string>, type: K, data: ServerEventMap[K], exceptConn?: string) {
+  sendToUsers<K extends ServerEventType>(
+    userIds: Iterable<string>,
+    type: K,
+    data: ServerEventMap[K],
+    exceptConn?: string,
+  ) {
     for (const uid of new Set(userIds)) {
       for (const c of this.byUser.get(uid) ?? []) if (c.id !== exceptConn) this.send(c, type, data);
     }
@@ -132,7 +137,10 @@ export class Hub {
   /** Disconnect all sockets for a session (logout / revoke) or a whole user (deactivation). */
   kick(filter: { sessionId?: string; userId?: string }) {
     for (const c of [...this.conns.values()]) {
-      if ((filter.sessionId && c.sessionId === filter.sessionId) || (filter.userId && c.userId === filter.userId)) {
+      if (
+        (filter.sessionId && c.sessionId === filter.sessionId) ||
+        (filter.userId && c.userId === filter.userId)
+      ) {
         this.send(c, 'session.revoked', {});
         c.socket.close(4001, 'session revoked');
         this.remove(c);

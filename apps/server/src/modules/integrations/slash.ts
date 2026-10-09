@@ -35,11 +35,15 @@ export function parseDuration(text: string): { ms: number; rest: string } | null
   const t = text.trim();
   const tm = /^tomorrow\b\s*(.*)$/i.exec(t);
   if (tm) return { ms: DAY, rest: tm[1] ?? '' };
-  const m = /^(?:in\s+)?(\d+(?:\.\d+)?)\s*(m|min|mins|minutes?|h|hr|hrs|hours?|d|days?|w|weeks?)\b\s*(.*)$/i.exec(t);
+  const m =
+    /^(?:in\s+)?(\d+(?:\.\d+)?)\s*(m|min|mins|minutes?|h|hr|hrs|hours?|d|days?|w|weeks?)\b\s*(.*)$/i.exec(
+      t,
+    );
   if (!m) return null;
   const n = Number(m[1]);
   const unit = m[2]!.toLowerCase()[0];
-  const ms = unit === 'm' ? n * 60_000 : unit === 'h' ? n * HOUR : unit === 'd' ? n * DAY : n * 7 * DAY;
+  const ms =
+    unit === 'm' ? n * 60_000 : unit === 'h' ? n * HOUR : unit === 'd' ? n * DAY : n * 7 * DAY;
   return { ms, rest: m[3] ?? '' };
 }
 
@@ -58,7 +62,14 @@ function toCommand(c: SlashCommandsTable, secret?: string): SlashCommand {
 
 type Result = { ephemeral?: string; clientAction?: 'call' | 'open_channel'; channelId?: string };
 
-async function runBuiltin(ctx: Ctx, user: UsersTable, cmd: string, args: string, channelId: string, threadRootId: string | null): Promise<Result | null> {
+async function runBuiltin(
+  ctx: Ctx,
+  user: UsersTable,
+  cmd: string,
+  args: string,
+  channelId: string,
+  threadRootId: string | null,
+): Promise<Result | null> {
   const post = async (body: string) => {
     const { channel } = await requireMember(ctx, user, channelId);
     await createMessage(ctx, { channel, userId: user.id, body, threadRootId });
@@ -74,21 +85,55 @@ async function runBuiltin(ctx: Ctx, user: UsersTable, cmd: string, args: string,
       return {};
     case 'topic': {
       const { channel } = await requireMember(ctx, user, channelId);
-      if (channel.kind === 'dm' || channel.kind === 'group_dm') throw badRequest('DMs have no topic');
-      await ctx.db.updateTable('channels').set({ topic: args.slice(0, 250) }).where('id', '=', channel.id).execute();
-      const updated = await ctx.db.selectFrom('channels').selectAll().where('id', '=', channel.id).executeTakeFirstOrThrow();
-      await ctx.hub.sendToChannel(channel.id, 'channel.updated', { channel: await channelView(ctx, updated) });
-      await createMessage(ctx, { channel: updated, userId: user.id, kind: 'system', body: args ? `@${user.username} set the topic: ${args}` : `@${user.username} cleared the topic`, skipNotify: true });
+      if (channel.kind === 'dm' || channel.kind === 'group_dm')
+        throw badRequest('DMs have no topic');
+      await ctx.db
+        .updateTable('channels')
+        .set({ topic: args.slice(0, 250) })
+        .where('id', '=', channel.id)
+        .execute();
+      const updated = await ctx.db
+        .selectFrom('channels')
+        .selectAll()
+        .where('id', '=', channel.id)
+        .executeTakeFirstOrThrow();
+      await ctx.hub.sendToChannel(channel.id, 'channel.updated', {
+        channel: await channelView(ctx, updated),
+      });
+      await createMessage(ctx, {
+        channel: updated,
+        userId: user.id,
+        kind: 'system',
+        body: args
+          ? `@${user.username} set the topic: ${args}`
+          : `@${user.username} cleared the topic`,
+        skipNotify: true,
+      });
       return {};
     }
     case 'invite': {
       const { channel } = await requireMember(ctx, user, channelId);
       if (user.role === 'guest' || channel.kind === 'dm') throw forbidden();
-      const names = [...args.matchAll(/@?([a-z0-9][a-z0-9._-]*)/gi)].map((m) => m[1]!.toLowerCase());
+      const names = [...args.matchAll(/@?([a-z0-9][a-z0-9._-]*)/gi)].map((m) =>
+        m[1]!.toLowerCase(),
+      );
       if (!names.length) throw badRequest('Usage: /invite @user');
-      const users = await ctx.db.selectFrom('users').select('id').where('username', 'in', names).execute();
-      const added = await addMembers(ctx, channel, users.map((u) => u.id), user.id);
-      return { ephemeral: added.length ? `Added ${added.length} ${added.length === 1 ? 'person' : 'people'}.` : 'Nobody new to add.' };
+      const users = await ctx.db
+        .selectFrom('users')
+        .select('id')
+        .where('username', 'in', names)
+        .execute();
+      const added = await addMembers(
+        ctx,
+        channel,
+        users.map((u) => u.id),
+        user.id,
+      );
+      return {
+        ephemeral: added.length
+          ? `Added ${added.length} ${added.length === 1 ? 'person' : 'people'}.`
+          : 'Nobody new to add.',
+      };
     }
     case 'leave': {
       const { channel } = await requireMember(ctx, user, channelId);
@@ -102,15 +147,31 @@ async function runBuiltin(ctx: Ctx, user: UsersTable, cmd: string, args: string,
       if (!parsed) throw badRequest('Usage: /remind me in 30m to [text]  (also: 2h, 1d, tomorrow)');
       const text = parsed.rest.replace(/^to\s+/i, '').trim() || 'Reminder';
       const remindAt = new Date(Date.now() + parsed.ms).toISOString();
-      await ctx.db.insertInto('reminders').values({ id: ulid(), user_id: user.id, message_id: null, text, remind_at: remindAt, created_at: nowIso() }).execute();
-      return { ephemeral: `⏰ OK, I'll remind you "${text}" at ${new Date(remindAt).toUTCString()}.` };
+      await ctx.db
+        .insertInto('reminders')
+        .values({
+          id: ulid(),
+          user_id: user.id,
+          message_id: null,
+          text,
+          remind_at: remindAt,
+          created_at: nowIso(),
+        })
+        .execute();
+      return {
+        ephemeral: `⏰ OK, I'll remind you "${text}" at ${new Date(remindAt).toUTCString()}.`,
+      };
     }
     case 'status': {
       const em = /^(:[a-z0-9_+-]+:|\p{Extended_Pictographic}\S*)?\s*(.*)$/u.exec(args);
       const { replaceShortcodes } = await import('@ocpc/shared');
       await ctx.db
         .updateTable('users')
-        .set({ status_emoji: replaceShortcodes(em?.[1] ?? '').slice(0, 64), status_text: (em?.[2] ?? '').slice(0, 100), status_expires_at: null })
+        .set({
+          status_emoji: replaceShortcodes(em?.[1] ?? '').slice(0, 64),
+          status_text: (em?.[2] ?? '').slice(0, 100),
+          status_expires_at: null,
+        })
         .where('id', '=', user.id)
         .execute();
       await publishUser(ctx, user.id);
@@ -126,20 +187,33 @@ async function runBuiltin(ctx: Ctx, user: UsersTable, cmd: string, args: string,
         if (!d) throw badRequest('Usage: /dnd 30m | 2h | 1d | off');
         until = new Date(Date.now() + d.ms).toISOString();
       }
-      await ctx.db.updateTable('users').set({ dnd_until: until }).where('id', '=', user.id).execute();
+      await ctx.db
+        .updateTable('users')
+        .set({ dnd_until: until })
+        .where('id', '=', user.id)
+        .execute();
       await publishUser(ctx, user.id);
-      return { ephemeral: until ? `🔕 Notifications paused until ${new Date(until).toUTCString()}.` : '🔔 Notifications resumed.' };
+      return {
+        ephemeral: until
+          ? `🔕 Notifications paused until ${new Date(until).toUTCString()}.`
+          : '🔔 Notifications resumed.',
+      };
     }
     case 'call':
       return { clientAction: 'call' };
     case 'msg': {
       const m = /^@?([a-z0-9][a-z0-9._-]*)\s*([\s\S]*)$/i.exec(args);
       if (!m) throw badRequest('Usage: /msg @user [message]');
-      const target = await ctx.db.selectFrom('users').select('id').where('username', '=', m[1]!.toLowerCase()).executeTakeFirst();
+      const target = await ctx.db
+        .selectFrom('users')
+        .select('id')
+        .where('username', '=', m[1]!.toLowerCase())
+        .executeTakeFirst();
       if (!target) throw notFound('User');
       const { openDm } = await import('../channels/service.js');
       const dm = await openDm(ctx, user, [target.id]);
-      if (m[2]?.trim()) await createMessage(ctx, { channel: dm, userId: user.id, body: m[2].trim() });
+      if (m[2]?.trim())
+        await createMessage(ctx, { channel: dm, userId: user.id, body: m[2].trim() });
       return { clientAction: 'open_channel', channelId: dm.id };
     }
   }
@@ -153,15 +227,23 @@ export function slashRoutes(app: FastifyInstance, ctx: Ctx) {
     summary: 'List available slash commands (built-in and custom)',
     tags: ['integrations'],
     handler: async () => {
-      const custom = await ctx.db.selectFrom('slash_commands').selectAll().orderBy('command').execute();
-      return [...BUILTIN_COMMANDS.map((c) => ({ ...c, builtin: true })), ...custom.map((c) => ({ ...toCommand(c), builtin: false }))];
+      const custom = await ctx.db
+        .selectFrom('slash_commands')
+        .selectAll()
+        .orderBy('command')
+        .execute();
+      return [
+        ...BUILTIN_COMMANDS.map((c) => ({ ...c, builtin: true })),
+        ...custom.map((c) => ({ ...toCommand(c), builtin: false })),
+      ];
     },
   });
 
   route(app, ctx, {
     method: 'POST',
     url: '/commands/run',
-    summary: 'Run a slash command, e.g. {"channelId": "...", "text": "/remind me in 10m to stretch"}',
+    summary:
+      'Run a slash command, e.g. {"channelId": "...", "text": "/remind me in 10m to stretch"}',
     tags: ['integrations'],
     body: RunSlashCommandInput,
     handler: async ({ user, body }) => {
@@ -172,7 +254,11 @@ export function slashRoutes(app: FastifyInstance, ctx: Ctx) {
       const threadRootId = body.threadRootId ?? null;
       const builtin = await runBuiltin(ctx, user, cmd, args, body.channelId, threadRootId);
       if (builtin) return builtin;
-      const custom = await ctx.db.selectFrom('slash_commands').selectAll().where('command', '=', cmd).executeTakeFirst();
+      const custom = await ctx.db
+        .selectFrom('slash_commands')
+        .selectAll()
+        .where('command', '=', cmd)
+        .executeTakeFirst();
       if (!custom) throw notFound(`Command /${cmd}`);
       const { channel } = await requireMember(ctx, user, body.channelId);
       const payload = {
@@ -194,7 +280,14 @@ export function slashRoutes(app: FastifyInstance, ctx: Ctx) {
       const data = (res.data ?? {}) as { text?: string; response_type?: string; username?: string };
       if (res.status >= 300) return { ephemeral: `/${cmd} failed (HTTP ${res.status}).` };
       if (data.text && data.response_type === 'in_channel') {
-        await createMessage(ctx, { channel, userId: null, kind: 'bot', asName: (data.username ?? `/${cmd}`).slice(0, 80), body: data.text.slice(0, 40_000), threadRootId });
+        await createMessage(ctx, {
+          channel,
+          userId: null,
+          kind: 'bot',
+          asName: (data.username ?? `/${cmd}`).slice(0, 80),
+          body: data.text.slice(0, 40_000),
+          threadRootId,
+        });
         return {};
       }
       return { ephemeral: data.text ?? '' };
@@ -209,13 +302,34 @@ export function slashRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'admin',
     body: CreateSlashCommandInput,
     handler: async ({ user, body, ip }) => {
-      if (BUILTIN_COMMANDS.some((c) => c.command === body.command)) throw conflict('That is a built-in command');
-      const exists = await ctx.db.selectFrom('slash_commands').select('id').where('command', '=', body.command).executeTakeFirst();
+      if (BUILTIN_COMMANDS.some((c) => c.command === body.command))
+        throw conflict('That is a built-in command');
+      const exists = await ctx.db
+        .selectFrom('slash_commands')
+        .select('id')
+        .where('command', '=', body.command)
+        .executeTakeFirst();
       if (exists) throw conflict('That command already exists');
       const secret = randomToken(24);
-      const row: SlashCommandsTable = { id: ulid(), command: body.command, description: body.description, usage_hint: body.usageHint, url: body.url, secret, created_by: user.id, created_at: nowIso() };
+      const row: SlashCommandsTable = {
+        id: ulid(),
+        command: body.command,
+        description: body.description,
+        usage_hint: body.usageHint,
+        url: body.url,
+        secret,
+        created_by: user.id,
+        created_at: nowIso(),
+      };
       await ctx.db.insertInto('slash_commands').values(row).execute();
-      await audit(ctx, { actorId: user.id, action: 'slash_command.created', targetType: 'slash_command', targetId: row.id, ip, metadata: { command: body.command } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'slash_command.created',
+        targetType: 'slash_command',
+        targetId: row.id,
+        ip,
+        metadata: { command: body.command },
+      });
       return toCommand(row, secret);
     },
   });
@@ -228,7 +342,13 @@ export function slashRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'admin',
     handler: async ({ user, params, ip }) => {
       await ctx.db.deleteFrom('slash_commands').where('id', '=', params.id!).execute();
-      await audit(ctx, { actorId: user.id, action: 'slash_command.deleted', targetType: 'slash_command', targetId: params.id!, ip });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'slash_command.deleted',
+        targetType: 'slash_command',
+        targetId: params.id!,
+        ip,
+      });
     },
   });
 }

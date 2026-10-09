@@ -12,11 +12,14 @@ import { getMembershipRow, requireChannelAccess } from '../channels/service.js';
 import { toFileInfo } from '../messages/service.js';
 
 /** Types a browser may render inline. Everything else is forced to download. */
-const INLINE_TYPES = /^(image\/(png|jpeg|gif|webp|avif|bmp)|video\/(mp4|webm|ogg|quicktime)|audio\/(mpeg|ogg|wav|webm|mp4|aac|flac)|application\/pdf|text\/plain)$/;
+const INLINE_TYPES =
+  /^(image\/(png|jpeg|gif|webp|avif|bmp)|video\/(mp4|webm|ogg|quicktime)|audio\/(mpeg|ogg|wav|webm|mp4|aac|flac)|application\/pdf|text\/plain)$/;
 
 function sanitizeName(name: string) {
-  // eslint-disable-next-line no-control-regex -- stripping control characters is the point
-  const clean = name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').trim().slice(0, 200);
+  // Stripping control characters is the point of this regex.
+  // eslint-disable-next-line no-control-regex
+  const unsafe = /[\u0000-\u001f\u007f/\\]/g;
+  const clean = name.replace(unsafe, '_').trim().slice(0, 200);
   return clean || 'file';
 }
 
@@ -24,7 +27,8 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
   route(app, ctx, {
     method: 'POST',
     url: '/files',
-    summary: 'Upload a file (multipart/form-data, field "file"). Attach it by passing its id when posting a message.',
+    summary:
+      'Upload a file (multipart/form-data, field "file"). Attach it by passing its id when posting a message.',
     tags: ['files'],
     query: z.object({
       width: z.coerce.number().int().min(1).max(100_000).optional(),
@@ -37,7 +41,10 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
       const part = await req.file({ limits: { fileSize: maxBytes, files: 1 } });
       if (!part) throw badRequest('No file provided');
       const mime = (part.mimetype || 'application/octet-stream').toLowerCase();
-      if (settings.allowedMimePrefixes.length && !settings.allowedMimePrefixes.some((p) => mime.startsWith(p))) {
+      if (
+        settings.allowedMimePrefixes.length &&
+        !settings.allowedMimePrefixes.some((p) => mime.startsWith(p))
+      ) {
         part.file.resume();
         throw badRequest(`Files of type ${mime} are not allowed`);
       }
@@ -82,7 +89,11 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['files'],
     query: z.object({ download: z.string().optional() }),
     handler: async ({ user, params, reply, req, query }) => {
-      const f = await ctx.db.selectFrom('files').selectAll().where('id', '=', params.id!).executeTakeFirst();
+      const f = await ctx.db
+        .selectFrom('files')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .executeTakeFirst();
       if (!f) throw notFound('File');
       // Avatars, custom emoji and the org icon are visible to every signed-in user.
       if (f.purpose === 'attachment') {
@@ -96,8 +107,14 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
       const inline = INLINE_TYPES.test(f.mime) && !query.download;
       reply.header('Content-Type', inline ? f.mime : 'application/octet-stream');
       reply.header('X-Content-Type-Options', 'nosniff');
-      reply.header('Content-Security-Policy', "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox");
-      reply.header('Cache-Control', f.purpose === 'attachment' ? 'private, max-age=86400' : 'private, max-age=3600');
+      reply.header(
+        'Content-Security-Policy',
+        "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox",
+      );
+      reply.header(
+        'Cache-Control',
+        f.purpose === 'attachment' ? 'private, max-age=86400' : 'private, max-age=3600',
+      );
       reply.header('Accept-Ranges', 'bytes');
       reply.header(
         'Content-Disposition',
@@ -111,7 +128,10 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
           reply.code(416).header('Content-Range', `bytes */${size}`);
           return reply.send();
         }
-        reply.code(206).header('Content-Range', `bytes ${start}-${end}/${size}`).header('Content-Length', end - start + 1);
+        reply
+          .code(206)
+          .header('Content-Range', `bytes ${start}-${end}/${size}`)
+          .header('Content-Length', end - start + 1);
         return reply.send(await ctx.storage.get(f.storage_key, { start, end }));
       }
       reply.header('Content-Length', size);
@@ -127,7 +147,11 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
     query: z.object({ before: z.string().max(64).optional(), q: z.string().max(100).optional() }),
     handler: async ({ user, params, query }) => {
       await requireChannelAccess(ctx, user, params.id!);
-      let q = ctx.db.selectFrom('files').selectAll().where('channel_id', '=', params.id!).where('message_id', 'is not', null);
+      let q = ctx.db
+        .selectFrom('files')
+        .selectAll()
+        .where('channel_id', '=', params.id!)
+        .where('message_id', 'is not', null);
       if (query.before) q = q.where('id', '<', query.before);
       if (query.q) q = q.where('name', 'like', `%${query.q.replace(/[%_]/g, '')}%`);
       const rows = await q.orderBy('id', 'desc').limit(100).execute();
@@ -141,7 +165,11 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
     summary: 'Delete a file you uploaded',
     tags: ['files'],
     handler: async ({ user, params }) => {
-      const f = await ctx.db.selectFrom('files').selectAll().where('id', '=', params.id!).executeTakeFirst();
+      const f = await ctx.db
+        .selectFrom('files')
+        .selectAll()
+        .where('id', '=', params.id!)
+        .executeTakeFirst();
       if (!f) throw notFound('File');
       let allowed = f.uploader_id === user.id || user.role === 'admin' || user.role === 'owner';
       if (!allowed && f.channel_id) {
@@ -152,7 +180,11 @@ export function fileRoutes(app: FastifyInstance, ctx: Ctx) {
       await ctx.db.deleteFrom('files').where('id', '=', f.id).execute();
       await ctx.storage.delete(f.storage_key).catch(() => {});
       if (f.message_id) {
-        const msg = await ctx.db.selectFrom('messages').selectAll().where('id', '=', f.message_id).executeTakeFirst();
+        const msg = await ctx.db
+          .selectFrom('messages')
+          .selectAll()
+          .where('id', '=', f.message_id)
+          .executeTakeFirst();
         if (msg) {
           const { publishMessage } = await import('../messages/service.js');
           await publishMessage(ctx, msg, 'message.updated');

@@ -13,7 +13,9 @@ export function Export() {
       <div className="card">
         <h3>{t('Export everything')}</h3>
         <p className="muted">
-          {t('Download all users, channels, memberships, messages, reactions, pins and file metadata as NDJSON: one JSON object per line, each shaped like {"type": "...", "data": {...}}. Passwords, two-factor secrets and tokens are never included. File contents stay in storage; use a backup to copy them.')}
+          {t(
+            'Download all users, channels, memberships, messages, reactions, pins and file metadata as NDJSON: one JSON object per line, each shaped like {"type": "...", "data": {...}}. Passwords, two-factor secrets and tokens are never included. File contents stay in storage; use a backup to copy them.',
+          )}
         </p>
         {isOwner ? (
           <a className="btn btn-primary" href="/api/v1/admin/export" download>
@@ -34,7 +36,11 @@ export function Export() {
               <td>
                 <code>ocpc backup --out /backups/today</code>
               </td>
-              <td className="small">{t('Consistent copy of the SQLite database and uploaded files. For PostgreSQL, use pg_dump.')}</td>
+              <td className="small">
+                {t(
+                  'Consistent copy of the SQLite database and uploaded files. For PostgreSQL, use pg_dump.',
+                )}
+              </td>
             </tr>
             <tr>
               <td>
@@ -52,7 +58,11 @@ export function Export() {
               <td>
                 <code>ocpc import-slack --in export.zip</code>
               </td>
-              <td className="small">{t('Import public channels, messages, threads and reactions from a Slack-format workspace export. Import is available from the command line only.')}</td>
+              <td className="small">
+                {t(
+                  'Import public channels, messages, threads and reactions from a Slack-format workspace export. Import is available from the command line only.',
+                )}
+              </td>
             </tr>
           </tbody>
         </table>

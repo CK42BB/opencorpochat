@@ -14,12 +14,23 @@ export function Invites() {
   const users = useStore((s) => s.users);
   const [invites, setInvites] = useState<Invite[] | null>(null);
   const [creating, setCreating] = useState(false);
-  const load = useCallback(() => api.get<Invite[]>('/invites').then(setInvites).catch(toastError), []);
+  const load = useCallback(
+    () => api.get<Invite[]>('/invites').then(setInvites).catch(toastError),
+    [],
+  );
   useEffect(() => {
     load();
   }, [load]);
   const revoke = async (inv: Invite) => {
-    if (!(await confirmDialog({ title: t('Revoke this invite?'), body: t('The link will stop working immediately.'), confirmLabel: t('Revoke'), danger: true }))) return;
+    if (
+      !(await confirmDialog({
+        title: t('Revoke this invite?'),
+        body: t('The link will stop working immediately.'),
+        confirmLabel: t('Revoke'),
+        danger: true,
+      }))
+    )
+      return;
     try {
       await api.del(`/invites/${inv.id}`);
       toast(t('Invite revoked'), 'success');
@@ -37,7 +48,9 @@ export function Invites() {
         </button>
       </SectionTitle>
       <p className="muted small" style={{ marginTop: 0 }}>
-        {t('Invite links are shown only once when created. Revoke a link here if it was shared by mistake.')}
+        {t(
+          'Invite links are shown only once when created. Revoke a link here if it was shared by mistake.',
+        )}
       </p>
       {!invites ? (
         <Spinner />
@@ -60,10 +73,14 @@ export function Invites() {
             </thead>
             <tbody>
               {invites.map((inv) => {
-                const expired = (inv.expiresAt && inv.expiresAt < now) || (inv.maxUses != null && inv.uses >= inv.maxUses);
+                const expired =
+                  (inv.expiresAt && inv.expiresAt < now) ||
+                  (inv.maxUses != null && inv.uses >= inv.maxUses);
                 return (
                   <tr key={inv.id} style={expired ? { opacity: 0.55 } : undefined}>
-                    <td>{inv.email ?? <span className="faint">{t('Anyone with the link')}</span>}</td>
+                    <td>
+                      {inv.email ?? <span className="faint">{t('Anyone with the link')}</span>}
+                    </td>
                     <td>
                       <span className="pill">{t(inv.role)}</span>
                     </td>
@@ -71,10 +88,18 @@ export function Invites() {
                       {inv.uses}
                       {inv.maxUses != null && ` / ${inv.maxUses}`}
                     </td>
-                    <td className="small">{inv.expiresAt ? formatDateTime(inv.expiresAt) : t('Never')}{expired && ` · ${t('expired')}`}</td>
+                    <td className="small">
+                      {inv.expiresAt ? formatDateTime(inv.expiresAt) : t('Never')}
+                      {expired && ` · ${t('expired')}`}
+                    </td>
                     <td className="small">{displayName(users[inv.createdBy])}</td>
                     <td style={{ textAlign: 'right' }}>
-                      <button className="icon-btn" onClick={() => revoke(inv)} aria-label={t('Revoke invite')} title={t('Revoke invite')}>
+                      <button
+                        className="icon-btn"
+                        onClick={() => revoke(inv)}
+                        aria-label={t('Revoke invite')}
+                        title={t('Revoke invite')}
+                      >
                         <Trash2 size={16} />
                       </button>
                     </td>

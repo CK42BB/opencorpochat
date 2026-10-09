@@ -3,12 +3,20 @@
 const SHELL = 'ocpc-shell-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL).then((c) => c.addAll(['/', '/icon.svg', '/manifest.webmanifest'])).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(SHELL)
+      .then((c) => c.addAll(['/', '/icon.svg', '/manifest.webmanifest']))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== SHELL).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== SHELL).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
   );
 });
 
@@ -31,7 +39,8 @@ self.addEventListener('fetch', (event) => {
           fetch(req).then((res) => {
             const copy = res.clone();
             const type = res.headers.get('content-type') || '';
-            if (res.ok && !type.includes('text/html')) caches.open(SHELL).then((c) => c.put(req, copy));
+            if (res.ok && !type.includes('text/html'))
+              caches.open(SHELL).then((c) => c.put(req, copy));
             return res;
           }),
       ),

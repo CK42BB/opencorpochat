@@ -52,6 +52,8 @@ export interface State {
   calls: Record<string, CallInfo>;
   connectionId: string | null;
   connected: boolean;
+  /** True once the first realtime connection succeeded (drives the reconnect banner). */
+  everConnected: boolean;
   messages: Record<string, Message>;
   lists: Record<string, MessageList>;
   threads: Record<string, ThreadState>;
@@ -79,6 +81,7 @@ export const useStore = create<State>(() => ({
   calls: {},
   connectionId: null,
   connected: false,
+  everConnected: false,
   messages: {},
   lists: {},
   threads: {},
@@ -101,7 +104,10 @@ let toastId = 0;
 export function toast(text: string, kind: Toast['kind'] = 'info', action?: Toast['action']) {
   const id = ++toastId;
   set((s) => ({ toasts: [...s.toasts, { id, text, kind, action }] }));
-  setTimeout(() => set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })), kind === 'error' ? 7000 : 4000);
+  setTimeout(
+    () => set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })),
+    kind === 'error' ? 7000 : 4000,
+  );
 }
 export function toastError(err: unknown) {
   toast(err instanceof Error ? err.message : String(err), 'error');
@@ -149,7 +155,8 @@ function putMessages(msgs: Message[]) {
   if (!msgs.length) return;
   set((s) => {
     const messages = { ...s.messages };
-    for (const m of msgs) messages[m.id] = s.messages[m.id] ? { ...m, saved: m.saved || s.messages[m.id]!.saved } : m;
+    for (const m of msgs)
+      messages[m.id] = s.messages[m.id] ? { ...m, saved: m.saved || s.messages[m.id]!.saved } : m;
     return { messages };
   });
 }
@@ -163,15 +170,45 @@ interface Page {
 export async function loadLatest(channelId: string) {
   const cur = get().lists[channelId];
   if (cur?.loading) return;
-  set((s) => ({ lists: { ...s.lists, [channelId]: { ...(cur ?? { ids: [], hasMoreBefore: true, hasMoreAfter: false, loaded: false }), loading: true } } }));
+  set((s) => ({
+    lists: {
+      ...s.lists,
+      [channelId]: {
+        ...(cur ?? { ids: [], hasMoreBefore: true, hasMoreAfter: false, loaded: false }),
+        loading: true,
+      },
+    },
+  }));
   try {
     const page = await api.get<Page>(`/channels/${channelId}/messages?limit=50`);
     putMessages(page.messages);
     set((s) => ({
-      lists: { ...s.lists, [channelId]: { ids: page.messages.map((m) => m.id), hasMoreBefore: page.hasMoreBefore, hasMoreAfter: false, loading: false, loaded: true } },
+      lists: {
+        ...s.lists,
+        [channelId]: {
+          ids: page.messages.map((m) => m.id),
+          hasMoreBefore: page.hasMoreBefore,
+          hasMoreAfter: false,
+          loading: false,
+          loaded: true,
+        },
+      },
     }));
   } catch (err) {
-    set((s) => ({ lists: { ...s.lists, [channelId]: { ...(s.lists[channelId] ?? { ids: [], hasMoreBefore: false, hasMoreAfter: false, loaded: true }), loading: false } } }));
+    set((s) => ({
+      lists: {
+        ...s.lists,
+        [channelId]: {
+          ...(s.lists[channelId] ?? {
+            ids: [],
+            hasMoreBefore: false,
+            hasMoreAfter: false,
+            loaded: true,
+          }),
+          loading: false,
+        },
+      },
+    }));
     throw err;
   }
 }
@@ -185,7 +222,12 @@ export async function loadOlder(channelId: string) {
   set((s) => {
     const l = s.lists[channelId]!;
     const ids = [...page.messages.map((m) => m.id).filter((id) => !l.ids.includes(id)), ...l.ids];
-    return { lists: { ...s.lists, [channelId]: { ...l, ids, hasMoreBefore: page.hasMoreBefore, loading: false } } };
+    return {
+      lists: {
+        ...s.lists,
+        [channelId]: { ...l, ids, hasMoreBefore: page.hasMoreBefore, loading: false },
+      },
+    };
   });
 }
 
@@ -193,12 +235,19 @@ export async function loadNewer(channelId: string) {
   const cur = get().lists[channelId];
   if (!cur || cur.loading || !cur.hasMoreAfter || !cur.ids.length) return;
   set((s) => ({ lists: { ...s.lists, [channelId]: { ...cur, loading: true } } }));
-  const page = await api.get<Page>(`/channels/${channelId}/messages?limit=50&after=${cur.ids[cur.ids.length - 1]}`);
+  const page = await api.get<Page>(
+    `/channels/${channelId}/messages?limit=50&after=${cur.ids[cur.ids.length - 1]}`,
+  );
   putMessages(page.messages);
   set((s) => {
     const l = s.lists[channelId]!;
     const ids = [...l.ids, ...page.messages.map((m) => m.id).filter((id) => !l.ids.includes(id))];
-    return { lists: { ...s.lists, [channelId]: { ...l, ids, hasMoreAfter: page.hasMoreAfter, loading: false } } };
+    return {
+      lists: {
+        ...s.lists,
+        [channelId]: { ...l, ids, hasMoreAfter: page.hasMoreAfter, loading: false },
+      },
+    };
   });
 }
 
@@ -206,14 +255,30 @@ export async function loadAround(channelId: string, messageId: string) {
   const page = await api.get<Page>(`/channels/${channelId}/messages?limit=60&around=${messageId}`);
   putMessages(page.messages);
   set((s) => ({
-    lists: { ...s.lists, [channelId]: { ids: page.messages.map((m) => m.id), hasMoreBefore: page.hasMoreBefore, hasMoreAfter: page.hasMoreAfter, loading: false, loaded: true } },
+    lists: {
+      ...s.lists,
+      [channelId]: {
+        ids: page.messages.map((m) => m.id),
+        hasMoreBefore: page.hasMoreBefore,
+        hasMoreAfter: page.hasMoreAfter,
+        loading: false,
+        loaded: true,
+      },
+    },
   }));
 }
 
 export async function loadThread(rootId: string) {
-  const r = await api.get<{ root: Message; replies: Message[]; following: boolean }>(`/messages/${rootId}/thread`);
+  const r = await api.get<{ root: Message; replies: Message[]; following: boolean }>(
+    `/messages/${rootId}/thread`,
+  );
   putMessages([r.root, ...r.replies]);
-  set((s) => ({ threads: { ...s.threads, [r.root.id]: { replyIds: r.replies.map((m) => m.id), loaded: true, following: r.following } } }));
+  set((s) => ({
+    threads: {
+      ...s.threads,
+      [r.root.id]: { replyIds: r.replies.map((m) => m.id), loaded: true, following: r.following },
+    },
+  }));
   return r.root;
 }
 
@@ -225,9 +290,12 @@ export function addPending(m: Message) {
 export function removeMessage(id: string) {
   set((s) => {
     const lists = { ...s.lists };
-    for (const [k, l] of Object.entries(lists)) if (l.ids.includes(id)) lists[k] = { ...l, ids: l.ids.filter((x) => x !== id) };
+    for (const [k, l] of Object.entries(lists))
+      if (l.ids.includes(id)) lists[k] = { ...l, ids: l.ids.filter((x) => x !== id) };
     const threads = { ...s.threads };
-    for (const [k, th] of Object.entries(threads)) if (th.replyIds.includes(id)) threads[k] = { ...th, replyIds: th.replyIds.filter((x) => x !== id) };
+    for (const [k, th] of Object.entries(threads))
+      if (th.replyIds.includes(id))
+        threads[k] = { ...th, replyIds: th.replyIds.filter((x) => x !== id) };
     const messages = { ...s.messages };
     delete messages[id];
     return { lists, threads, messages };
@@ -242,13 +310,20 @@ function insertIntoLists(m: Message) {
     if (inChannel && list?.loaded && !list.hasMoreAfter && !list.ids.includes(m.id)) {
       const ids = [...list.ids, m.id];
       // Keep pending (client-) messages at the end in send order.
-      ids.sort((a, b) => (a.startsWith('pending-') ? 1 : 0) - (b.startsWith('pending-') ? 1 : 0) || (a < b ? -1 : a > b ? 1 : 0));
+      ids.sort(
+        (a, b) =>
+          (a.startsWith('pending-') ? 1 : 0) - (b.startsWith('pending-') ? 1 : 0) ||
+          (a < b ? -1 : a > b ? 1 : 0),
+      );
       patch.lists = { ...s.lists, [m.channelId]: { ...list, ids } };
     }
     if (m.threadRootId) {
       const th = s.threads[m.threadRootId];
       if (th?.loaded && !th.replyIds.includes(m.id)) {
-        patch.threads = { ...s.threads, [m.threadRootId]: { ...th, replyIds: [...th.replyIds, m.id] } };
+        patch.threads = {
+          ...s.threads,
+          [m.threadRootId]: { ...th, replyIds: [...th.replyIds, m.id] },
+        };
       }
     }
     return patch;
@@ -260,7 +335,9 @@ export function mentionsMe(m: Message, me: Me, groups: Record<string, UserGroup>
   const p = parseMentions(m.body);
   if (p.channel || p.here) return true;
   if (p.usernames.includes(me.username)) return true;
-  return Object.values(groups).some((g) => p.usernames.includes(g.handle) && g.memberIds.includes(me.id));
+  return Object.values(groups).some(
+    (g) => p.usernames.includes(g.handle) && g.memberIds.includes(me.id),
+  );
 }
 
 // ---------- realtime ----------
@@ -284,10 +361,13 @@ export function applyEvent(e: ServerEvent) {
         if (inChannel && !mine && !viewing && m.kind !== 'system') {
           patch.unreadCount = ch.unreadCount + 1;
           const isDm = ch.kind === 'dm' || ch.kind === 'group_dm';
-          if (isDm || (s.me && mentionsMe(m, s.me, s.groups))) patch.mentionCount = ch.mentionCount + 1;
+          if (isDm || (s.me && mentionsMe(m, s.me, s.groups)))
+            patch.mentionCount = ch.mentionCount + 1;
         }
         if (mine && inChannel) patch.membership = { ...ch.membership, lastReadMessageId: m.id };
-        set((st) => ({ channels: { ...st.channels, [ch.id]: { ...st.channels[ch.id]!, ...patch } } }));
+        set((st) => ({
+          channels: { ...st.channels, [ch.id]: { ...st.channels[ch.id]!, ...patch } },
+        }));
       }
       // Clear typing indicator for the author.
       if (m.userId) clearTyping(m.channelId, m.threadRootId, m.userId);
@@ -303,12 +383,28 @@ export function applyEvent(e: ServerEvent) {
       if (!prev) break;
       // Keep tombstones for thread roots with replies; drop plain messages.
       if (prev.replyCount > 0 && !prev.threadRootId) {
-        set((st) => ({ messages: { ...st.messages, [prev.id]: { ...prev, deleted: true, body: '', files: [], reactions: [] } } }));
+        set((st) => ({
+          messages: {
+            ...st.messages,
+            [prev.id]: { ...prev, deleted: true, body: '', files: [], reactions: [] },
+          },
+        }));
       } else if (prev.threadRootId) {
-        set((st) => ({ messages: { ...st.messages, [prev.id]: { ...prev, deleted: true, body: '', files: [], reactions: [] } } }));
+        set((st) => ({
+          messages: {
+            ...st.messages,
+            [prev.id]: { ...prev, deleted: true, body: '', files: [], reactions: [] },
+          },
+        }));
         if (prev.alsoInChannel) {
           const l = s.lists[prev.channelId];
-          if (l) set((st) => ({ lists: { ...st.lists, [prev.channelId]: { ...l, ids: l.ids.filter((x) => x !== prev.id) } } }));
+          if (l)
+            set((st) => ({
+              lists: {
+                ...st.lists,
+                [prev.channelId]: { ...l, ids: l.ids.filter((x) => x !== prev.id) },
+              },
+            }));
         }
       } else {
         removeMessage(prev.id);
@@ -317,17 +413,26 @@ export function applyEvent(e: ServerEvent) {
     }
     case 'reaction.updated': {
       const prev = s.messages[e.data.messageId];
-      if (prev) set((st) => ({ messages: { ...st.messages, [prev.id]: { ...prev, reactions: e.data.reactions } } }));
+      if (prev)
+        set((st) => ({
+          messages: { ...st.messages, [prev.id]: { ...prev, reactions: e.data.reactions } },
+        }));
       break;
     }
     case 'pin.updated': {
       const prev = s.messages[e.data.messageId];
-      if (prev) set((st) => ({ messages: { ...st.messages, [prev.id]: { ...prev, pinned: e.data.pinned } } }));
+      if (prev)
+        set((st) => ({
+          messages: { ...st.messages, [prev.id]: { ...prev, pinned: e.data.pinned } },
+        }));
       break;
     }
     case 'saved.updated': {
       const prev = s.messages[e.data.messageId];
-      if (prev) set((st) => ({ messages: { ...st.messages, [prev.id]: { ...prev, saved: e.data.saved } } }));
+      if (prev)
+        set((st) => ({
+          messages: { ...st.messages, [prev.id]: { ...prev, saved: e.data.saved } },
+        }));
       break;
     }
     case 'channel.created':
@@ -335,7 +440,10 @@ export function applyEvent(e: ServerEvent) {
       break;
     case 'channel.updated': {
       const ch = s.channels[e.data.channel.id];
-      if (ch) set((st) => ({ channels: { ...st.channels, [ch.id]: { ...ch, ...(e.data.channel as Channel) } } }));
+      if (ch)
+        set((st) => ({
+          channels: { ...st.channels, [ch.id]: { ...ch, ...(e.data.channel as Channel) } },
+        }));
       break;
     }
     case 'channel.removed': {
@@ -352,9 +460,21 @@ export function applyEvent(e: ServerEvent) {
       if (ch) {
         let dmUserIds = ch.dmUserIds;
         if (dmUserIds) {
-          dmUserIds = e.type === 'channel.member_joined' ? [...new Set([...dmUserIds, e.data.userId])] : dmUserIds.filter((u) => u !== e.data.userId);
+          dmUserIds =
+            e.type === 'channel.member_joined'
+              ? [...new Set([...dmUserIds, e.data.userId])]
+              : dmUserIds.filter((u) => u !== e.data.userId);
         }
-        set((st) => ({ channels: { ...st.channels, [ch.id]: { ...ch, memberCount: e.data.memberCount, ...(dmUserIds ? { dmUserIds } : {}) } } }));
+        set((st) => ({
+          channels: {
+            ...st.channels,
+            [ch.id]: {
+              ...ch,
+              memberCount: e.data.memberCount,
+              ...(dmUserIds ? { dmUserIds } : {}),
+            },
+          },
+        }));
       }
       break;
     }
@@ -362,7 +482,15 @@ export function applyEvent(e: ServerEvent) {
       const ch = s.channels[e.data.membership.channelId];
       if (ch) {
         set((st) => ({
-          channels: { ...st.channels, [ch.id]: { ...ch, membership: e.data.membership, unreadCount: e.data.unreadCount, mentionCount: e.data.mentionCount } },
+          channels: {
+            ...st.channels,
+            [ch.id]: {
+              ...ch,
+              membership: e.data.membership,
+              unreadCount: e.data.unreadCount,
+              mentionCount: e.data.mentionCount,
+            },
+          },
         }));
       }
       break;
@@ -370,8 +498,16 @@ export function applyEvent(e: ServerEvent) {
     case 'typing': {
       if (e.data.userId === s.me?.id) break;
       const key = `${e.data.channelId}:${e.data.threadRootId ?? ''}`;
-      set((st) => ({ typing: { ...st.typing, [key]: { ...(st.typing[key] ?? {}), [e.data.userId]: Date.now() + 6000 } } }));
-      setTimeout(() => clearTyping(e.data.channelId, e.data.threadRootId, e.data.userId, true), 6100);
+      set((st) => ({
+        typing: {
+          ...st.typing,
+          [key]: { ...(st.typing[key] ?? {}), [e.data.userId]: Date.now() + 6000 },
+        },
+      }));
+      setTimeout(
+        () => clearTyping(e.data.channelId, e.data.threadRootId, e.data.userId, true),
+        6100,
+      );
       break;
     }
     case 'presence':
@@ -385,9 +521,13 @@ export function applyEvent(e: ServerEvent) {
       }));
       break;
     case 'notification':
-      if (e.data.notification.kind !== 'call') set((st) => ({ unreadNotifications: st.unreadNotifications + (e.data.notification.read ? 0 : 1) }));
+      if (e.data.notification.kind !== 'call')
+        set((st) => ({
+          unreadNotifications: st.unreadNotifications + (e.data.notification.read ? 0 : 1),
+        }));
       window.dispatchEvent(new CustomEvent('ocpc:notification', { detail: e.data.notification }));
-      if (e.data.notification.kind === 'thread_reply') set((st) => ({ unreadThreads: st.unreadThreads + 1 }));
+      if (e.data.notification.kind === 'thread_reply')
+        set((st) => ({ unreadThreads: st.unreadThreads + 1 }));
       break;
     case 'thread.updated':
       if (!e.data.unread) set((st) => ({ unreadThreads: Math.max(0, st.unreadThreads - 1) }));
@@ -406,14 +546,22 @@ export function applyEvent(e: ServerEvent) {
       set({ emoji: e.data.emoji });
       break;
     case 'settings.updated':
-      api.get<OrgSettings>('/bootstrap').then((b) => set({ settings: (b as unknown as Bootstrap).settings })).catch(() => {});
+      api
+        .get<OrgSettings>('/bootstrap')
+        .then((b) => set({ settings: (b as unknown as Bootstrap).settings }))
+        .catch(() => {});
       break;
     case 'call.updated':
       set((st) => {
         const calls = { ...st.calls };
         if (e.data.call) calls[e.data.channelId] = e.data.call;
         else delete calls[e.data.channelId];
-        const ringing = st.ringing && (!e.data.call || st.ringing.call.id !== e.data.call.id) && st.ringing.call.channelId === e.data.channelId ? null : st.ringing;
+        const ringing =
+          st.ringing &&
+          (!e.data.call || st.ringing.call.id !== e.data.call.id) &&
+          st.ringing.call.channelId === e.data.channelId
+            ? null
+            : st.ringing;
         return { calls, ringing };
       });
       window.dispatchEvent(new CustomEvent('ocpc:call-updated', { detail: e.data }));
@@ -430,7 +578,12 @@ export function applyEvent(e: ServerEvent) {
   }
 }
 
-function clearTyping(channelId: string, threadRootId: string | null, userId: string, onlyIfExpired = false) {
+function clearTyping(
+  channelId: string,
+  threadRootId: string | null,
+  userId: string,
+  onlyIfExpired = false,
+) {
   const key = `${channelId}:${threadRootId ?? ''}`;
   set((st) => {
     const cur = st.typing[key];
@@ -447,7 +600,11 @@ export function displayName(u: User | undefined | null) {
   return u ? u.displayName || u.username : 'Unknown';
 }
 
-export function channelTitle(ch: Pick<Channel, 'kind' | 'name' | 'dmUserIds'>, meId?: string, users: Record<string, User> = get().users) {
+export function channelTitle(
+  ch: Pick<Channel, 'kind' | 'name' | 'dmUserIds'>,
+  meId?: string,
+  users: Record<string, User> = get().users,
+) {
   if (ch.kind === 'dm' || ch.kind === 'group_dm') {
     const others = (ch.dmUserIds ?? []).filter((id) => id !== meId);
     if (!others.length) return `${displayName(users[meId ?? ''])} (you)`;

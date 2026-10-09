@@ -23,7 +23,8 @@ export function buildOpenApi(routes: RouteDoc[], publicUrl: string) {
       required: true,
       schema: { type: 'string' },
     }));
-    const querySchema = schemaOf(r.query) as { properties?: Record<string, unknown>; required?: string[] } | undefined;
+    const querySchema = schemaOf(r.query) as
+      { properties?: Record<string, unknown>; required?: string[] } | undefined;
     const queryParams = Object.entries(querySchema?.properties ?? {}).map(([name, schema]) => ({
       name,
       in: 'query',
@@ -34,11 +35,22 @@ export function buildOpenApi(routes: RouteDoc[], publicUrl: string) {
       summary: r.summary,
       tags: r.tags,
       parameters: [...params, ...queryParams],
-      responses: { '200': { description: 'OK' }, '204': { description: 'No content' }, '4XX': { description: 'Error', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } } },
+      responses: {
+        '200': { description: 'OK' },
+        '204': { description: 'No content' },
+        '4XX': {
+          description: 'Error',
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+        },
+      },
     };
     if (r.auth === 'none') op.security = [];
     if (r.auth === 'admin' || r.auth === 'owner') op.description = `Requires the ${r.auth} role.`;
-    if (r.body) op.requestBody = { required: true, content: { 'application/json': { schema: schemaOf(r.body) } } };
+    if (r.body)
+      op.requestBody = {
+        required: true,
+        content: { 'application/json': { schema: schemaOf(r.body) } },
+      };
     paths[path] = { ...(paths[path] ?? {}), [r.method.toLowerCase()]: op };
   }
   return {

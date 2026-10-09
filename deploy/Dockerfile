@@ -51,7 +51,8 @@ RUN mkdir -p /app/apps/server \
 
 USER node
 VOLUME ["/data"]
-EXPOSE 8080
+# 8080: HTTP/WebSocket. 3478/udp: built-in STUN for calls (OCPC_STUN_PORT=0 disables).
+EXPOSE 8080 3478/udp
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

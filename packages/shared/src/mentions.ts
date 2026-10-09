@@ -31,7 +31,8 @@ export function parseMentions(text: string): ParsedMentions {
     else if (name) usernames.add(name);
   }
   const channelNames = new Set<string>();
-  for (const m of clean.matchAll(CHANNEL_RE)) channelNames.add(m[2]!.toLowerCase().replace(/[_-]+$/, ''));
+  for (const m of clean.matchAll(CHANNEL_RE))
+    channelNames.add(m[2]!.toLowerCase().replace(/[_-]+$/, ''));
   return { usernames: [...usernames], channel, here, channelNames: [...channelNames] };
 }
 

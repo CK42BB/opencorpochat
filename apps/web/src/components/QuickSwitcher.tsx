@@ -42,15 +42,29 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
       const sc = score(title);
       if (!sc) continue;
       if (c.kind === 'dm') (c.dmUserIds ?? []).forEach((id) => dmUserIds.add(id));
-      const other = c.kind === 'dm' ? users[(c.dmUserIds ?? []).find((id) => id !== me.id) ?? ''] : undefined;
+      const other =
+        c.kind === 'dm' ? users[(c.dmUserIds ?? []).find((id) => id !== me.id) ?? ''] : undefined;
       out.push({
         key: c.id,
         label: title,
         sub: c.archived ? t('archived') : undefined,
-        icon: isDm(c) ? other ? <Avatar user={other} size={20} presence /> : <Users size={16} /> : c.kind === 'private' ? <Lock size={16} /> : <Hash size={16} />,
+        icon: isDm(c) ? (
+          other ? (
+            <Avatar user={other} size={20} presence />
+          ) : (
+            <Users size={16} />
+          )
+        ) : c.kind === 'private' ? (
+          <Lock size={16} />
+        ) : (
+          <Hash size={16} />
+        ),
         run: () => navigate(`/c/${c.id}`),
         // Unread and recent conversations float up.
-        score: sc * 10 + (c.unreadCount ? 3 : 0) + (c.lastMessageAt ? Date.parse(c.lastMessageAt) / 1e13 : 0),
+        score:
+          sc * 10 +
+          (c.unreadCount ? 3 : 0) +
+          (c.lastMessageAt ? Date.parse(c.lastMessageAt) / 1e13 : 0),
       });
     }
     if (query) {
@@ -74,7 +88,13 @@ export function QuickSwitcher({ onClose }: { onClose: () => void }) {
     out.sort((a, b) => b.score - a.score);
     const top = out.slice(0, 12);
     if (q.trim()) {
-      top.push({ key: 'search', label: t('Search messages for “{q}”', { q: q.trim() }), icon: <Search size={16} />, run: () => navigate(`/search?q=${encodeURIComponent(q.trim())}`), score: 0 });
+      top.push({
+        key: 'search',
+        label: t('Search messages for “{q}”', { q: q.trim() }),
+        icon: <Search size={16} />,
+        run: () => navigate(`/search?q=${encodeURIComponent(q.trim())}`),
+        score: 0,
+      });
     }
     return top;
   }, [q, channels, users, me.id, navigate]);

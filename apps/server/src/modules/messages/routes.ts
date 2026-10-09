@@ -66,20 +66,35 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       let hasMoreAfter = false;
       if (query.around) {
         const half = Math.ceil(query.limit / 2);
-        const older = await base().where('id', '<', query.around).orderBy('id', 'desc').limit(half + 1).execute();
-        const newer = await base().where('id', '>=', query.around).orderBy('id', 'asc').limit(half + 1).execute();
+        const older = await base()
+          .where('id', '<', query.around)
+          .orderBy('id', 'desc')
+          .limit(half + 1)
+          .execute();
+        const newer = await base()
+          .where('id', '>=', query.around)
+          .orderBy('id', 'asc')
+          .limit(half + 1)
+          .execute();
         hasMoreBefore = older.length > half;
         hasMoreAfter = newer.length > half;
         rows = [...older.slice(0, half).reverse(), ...newer.slice(0, half)];
       } else if (query.after) {
-        const r = await base().where('id', '>', query.after).orderBy('id', 'asc').limit(query.limit + 1).execute();
+        const r = await base()
+          .where('id', '>', query.after)
+          .orderBy('id', 'asc')
+          .limit(query.limit + 1)
+          .execute();
         hasMoreAfter = r.length > query.limit;
         rows = r.slice(0, query.limit);
         hasMoreBefore = true;
       } else {
         let q = base();
         if (query.before) q = q.where('id', '<', query.before);
-        const r = await q.orderBy('id', 'desc').limit(query.limit + 1).execute();
+        const r = await q
+          .orderBy('id', 'desc')
+          .limit(query.limit + 1)
+          .execute();
         hasMoreBefore = r.length > query.limit;
         rows = r.slice(0, query.limit).reverse();
         hasMoreAfter = !!query.before;
@@ -97,9 +112,20 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     rateLimit: { max: 60, timeWindow: '1 minute' },
     handler: async ({ user, params, body }): Promise<Message> => {
       const { channel, membership } = await requireMember(ctx, user, params.id!);
-      if (!canPostInChannel(actorOf(user), { kind: channel.kind as never, archived: !!channel.archived_at, isReadonly: !!channel.is_readonly }, toMembership(membership))) {
+      if (
+        !canPostInChannel(
+          actorOf(user),
+          {
+            kind: channel.kind as never,
+            archived: !!channel.archived_at,
+            isReadonly: !!channel.is_readonly,
+          },
+          toMembership(membership),
+        )
+      ) {
         // Anyone may still reply in threads of announcement channels.
-        if (!(channel.is_readonly && body.threadRootId && !channel.archived_at)) throw forbidden('You cannot post in this channel');
+        if (!(channel.is_readonly && body.threadRootId && !channel.archived_at))
+          throw forbidden('You cannot post in this channel');
       }
       const row = await createMessage(ctx, {
         channel,
@@ -109,7 +135,14 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
         threadRootId: body.threadRootId ?? null,
         alsoInChannel: body.alsoInChannel,
         fileIds: body.fileIds,
-        poll: body.poll ? { question: body.poll.question, options: body.poll.options, multiple: body.poll.multiple, anonymous: body.poll.anonymous } : undefined,
+        poll: body.poll
+          ? {
+              question: body.poll.question,
+              options: body.poll.options,
+              multiple: body.poll.multiple,
+              anonymous: body.poll.anonymous,
+            }
+          : undefined,
       });
       return hydrateOne(ctx, row, user.id);
     },
@@ -134,8 +167,16 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     body: EditMessageInput,
     handler: async ({ user, params, body }) => {
       const { msg } = await requireMessageAccess(ctx, user, params.id!);
-      if (msg.deleted_at || msg.kind === 'system') throw badRequest('This message cannot be edited');
-      if (!canEditMessage(actorOf(user), { userId: msg.user_id, createdAt: msg.created_at }, ctx.settings.get().messageEditWindowMinutes)) throw forbidden('You can no longer edit this message');
+      if (msg.deleted_at || msg.kind === 'system')
+        throw badRequest('This message cannot be edited');
+      if (
+        !canEditMessage(
+          actorOf(user),
+          { userId: msg.user_id, createdAt: msg.created_at },
+          ctx.settings.get().messageEditWindowMinutes,
+        )
+      )
+        throw forbidden('You can no longer edit this message');
       return hydrateOne(ctx, await editMessage(ctx, msg, body.body), user.id);
     },
   });
@@ -148,10 +189,24 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, params, ip }) => {
       const { msg, membership } = await requireMessageAccess(ctx, user, params.id!);
       if (msg.deleted_at) return;
-      if (!canDeleteMessage(actorOf(user), { userId: msg.user_id }, membership ? toMembership(membership) : null)) throw forbidden();
+      if (
+        !canDeleteMessage(
+          actorOf(user),
+          { userId: msg.user_id },
+          membership ? toMembership(membership) : null,
+        )
+      )
+        throw forbidden();
       await deleteMessage(ctx, msg);
       if (msg.user_id !== user.id) {
-        await audit(ctx, { actorId: user.id, action: 'message.deleted_by_admin', targetType: 'message', targetId: msg.id, ip, metadata: { channelId: msg.channel_id, authorId: msg.user_id } });
+        await audit(ctx, {
+          actorId: user.id,
+          action: 'message.deleted_by_admin',
+          targetType: 'message',
+          targetId: msg.id,
+          ip,
+          metadata: { channelId: msg.channel_id, authorId: msg.user_id },
+        });
       }
     },
   });
@@ -164,8 +219,19 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, params }) => {
       const { msg } = await requireMessageAccess(ctx, user, params.id!);
       const root = msg.thread_root_id ? await getMessageRow(ctx, msg.thread_root_id) : msg;
-      const replies = await ctx.db.selectFrom('messages').selectAll().where('thread_root_id', '=', root.id).orderBy('id').limit(1000).execute();
-      const follow = await ctx.db.selectFrom('thread_follows').select('following').where('root_id', '=', root.id).where('user_id', '=', user.id).executeTakeFirst();
+      const replies = await ctx.db
+        .selectFrom('messages')
+        .selectAll()
+        .where('thread_root_id', '=', root.id)
+        .orderBy('id')
+        .limit(1000)
+        .execute();
+      const follow = await ctx.db
+        .selectFrom('thread_follows')
+        .select('following')
+        .where('root_id', '=', root.id)
+        .where('user_id', '=', user.id)
+        .executeTakeFirst();
       const [rootMsg, ...rest] = await hydrate(ctx, [root, ...replies], user.id);
       return { root: rootMsg, replies: rest, following: follow ? follow.following === 1 : false };
     },
@@ -181,15 +247,25 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       const { msg, membership } = await requireMessageAccess(ctx, user, params.id!);
       if (!membership) throw forbidden('Join the channel first');
       if (msg.deleted_at) throw badRequest('Message was deleted');
-      const distinct = await ctx.db.selectFrom('reactions').select('emoji').distinct().where('message_id', '=', msg.id).execute();
-      if (distinct.length >= 50 && !distinct.some((d) => d.emoji === body.emoji)) throw badRequest('Too many different reactions');
+      const distinct = await ctx.db
+        .selectFrom('reactions')
+        .select('emoji')
+        .distinct()
+        .where('message_id', '=', msg.id)
+        .execute();
+      if (distinct.length >= 50 && !distinct.some((d) => d.emoji === body.emoji))
+        throw badRequest('Too many different reactions');
       await ctx.db
         .insertInto('reactions')
         .values({ message_id: msg.id, user_id: user.id, emoji: body.emoji, created_at: nowIso() })
         .onConflict((oc) => oc.doNothing())
         .execute();
       const reactions = await reactionSummary(ctx, msg.id);
-      await ctx.hub.sendToChannel(msg.channel_id, 'reaction.updated', { messageId: msg.id, channelId: msg.channel_id, reactions });
+      await ctx.hub.sendToChannel(msg.channel_id, 'reaction.updated', {
+        messageId: msg.id,
+        channelId: msg.channel_id,
+        reactions,
+      });
       return reactions;
     },
   });
@@ -208,7 +284,11 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
         .where('emoji', '=', decodeURIComponent(params.emoji!))
         .execute();
       const reactions = await reactionSummary(ctx, msg.id);
-      await ctx.hub.sendToChannel(msg.channel_id, 'reaction.updated', { messageId: msg.id, channelId: msg.channel_id, reactions });
+      await ctx.hub.sendToChannel(msg.channel_id, 'reaction.updated', {
+        messageId: msg.id,
+        channelId: msg.channel_id,
+        reactions,
+      });
       return reactions;
     },
   });
@@ -245,14 +325,29 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
         if (method === 'POST') {
           await ctx.db
             .insertInto('pins')
-            .values({ channel_id: msg.channel_id, message_id: msg.id, pinned_by: user.id, created_at: nowIso() })
+            .values({
+              channel_id: msg.channel_id,
+              message_id: msg.id,
+              pinned_by: user.id,
+              created_at: nowIso(),
+            })
             .onConflict((oc) => oc.doNothing())
             .execute();
-          await createMessage(ctx, { channel, userId: user.id, kind: 'system', body: `@${user.username} pinned a message`, skipNotify: true });
+          await createMessage(ctx, {
+            channel,
+            userId: user.id,
+            kind: 'system',
+            body: `@${user.username} pinned a message`,
+            skipNotify: true,
+          });
         } else {
           await ctx.db.deleteFrom('pins').where('message_id', '=', msg.id).execute();
         }
-        await ctx.hub.sendToChannel(msg.channel_id, 'pin.updated', { channelId: msg.channel_id, messageId: msg.id, pinned: method === 'POST' });
+        await ctx.hub.sendToChannel(msg.channel_id, 'pin.updated', {
+          channelId: msg.channel_id,
+          messageId: msg.id,
+          pinned: method === 'POST',
+        });
       },
     });
   }
@@ -267,7 +362,9 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       const rows = await ctx.db
         .selectFrom('saved_items as s')
         .innerJoin('messages as m', 'm.id', 's.message_id')
-        .innerJoin('channel_members as cm', (j) => j.onRef('cm.channel_id', '=', 'm.channel_id').on('cm.user_id', '=', user.id))
+        .innerJoin('channel_members as cm', (j) =>
+          j.onRef('cm.channel_id', '=', 'm.channel_id').on('cm.user_id', '=', user.id),
+        )
         .selectAll('m')
         .where('s.user_id', '=', user.id)
         .orderBy('s.created_at', 'desc')
@@ -292,9 +389,16 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
             .onConflict((oc) => oc.doNothing())
             .execute();
         } else {
-          await ctx.db.deleteFrom('saved_items').where('user_id', '=', user.id).where('message_id', '=', msg.id).execute();
+          await ctx.db
+            .deleteFrom('saved_items')
+            .where('user_id', '=', user.id)
+            .where('message_id', '=', msg.id)
+            .execute();
         }
-        ctx.hub.sendToUsers([user.id], 'saved.updated', { messageId: msg.id, saved: method === 'POST' });
+        ctx.hub.sendToUsers([user.id], 'saved.updated', {
+          messageId: msg.id,
+          saved: method === 'POST',
+        });
       },
     });
   }
@@ -310,7 +414,18 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       const { msg } = await requireMessageAccess(ctx, user, params.id!);
       if (msg.deleted_at) throw badRequest('Message was deleted');
       const { channel, membership } = await requireMember(ctx, user, body.channelId);
-      if (!canPostInChannel(actorOf(user), { kind: channel.kind as never, archived: !!channel.archived_at, isReadonly: !!channel.is_readonly }, toMembership(membership))) throw forbidden();
+      if (
+        !canPostInChannel(
+          actorOf(user),
+          {
+            kind: channel.kind as never,
+            archived: !!channel.archived_at,
+            isReadonly: !!channel.is_readonly,
+          },
+          toMembership(membership),
+        )
+      )
+        throw forbidden();
       const row = await createMessage(ctx, {
         channel,
         userId: user.id,
@@ -331,16 +446,26 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, params, body }) => {
       const { msg, membership } = await requireMessageAccess(ctx, user, params.id!);
       if (!membership) throw forbidden('Join the channel first');
-      const poll = json<{ options: { id: string }[]; multiple: boolean; closed: boolean } | null>(msg.poll, null);
+      const poll = json<{ options: { id: string }[]; multiple: boolean; closed: boolean } | null>(
+        msg.poll,
+        null,
+      );
       if (!poll || msg.deleted_at) throw notFound('Poll');
       if (poll.closed) throw badRequest('This poll is closed');
       const valid = new Set(poll.options.map((o) => o.id));
       const choices = [...new Set(body.optionIds)].filter((o) => valid.has(o));
       if (!poll.multiple && choices.length > 1) throw badRequest('Choose one option');
       await ctx.db.transaction().execute(async (trx) => {
-        await trx.deleteFrom('poll_votes').where('message_id', '=', msg.id).where('user_id', '=', user.id).execute();
+        await trx
+          .deleteFrom('poll_votes')
+          .where('message_id', '=', msg.id)
+          .where('user_id', '=', user.id)
+          .execute();
         if (choices.length) {
-          await trx.insertInto('poll_votes').values(choices.map((o) => ({ message_id: msg.id, option_id: o, user_id: user.id }))).execute();
+          await trx
+            .insertInto('poll_votes')
+            .values(choices.map((o) => ({ message_id: msg.id, option_id: o, user_id: user.id })))
+            .execute();
         }
       });
       await publishMessage(ctx, msg, 'message.updated');
@@ -357,7 +482,11 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       if (msg.user_id !== user.id) throw forbidden();
       const poll = json<Record<string, unknown> | null>(msg.poll, null);
       if (!poll) throw notFound('Poll');
-      await ctx.db.updateTable('messages').set({ poll: JSON.stringify({ ...poll, closed: true }) }).where('id', '=', msg.id).execute();
+      await ctx.db
+        .updateTable('messages')
+        .set({ poll: JSON.stringify({ ...poll, closed: true }) })
+        .where('id', '=', msg.id)
+        .execute();
       await publishMessage(ctx, await getMessageRow(ctx, msg.id), 'message.updated');
     },
   });
@@ -368,12 +497,17 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     url: '/threads',
     summary: 'Threads you follow, most recently active first',
     tags: ['messages'],
-    query: z.object({ limit: z.coerce.number().int().min(1).max(100).default(30), before: z.string().max(64).optional() }),
+    query: z.object({
+      limit: z.coerce.number().int().min(1).max(100).default(30),
+      before: z.string().max(64).optional(),
+    }),
     handler: async ({ user, query }) => {
       let q = ctx.db
         .selectFrom('thread_follows as f')
         .innerJoin('messages as m', 'm.id', 'f.root_id')
-        .innerJoin('channel_members as cm', (j) => j.onRef('cm.channel_id', '=', 'm.channel_id').on('cm.user_id', '=', user.id))
+        .innerJoin('channel_members as cm', (j) =>
+          j.onRef('cm.channel_id', '=', 'm.channel_id').on('cm.user_id', '=', user.id),
+        )
         .selectAll('m')
         .select(['f.last_read_at'])
         .where('f.user_id', '=', user.id)
@@ -385,7 +519,14 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       const out = [];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i]!;
-        const latest = await ctx.db.selectFrom('messages').selectAll().where('thread_root_id', '=', r.id).where('deleted_at', 'is', null).orderBy('id', 'desc').limit(3).execute();
+        const latest = await ctx.db
+          .selectFrom('messages')
+          .selectAll()
+          .where('thread_root_id', '=', r.id)
+          .where('deleted_at', 'is', null)
+          .orderBy('id', 'desc')
+          .limit(3)
+          .execute();
         out.push({
           root: roots[i],
           latestReplies: await hydrate(ctx, latest.reverse(), user.id),
@@ -403,9 +544,27 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['messages'],
     handler: async ({ user, params }) => {
       const { msg } = await requireMessageAccess(ctx, user, params.id!);
-      await ctx.db.updateTable('thread_follows').set({ last_read_at: nowIso() }).where('root_id', '=', msg.id).where('user_id', '=', user.id).execute();
-      await ctx.db.updateTable('notifications').set({ read_at: nowIso() }).where('user_id', '=', user.id).where('kind', '=', 'thread_reply').where('read_at', 'is', null).where('message_id', 'in', (eb) => eb.selectFrom('messages').select('id').where('thread_root_id', '=', msg.id)).execute();
-      ctx.hub.sendToUsers([user.id], 'thread.updated', { rootId: msg.id, channelId: msg.channel_id, unread: false });
+      await ctx.db
+        .updateTable('thread_follows')
+        .set({ last_read_at: nowIso() })
+        .where('root_id', '=', msg.id)
+        .where('user_id', '=', user.id)
+        .execute();
+      await ctx.db
+        .updateTable('notifications')
+        .set({ read_at: nowIso() })
+        .where('user_id', '=', user.id)
+        .where('kind', '=', 'thread_reply')
+        .where('read_at', 'is', null)
+        .where('message_id', 'in', (eb) =>
+          eb.selectFrom('messages').select('id').where('thread_root_id', '=', msg.id),
+        )
+        .execute();
+      ctx.hub.sendToUsers([user.id], 'thread.updated', {
+        rootId: msg.id,
+        channelId: msg.channel_id,
+        unread: false,
+      });
     },
   });
 

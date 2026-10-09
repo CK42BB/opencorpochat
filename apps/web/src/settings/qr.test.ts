@@ -33,7 +33,9 @@ describe('QR encoder', () => {
   });
 
   it('draws finder, timing and dark-module patterns', () => {
-    const qr = encodeQr('otpauth://totp/Acme:alice@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Acme');
+    const qr = encodeQr(
+      'otpauth://totp/Acme:alice@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Acme',
+    );
     const n = qr.size;
     expect(n).toBe(qr.version * 4 + 17);
     const m = qr.modules;
@@ -58,7 +60,23 @@ describe('QR encoder', () => {
     const bit = (x: number, y: number) => (m[y]![x] ? 1 : 0);
     let a = 0;
     let b = 0;
-    const firstPos: [number, number][] = [[8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 7], [8, 8], [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8]];
+    const firstPos: [number, number][] = [
+      [8, 0],
+      [8, 1],
+      [8, 2],
+      [8, 3],
+      [8, 4],
+      [8, 5],
+      [8, 7],
+      [8, 8],
+      [7, 8],
+      [5, 8],
+      [4, 8],
+      [3, 8],
+      [2, 8],
+      [1, 8],
+      [0, 8],
+    ];
     firstPos.forEach(([x, y], i) => (a |= bit(x, y) << i));
     for (let i = 0; i < 8; i++) b |= bit(n - 1 - i, 8) << i;
     for (let i = 8; i < 15; i++) b |= bit(8, n - 15 + i) << i;

@@ -46,28 +46,45 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     url: '/channels',
     summary: 'Browse the channel directory (public channels, plus private ones you belong to)',
     tags: ['channels'],
-    query: z.object({ q: z.string().max(80).optional(), archived: z.enum(['true', 'false']).optional(), all: z.enum(['true', 'false']).optional() }),
+    query: z.object({
+      q: z.string().max(80).optional(),
+      archived: z.enum(['true', 'false']).optional(),
+      all: z.enum(['true', 'false']).optional(),
+    }),
     handler: async ({ user, query }): Promise<Channel[]> => {
       if (user.role === 'guest') return [];
       let q = ctx.db
         .selectFrom('channels as c')
         .selectAll('c')
         .select((eb) =>
-          eb.selectFrom('channel_members as cm').select(eb.fn.countAll<number>().as('n')).whereRef('cm.channel_id', '=', 'c.id').as('member_count'),
+          eb
+            .selectFrom('channel_members as cm')
+            .select(eb.fn.countAll<number>().as('n'))
+            .whereRef('cm.channel_id', '=', 'c.id')
+            .as('member_count'),
         )
         .where((eb) =>
           // Admins may list every channel (admin console); DMs are never listed.
           query.all === 'true' && isAdmin(actorOf(user))
             ? eb('c.kind', 'in', ['public', 'private'])
             : eb.or([
-            eb('c.kind', '=', 'public'),
-            eb.and([
-              eb('c.kind', '=', 'private'),
-              eb.exists(eb.selectFrom('channel_members as m').select('m.user_id').whereRef('m.channel_id', '=', 'c.id').where('m.user_id', '=', user.id)),
-            ]),
-          ]),
+                eb('c.kind', '=', 'public'),
+                eb.and([
+                  eb('c.kind', '=', 'private'),
+                  eb.exists(
+                    eb
+                      .selectFrom('channel_members as m')
+                      .select('m.user_id')
+                      .whereRef('m.channel_id', '=', 'c.id')
+                      .where('m.user_id', '=', user.id),
+                  ),
+                ]),
+              ]),
         );
-      q = query.archived === 'true' ? q.where('c.archived_at', 'is not', null) : q.where('c.archived_at', 'is', null);
+      q =
+        query.archived === 'true'
+          ? q.where('c.archived_at', 'is not', null)
+          : q.where('c.archived_at', 'is', null);
       if (query.q) q = q.where('c.name', 'like', `%${query.q.toLowerCase().replace(/[%_]/g, '')}%`);
       const rows = await q.orderBy('c.name').limit(500).execute();
       return rows.map((r) => toChannel(r, Number(r.member_count ?? 0)));
@@ -82,9 +99,17 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     auth: 'member',
     body: CreateChannelInput,
     handler: async ({ body, user, ip }) => {
-      if (body.isReadonly && !isAdmin(actorOf(user))) throw forbidden('Only admins can create announcement channels');
+      if (body.isReadonly && !isAdmin(actorOf(user)))
+        throw forbidden('Only admins can create announcement channels');
       const row = await createChannel(ctx, { ...body, createdBy: user.id });
-      await audit(ctx, { actorId: user.id, action: 'channel.created', targetType: 'channel', targetId: row.id, ip, metadata: { name: row.name, kind: row.kind } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'channel.created',
+        targetType: 'channel',
+        targetId: row.id,
+        ip,
+        metadata: { name: row.name, kind: row.kind },
+      });
       return myChannel(ctx, user.id, row.id);
     },
   });
@@ -121,7 +146,10 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['channels'],
     handler: async ({ user, params }) => {
       const { channel, membership } = await requireChannelAccess(ctx, user, params.id!);
-      return { ...(await channelView(ctx, channel)), membership: membership ? toMembership(membership) : null };
+      return {
+        ...(await channelView(ctx, channel)),
+        membership: membership ? toMembership(membership) : null,
+      };
     },
   });
 
@@ -136,13 +164,26 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
       const actor = actorOf(user);
       const onlyTopic = Object.keys(body).every((k) => k === 'topic');
       // Any member may change the topic; other settings need channel-manager rights.
-      if (!(onlyTopic && membership) && !canManageChannel(actor, { kind: channel.kind as never, createdBy: channel.created_by }, membership ? toMembership(membership) : null)) {
+      if (
+        !(onlyTopic && membership) &&
+        !canManageChannel(
+          actor,
+          { kind: channel.kind as never, createdBy: channel.created_by },
+          membership ? toMembership(membership) : null,
+        )
+      ) {
         throw forbidden();
       }
-      if ((body.isDefault !== undefined || body.isReadonly !== undefined) && !isAdmin(actor)) throw forbidden('Admins only');
+      if ((body.isDefault !== undefined || body.isReadonly !== undefined) && !isAdmin(actor))
+        throw forbidden('Admins only');
       if (channel.kind === 'dm' || channel.kind === 'group_dm') throw forbidden();
       if (body.name && body.name !== channel.name) {
-        const taken = await ctx.db.selectFrom('channels').select('id').where('name', '=', body.name).where('kind', 'in', ['public', 'private']).executeTakeFirst();
+        const taken = await ctx.db
+          .selectFrom('channels')
+          .select('id')
+          .where('name', '=', body.name)
+          .where('kind', 'in', ['public', 'private'])
+          .executeTakeFirst();
         if (taken) throw conflict(`A channel named #${body.name} already exists`);
       }
       await ctx.db
@@ -157,16 +198,41 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
         })
         .where('id', '=', channel.id)
         .execute();
-      const updated = await ctx.db.selectFrom('channels').selectAll().where('id', '=', channel.id).executeTakeFirstOrThrow();
+      const updated = await ctx.db
+        .selectFrom('channels')
+        .selectAll()
+        .where('id', '=', channel.id)
+        .executeTakeFirstOrThrow();
       const view = await channelView(ctx, updated);
       await ctx.hub.sendToChannel(channel.id, 'channel.updated', { channel: view });
       if (body.topic !== undefined && body.topic !== channel.topic) {
-        await createMessage(ctx, { channel: updated, userId: user.id, kind: 'system', body: body.topic ? `@${user.username} set the topic: ${body.topic}` : `@${user.username} cleared the topic`, skipNotify: true });
+        await createMessage(ctx, {
+          channel: updated,
+          userId: user.id,
+          kind: 'system',
+          body: body.topic
+            ? `@${user.username} set the topic: ${body.topic}`
+            : `@${user.username} cleared the topic`,
+          skipNotify: true,
+        });
       }
       if (body.name && body.name !== channel.name) {
-        await createMessage(ctx, { channel: updated, userId: user.id, kind: 'system', body: `@${user.username} renamed the channel from #${channel.name} to #${body.name}`, skipNotify: true });
+        await createMessage(ctx, {
+          channel: updated,
+          userId: user.id,
+          kind: 'system',
+          body: `@${user.username} renamed the channel from #${channel.name} to #${body.name}`,
+          skipNotify: true,
+        });
       }
-      await audit(ctx, { actorId: user.id, action: 'channel.updated', targetType: 'channel', targetId: channel.id, ip, metadata: body });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'channel.updated',
+        targetType: 'channel',
+        targetId: channel.id,
+        ip,
+        metadata: body,
+      });
       return view;
     },
   });
@@ -175,17 +241,50 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     route(app, ctx, {
       method: 'POST',
       url: `/channels/:id/${action}`,
-      summary: action === 'archive' ? 'Archive a channel (read-only, hidden from directory)' : 'Unarchive a channel',
+      summary:
+        action === 'archive'
+          ? 'Archive a channel (read-only, hidden from directory)'
+          : 'Unarchive a channel',
       tags: ['channels'],
       handler: async ({ user, params, ip }) => {
         const { channel, membership } = await requireChannelAccess(ctx, user, params.id!);
-        if (!canManageChannel(actorOf(user), { kind: channel.kind as never, createdBy: channel.created_by }, membership ? toMembership(membership) : null)) throw forbidden();
-        if (channel.is_default && action === 'archive') throw forbidden('Remove this channel from the defaults before archiving it');
-        await ctx.db.updateTable('channels').set({ archived_at: action === 'archive' ? nowIso() : null }).where('id', '=', channel.id).execute();
-        const updated = await ctx.db.selectFrom('channels').selectAll().where('id', '=', channel.id).executeTakeFirstOrThrow();
-        await createMessage(ctx, { channel: { ...updated, archived_at: null }, userId: user.id, kind: 'system', body: `@${user.username} ${action}d this channel`, skipNotify: true });
-        await ctx.hub.sendToChannel(channel.id, 'channel.updated', { channel: await channelView(ctx, updated) });
-        await audit(ctx, { actorId: user.id, action: `channel.${action}d`, targetType: 'channel', targetId: channel.id, ip });
+        if (
+          !canManageChannel(
+            actorOf(user),
+            { kind: channel.kind as never, createdBy: channel.created_by },
+            membership ? toMembership(membership) : null,
+          )
+        )
+          throw forbidden();
+        if (channel.is_default && action === 'archive')
+          throw forbidden('Remove this channel from the defaults before archiving it');
+        await ctx.db
+          .updateTable('channels')
+          .set({ archived_at: action === 'archive' ? nowIso() : null })
+          .where('id', '=', channel.id)
+          .execute();
+        const updated = await ctx.db
+          .selectFrom('channels')
+          .selectAll()
+          .where('id', '=', channel.id)
+          .executeTakeFirstOrThrow();
+        await createMessage(ctx, {
+          channel: { ...updated, archived_at: null },
+          userId: user.id,
+          kind: 'system',
+          body: `@${user.username} ${action}d this channel`,
+          skipNotify: true,
+        });
+        await ctx.hub.sendToChannel(channel.id, 'channel.updated', {
+          channel: await channelView(ctx, updated),
+        });
+        await audit(ctx, {
+          actorId: user.id,
+          action: `channel.${action}d`,
+          targetType: 'channel',
+          targetId: channel.id,
+          ip,
+        });
       },
     });
   }
@@ -198,7 +297,13 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     handler: async ({ user, params }) => {
       const { channel, membership } = await requireChannelAccess(ctx, user, params.id!);
       if (!membership) {
-        if (!canJoinChannel(actorOf(user), { kind: channel.kind as never, archived: !!channel.archived_at })) throw forbidden();
+        if (
+          !canJoinChannel(actorOf(user), {
+            kind: channel.kind as never,
+            archived: !!channel.archived_at,
+          })
+        )
+          throw forbidden();
         await addMembers(ctx, channel, [user.id], user.id);
       }
       return myChannel(ctx, user.id, channel.id);
@@ -235,7 +340,11 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
         .where('cm.channel_id', '=', params.id!)
         .orderBy('u.username')
         .execute();
-      return rows.map((r) => ({ ...toUser(r), channelRole: r.channel_role, presence: ctx.hub.presenceOf(r.id) }));
+      return rows.map((r) => ({
+        ...toUser(r),
+        channelRole: r.channel_role,
+        presence: ctx.hub.presenceOf(r.id),
+      }));
     },
   });
 
@@ -247,7 +356,14 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     body: AddMembersInput,
     handler: async ({ user, params, body }) => {
       const { channel, membership } = await requireChannelAccess(ctx, user, params.id!);
-      if (!canAddMembers(actorOf(user), { kind: channel.kind as never, archived: !!channel.archived_at }, membership ? toMembership(membership) : null)) throw forbidden();
+      if (
+        !canAddMembers(
+          actorOf(user),
+          { kind: channel.kind as never, archived: !!channel.archived_at },
+          membership ? toMembership(membership) : null,
+        )
+      )
+        throw forbidden();
       const added = await addMembers(ctx, channel, body.userIds, user.id);
       return { added };
     },
@@ -260,25 +376,63 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     tags: ['channels'],
     handler: async ({ user, params, ip }) => {
       const { channel, membership } = await requireChannelAccess(ctx, user, params.id!);
-      if (params.userId !== user.id && !canManageChannel(actorOf(user), { kind: channel.kind as never, createdBy: channel.created_by }, membership ? toMembership(membership) : null)) throw forbidden();
-      if (channel.is_default && channel.kind === 'public' && params.userId !== user.id && !isAdmin(actorOf(user))) throw forbidden();
+      if (
+        params.userId !== user.id &&
+        !canManageChannel(
+          actorOf(user),
+          { kind: channel.kind as never, createdBy: channel.created_by },
+          membership ? toMembership(membership) : null,
+        )
+      )
+        throw forbidden();
+      if (
+        channel.is_default &&
+        channel.kind === 'public' &&
+        params.userId !== user.id &&
+        !isAdmin(actorOf(user))
+      )
+        throw forbidden();
       await removeMember(ctx, channel, params.userId!, user.id);
-      await audit(ctx, { actorId: user.id, action: 'channel.member_removed', targetType: 'channel', targetId: channel.id, ip, metadata: { userId: params.userId } });
+      await audit(ctx, {
+        actorId: user.id,
+        action: 'channel.member_removed',
+        targetType: 'channel',
+        targetId: channel.id,
+        ip,
+        metadata: { userId: params.userId },
+      });
     },
   });
 
   route(app, ctx, {
     method: 'PATCH',
     url: '/channels/:id/members/:userId',
-    summary: 'Change a member\'s channel role (admin/member)',
+    summary: "Change a member's channel role (admin/member)",
     tags: ['channels'],
     body: z.object({ role: z.enum(['admin', 'member']) }),
     handler: async ({ user, params, body }) => {
       const { channel, membership } = await requireChannelAccess(ctx, user, params.id!);
-      if (!canManageChannel(actorOf(user), { kind: channel.kind as never, createdBy: channel.created_by }, membership ? toMembership(membership) : null)) throw forbidden();
-      await ctx.db.updateTable('channel_members').set({ role: body.role }).where('channel_id', '=', channel.id).where('user_id', '=', params.userId!).execute();
+      if (
+        !canManageChannel(
+          actorOf(user),
+          { kind: channel.kind as never, createdBy: channel.created_by },
+          membership ? toMembership(membership) : null,
+        )
+      )
+        throw forbidden();
+      await ctx.db
+        .updateTable('channel_members')
+        .set({ role: body.role })
+        .where('channel_id', '=', channel.id)
+        .where('user_id', '=', params.userId!)
+        .execute();
       const mine = await myChannel(ctx, params.userId!, channel.id);
-      if (mine) ctx.hub.sendToUsers([params.userId!], 'membership.updated', { membership: mine.membership, unreadCount: mine.unreadCount, mentionCount: mine.mentionCount });
+      if (mine)
+        ctx.hub.sendToUsers([params.userId!], 'membership.updated', {
+          membership: mine.membership,
+          unreadCount: mine.unreadCount,
+          mentionCount: mine.mentionCount,
+        });
     },
   });
 
@@ -301,7 +455,12 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
         .where('user_id', '=', user.id)
         .execute();
       const mine = await myChannel(ctx, user.id, params.id!);
-      if (mine) ctx.hub.sendToUsers([user.id], 'membership.updated', { membership: mine.membership, unreadCount: mine.unreadCount, mentionCount: mine.mentionCount });
+      if (mine)
+        ctx.hub.sendToUsers([user.id], 'membership.updated', {
+          membership: mine.membership,
+          unreadCount: mine.unreadCount,
+          mentionCount: mine.mentionCount,
+        });
       return mine?.membership;
     },
   });
@@ -316,7 +475,8 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
       const m = await getMembershipRow(ctx, params.id!, user.id);
       if (!m) throw notFound('Channel');
       // Never move the read pointer backwards via this endpoint.
-      if (body.messageId && m.last_read_message_id && body.messageId <= m.last_read_message_id) return;
+      if (body.messageId && m.last_read_message_id && body.messageId <= m.last_read_message_id)
+        return;
       await markRead(ctx, params.id!, user.id, body.messageId);
     },
   });

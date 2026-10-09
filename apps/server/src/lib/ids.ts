@@ -22,7 +22,13 @@ function randomDigits(): number[] {
 
 /** New ULID. With an explicit timestamp (e.g. imports) no monotonic adjustment is applied. */
 export function ulid(at?: number): string {
-  if (at !== undefined) return encodeTime(at) + randomDigits().map((d) => ALPHABET[d]).join('');
+  if (at !== undefined)
+    return (
+      encodeTime(at) +
+      randomDigits()
+        .map((d) => ALPHABET[d])
+        .join('')
+    );
   let now = Date.now();
   if (now <= lastTime) {
     // Same (or earlier, clock skew) millisecond: increment the random part to keep ordering.

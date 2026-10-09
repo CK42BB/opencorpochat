@@ -17,7 +17,13 @@ async function resync() {
   // After a disconnect we may have missed events: refresh what the user can see.
   await loadBootstrap();
   const { lists, activeChannelId } = useStore.getState();
-  useStore.setState({ lists: activeChannelId && lists[activeChannelId] ? { [activeChannelId]: lists[activeChannelId] } : {}, threads: {} });
+  useStore.setState({
+    lists:
+      activeChannelId && lists[activeChannelId]
+        ? { [activeChannelId]: lists[activeChannelId] }
+        : {},
+    threads: {},
+  });
   if (activeChannelId) await loadLatest(activeChannelId);
 }
 
@@ -27,7 +33,7 @@ export function connect() {
   ws = new WebSocket(`${proto}://${location.host}/api/v1/ws`);
   ws.onopen = () => {
     attempts = 0;
-    useStore.setState({ connected: true });
+    useStore.setState({ connected: true, everConnected: true });
     if (everConnected) resync().catch(() => {});
     everConnected = true;
     reportPresence();

@@ -84,7 +84,13 @@ export async function setupOrg(srv: TestServer) {
   return owner;
 }
 
-export async function invite(owner: Client, srv: TestServer, username: string, role = 'member', channelIds: string[] = []) {
+export async function invite(
+  owner: Client,
+  srv: TestServer,
+  username: string,
+  role = 'member',
+  channelIds: string[] = [],
+) {
   const inv = await owner.post('/invites', { role, channelIds });
   if (inv.status !== 200) throw new Error(`invite failed: ${JSON.stringify(inv.body)}`);
   const c = new Client(srv);

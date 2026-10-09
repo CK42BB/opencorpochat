@@ -1,5 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { parseMentions, replaceShortcodes, type FileInfo, type LinkPreview, type Message, type Poll, type ReactionSummary } from '@ocpc/shared';
+import {
+  parseMentions,
+  replaceShortcodes,
+  type FileInfo,
+  type LinkPreview,
+  type Message,
+  type Poll,
+  type ReactionSummary,
+} from '@ocpc/shared';
 import type { Ctx } from '../../context.js';
 import { bool, json } from '../../db/index.js';
 import type { ChannelsTable, FilesTable, MessagesTable } from '../../db/schema.js';
@@ -37,14 +45,28 @@ interface StoredPoll {
 }
 
 /** Turn message rows into API messages, batch-loading reactions, files, pins, etc. */
-export async function hydrate(ctx: Ctx, rows: MessagesTable[], viewerId: string): Promise<Message[]> {
+export async function hydrate(
+  ctx: Ctx,
+  rows: MessagesTable[],
+  viewerId: string,
+): Promise<Message[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const [reactions, files, pins, saved, replyUsers, votes] = await Promise.all([
-    ctx.db.selectFrom('reactions').selectAll().where('message_id', 'in', ids).orderBy('created_at').execute(),
+    ctx.db
+      .selectFrom('reactions')
+      .selectAll()
+      .where('message_id', 'in', ids)
+      .orderBy('created_at')
+      .execute(),
     ctx.db.selectFrom('files').selectAll().where('message_id', 'in', ids).orderBy('id').execute(),
     ctx.db.selectFrom('pins').select('message_id').where('message_id', 'in', ids).execute(),
-    ctx.db.selectFrom('saved_items').select('message_id').where('user_id', '=', viewerId).where('message_id', 'in', ids).execute(),
+    ctx.db
+      .selectFrom('saved_items')
+      .select('message_id')
+      .where('user_id', '=', viewerId)
+      .where('message_id', 'in', ids)
+      .execute(),
     ctx.db
       .selectFrom('messages')
       .select(['thread_root_id', 'user_id'])
@@ -52,7 +74,11 @@ export async function hydrate(ctx: Ctx, rows: MessagesTable[], viewerId: string)
       .where('thread_root_id', 'in', ids.filter((_, i) => rows[i]!.reply_count > 0).concat(['']))
       .where('deleted_at', 'is', null)
       .execute(),
-    ctx.db.selectFrom('poll_votes').selectAll().where('message_id', 'in', ids.filter((_, i) => rows[i]!.poll).concat([''])).execute(),
+    ctx.db
+      .selectFrom('poll_votes')
+      .selectAll()
+      .where('message_id', 'in', ids.filter((_, i) => rows[i]!.poll).concat(['']))
+      .execute(),
   ]);
 
   const reactMap = new Map<string, ReactionSummary[]>();
@@ -65,7 +91,8 @@ export async function hydrate(ctx: Ctx, rows: MessagesTable[], viewerId: string)
     reactMap.set(r.message_id, list);
   }
   const fileMap = new Map<string, FileInfo[]>();
-  for (const f of files) fileMap.set(f.message_id!, [...(fileMap.get(f.message_id!) ?? []), toFileInfo(f)]);
+  for (const f of files)
+    fileMap.set(f.message_id!, [...(fileMap.get(f.message_id!) ?? []), toFileInfo(f)]);
   const pinSet = new Set(pins.map((p) => p.message_id));
   const savedSet = new Set(saved.map((s) => s.message_id));
   const replyMap = new Map<string, string[]>();
@@ -88,7 +115,9 @@ export async function hydrate(ctx: Ctx, rows: MessagesTable[], viewerId: string)
           anonymous: p.anonymous,
           closed: p.closed,
           options: p.options.map((o) => {
-            const voters = votes.filter((v) => v.message_id === r.id && v.option_id === o.id).map((v) => v.user_id);
+            const voters = votes
+              .filter((v) => v.message_id === r.id && v.option_id === o.id)
+              .map((v) => v.user_id);
             // Anonymous polls reveal only the viewer's own vote and the count.
             const voterIds = p.anonymous ? voters.map((v) => (v === viewerId ? v : '')) : voters;
             return { id: o.id, text: o.text, voterIds };
@@ -111,8 +140,8 @@ export async function hydrate(ctx: Ctx, rows: MessagesTable[], viewerId: string)
       lastReplyAt: r.last_reply_at,
       replyUserIds: replyMap.get(r.id) ?? [],
       alsoInChannel: bool(r.also_in_channel),
-      reactions: deleted ? [] : reactMap.get(r.id) ?? [],
-      files: deleted ? [] : fileMap.get(r.id) ?? [],
+      reactions: deleted ? [] : (reactMap.get(r.id) ?? []),
+      files: deleted ? [] : (fileMap.get(r.id) ?? []),
       pinned: pinSet.has(r.id),
       saved: savedSet.has(r.id),
       previews: deleted ? [] : json<LinkPreview[]>(r.previews, []),
@@ -123,7 +152,11 @@ export async function hydrate(ctx: Ctx, rows: MessagesTable[], viewerId: string)
 }
 
 export async function getMessageRow(ctx: Ctx, id: string) {
-  const row = await ctx.db.selectFrom('messages').selectAll().where('id', '=', id).executeTakeFirst();
+  const row = await ctx.db
+    .selectFrom('messages')
+    .selectAll()
+    .where('id', '=', id)
+    .executeTakeFirst();
   if (!row) throw notFound('Message');
   return row;
 }
@@ -134,7 +167,11 @@ export async function hydrateOne(ctx: Ctx, row: MessagesTable, viewerId: string)
 
 /** Broadcast a message change. Messages carry per-viewer fields (saved), so we hydrate per recipient lazily:
  * the shared payload uses saved=false and clients merge their local saved state. */
-export async function publishMessage(ctx: Ctx, row: MessagesTable, type: 'message.created' | 'message.updated') {
+export async function publishMessage(
+  ctx: Ctx,
+  row: MessagesTable,
+  type: 'message.created' | 'message.updated',
+) {
   const message = await hydrateOne(ctx, row, '');
   await ctx.hub.sendToChannel(row.channel_id, type, { message });
   return message;
@@ -198,12 +235,17 @@ export async function createMessage(ctx: Ctx, input: CreateMessageInput): Promis
   };
 
   // Resolve mentions before the transaction (reads only).
-  const mentionUserIds = kind === 'system' ? [] : await resolveMentions(ctx, input.channel.id, body, input.userId);
+  const mentionUserIds =
+    kind === 'system' ? [] : await resolveMentions(ctx, input.channel.id, body, input.userId);
 
   await ctx.db.transaction().execute(async (trx) => {
     await trx.insertInto('messages').values(row).execute();
     if (!root || row.also_in_channel) {
-      await trx.updateTable('channels').set({ last_message_at: now }).where('id', '=', input.channel.id).execute();
+      await trx
+        .updateTable('channels')
+        .set({ last_message_at: now })
+        .where('id', '=', input.channel.id)
+        .execute();
     }
     if (root) {
       await trx
@@ -216,7 +258,12 @@ export async function createMessage(ctx: Ctx, input: CreateMessageInput): Promis
       for (const uid of new Set(followers)) {
         await trx
           .insertInto('thread_follows')
-          .values({ root_id: root.id, user_id: uid, last_read_at: uid === input.userId ? now : null, following: 1 })
+          .values({
+            root_id: root.id,
+            user_id: uid,
+            last_read_at: uid === input.userId ? now : null,
+            following: 1,
+          })
           .onConflict((oc) => oc.columns(['root_id', 'user_id']).doNothing())
           .execute();
       }
@@ -238,12 +285,19 @@ export async function createMessage(ctx: Ctx, input: CreateMessageInput): Promis
         .where('message_id', 'is', null)
         .where('purpose', '=', 'attachment')
         .executeTakeFirst();
-      if (Number(res.numUpdatedRows) !== fileIds.length) throw badRequest('One or more files are invalid or already attached');
+      if (Number(res.numUpdatedRows) !== fileIds.length)
+        throw badRequest('One or more files are invalid or already attached');
     }
     if (mentionUserIds.length) {
       await trx
         .insertInto('mentions')
-        .values(mentionUserIds.map((uid) => ({ message_id: row.id, user_id: uid, channel_id: input.channel.id })))
+        .values(
+          mentionUserIds.map((uid) => ({
+            message_id: row.id,
+            user_id: uid,
+            channel_id: input.channel.id,
+          })),
+        )
         .onConflict((oc) => oc.doNothing())
         .execute();
     }
@@ -265,14 +319,21 @@ export async function createMessage(ctx: Ctx, input: CreateMessageInput): Promis
   }
   if (!input.skipNotify) {
     for (const fn of ctx.events.onMessageCreated) {
-      Promise.resolve(fn(row.id)).catch((err) => ctx.log.error({ err }, 'onMessageCreated hook failed'));
+      Promise.resolve(fn(row.id)).catch((err) =>
+        ctx.log.error({ err }, 'onMessageCreated hook failed'),
+      );
     }
   }
   return row;
 }
 
 /** Resolve @user, @group, @channel, @here into user ids that are members of the channel. */
-export async function resolveMentions(ctx: Ctx, channelId: string, body: string, authorId: string | null) {
+export async function resolveMentions(
+  ctx: Ctx,
+  channelId: string,
+  body: string,
+  authorId: string | null,
+) {
   const parsed = parseMentions(body);
   const members = await ctx.db
     .selectFrom('channel_members as cm')
@@ -298,7 +359,8 @@ export async function resolveMentions(ctx: Ctx, channelId: string, body: string,
     for (const g of groups) if (memberSet.has(g.user_id)) out.add(g.user_id);
   }
   if (parsed.channel) for (const m of members) out.add(m.id);
-  if (parsed.here) for (const m of members) if (ctx.hub.presenceOf(m.id) === 'online') out.add(m.id);
+  if (parsed.here)
+    for (const m of members) if (ctx.hub.presenceOf(m.id) === 'online') out.add(m.id);
   if (authorId) out.delete(authorId);
   return [...out];
 }
@@ -307,12 +369,22 @@ export async function editMessage(ctx: Ctx, row: MessagesTable, body: string) {
   const newBody = replaceShortcodes(body);
   const mentionIds = await resolveMentions(ctx, row.channel_id, newBody, row.user_id);
   await ctx.db.transaction().execute(async (trx) => {
-    await trx.updateTable('messages').set({ body: newBody, edited_at: nowIso(), previews: null }).where('id', '=', row.id).execute();
+    await trx
+      .updateTable('messages')
+      .set({ body: newBody, edited_at: nowIso(), previews: null })
+      .where('id', '=', row.id)
+      .execute();
     await trx.deleteFrom('mentions').where('message_id', '=', row.id).execute();
     if (mentionIds.length) {
       await trx
         .insertInto('mentions')
-        .values(mentionIds.map((uid) => ({ message_id: row.id, user_id: uid, channel_id: row.channel_id })))
+        .values(
+          mentionIds.map((uid) => ({
+            message_id: row.id,
+            user_id: uid,
+            channel_id: row.channel_id,
+          })),
+        )
         .execute();
     }
   });
@@ -326,7 +398,11 @@ export async function editMessage(ctx: Ctx, row: MessagesTable, body: string) {
 }
 
 export async function deleteMessage(ctx: Ctx, row: MessagesTable) {
-  const files = await ctx.db.selectFrom('files').selectAll().where('message_id', '=', row.id).execute();
+  const files = await ctx.db
+    .selectFrom('files')
+    .selectAll()
+    .where('message_id', '=', row.id)
+    .execute();
   await ctx.db.transaction().execute(async (trx) => {
     await trx
       .updateTable('messages')
@@ -354,13 +430,22 @@ export async function deleteMessage(ctx: Ctx, row: MessagesTable) {
     threadRootId: row.thread_root_id,
   });
   if (row.thread_root_id) {
-    const root = await ctx.db.selectFrom('messages').selectAll().where('id', '=', row.thread_root_id).executeTakeFirst();
+    const root = await ctx.db
+      .selectFrom('messages')
+      .selectAll()
+      .where('id', '=', row.thread_root_id)
+      .executeTakeFirst();
     if (root) await publishMessage(ctx, root, 'message.updated');
   }
 }
 
 export async function reactionSummary(ctx: Ctx, messageId: string): Promise<ReactionSummary[]> {
-  const rows = await ctx.db.selectFrom('reactions').selectAll().where('message_id', '=', messageId).orderBy('created_at').execute();
+  const rows = await ctx.db
+    .selectFrom('reactions')
+    .selectAll()
+    .where('message_id', '=', messageId)
+    .orderBy('created_at')
+    .execute();
   const out: ReactionSummary[] = [];
   for (const r of rows) {
     let e = out.find((x) => x.emoji === r.emoji);

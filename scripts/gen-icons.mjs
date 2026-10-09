@@ -28,35 +28,66 @@ function png(size, pixel) {
     raw[y * (size * 4 + 1)] = 0;
     for (let x = 0; x < size; x++) {
       // 4x4 supersampling for smooth edges.
-      let r = 0, g = 0, b = 0, a = 0;
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0;
       for (let sy = 0; sy < 4; sy++)
         for (let sx = 0; sx < 4; sx++) {
-          const [pr, pg, pb, pa] = pixel(((x + (sx + 0.5) / 4) / size) * 64, ((y + (sy + 0.5) / 4) / size) * 64);
-          r += pr * pa; g += pg * pa; b += pb * pa; a += pa;
+          const [pr, pg, pb, pa] = pixel(
+            ((x + (sx + 0.5) / 4) / size) * 64,
+            ((y + (sy + 0.5) / 4) / size) * 64,
+          );
+          r += pr * pa;
+          g += pg * pa;
+          b += pb * pa;
+          a += pa;
         }
       const o = y * (size * 4 + 1) + 1 + x * 4;
-      raw[o] = a ? r / a : 0; raw[o + 1] = a ? g / a : 0; raw[o + 2] = a ? b / a : 0; raw[o + 3] = (a / 16) * 255;
+      raw[o] = a ? r / a : 0;
+      raw[o + 1] = a ? g / a : 0;
+      raw[o + 2] = a ? b / a : 0;
+      raw[o + 3] = (a / 16) * 255;
     }
   }
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; ihdr[9] = 6;
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+  ihdr.writeUInt32BE(size, 0);
+  ihdr.writeUInt32BE(size, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
 }
 const inRoundRect = (x, y, x0, y0, x1, y1, r) => {
   const cx = Math.max(x0 + r, Math.min(x, x1 - r));
   const cy = Math.max(y0 + r, Math.min(y, y1 - r));
   return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
 };
-const BRAND = [74, 58, 255], WHITE = [255, 255, 255];
+const BRAND = [74, 58, 255],
+  WHITE = [255, 255, 255];
 function mark(x, y, full) {
   if (!full && !inRoundRect(x, y, 0, 0, 64, 64, 14)) return [0, 0, 0, 0];
-  const bubble = inRoundRect(x, y, 14, 12, 50, 40, 6) || (y >= 38 && y <= 48 && x >= 19 && x <= 28 && x - 19 <= (48 - y) * (9 / 10) + 0.5 && y <= 40 + (28 - x) * (8 / 9));
+  const bubble =
+    inRoundRect(x, y, 14, 12, 50, 40, 6) ||
+    (y >= 38 &&
+      y <= 48 &&
+      x >= 19 &&
+      x <= 28 &&
+      x - 19 <= (48 - y) * (9 / 10) + 0.5 &&
+      y <= 40 + (28 - x) * (8 / 9));
   if (bubble) {
     for (const cx of [24, 32, 40]) if ((x - cx) ** 2 + (y - 26) ** 2 <= 9) return [...BRAND, 1];
     return [...WHITE, 1];
   }
   return [...BRAND, 1];
 }
-for (const size of [192, 512]) writeFileSync(`apps/web/public/icon-${size}.png`, png(size, (x, y) => mark(x, y, size === 512)));
+for (const size of [192, 512])
+  writeFileSync(
+    `apps/web/public/icon-${size}.png`,
+    png(size, (x, y) => mark(x, y, size === 512)),
+  );
 console.log('icons written');

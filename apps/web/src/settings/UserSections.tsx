@@ -14,7 +14,9 @@ import { describeUserAgent, savePrefs } from './common';
 
 function timezones(): string[] {
   try {
-    return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone');
+    return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf(
+      'timeZone',
+    );
   } catch {
     return ['UTC'];
   }
@@ -22,7 +24,14 @@ function timezones(): string[] {
 
 export function ProfileSection() {
   const me = useStore((s) => s.me)!;
-  const [form, setForm] = useState({ displayName: me.displayName, fullName: me.fullName, title: me.title, pronouns: me.pronouns, phone: '', timezone: me.timezone });
+  const [form, setForm] = useState({
+    displayName: me.displayName,
+    fullName: me.fullName,
+    title: me.title,
+    pronouns: me.pronouns,
+    phone: '',
+    timezone: me.timezone,
+  });
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -33,7 +42,9 @@ export function ProfileSection() {
       .then((u) => setForm((f) => ({ ...f, phone: u.phone ?? '' })))
       .catch(() => {});
   }, [me.id]);
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
   const patch = async (body: Record<string, unknown>) => {
     const updated = await api.patch<Me>('/me', body);
     useStore.setState({ me: updated });
@@ -72,55 +83,118 @@ export function ProfileSection() {
           <Avatar user={me} size={72} />
           <div className="col">
             <div className="row">
-              <button className="btn btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              <button
+                className="btn btn-sm"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+              >
                 {uploading ? <Spinner size={14} /> : <Upload size={14} />} {t('Upload photo')}
               </button>
               {me.avatarUrl && (
-                <button className="btn btn-sm btn-ghost" onClick={() => patch({ avatarFileId: null }).catch(toastError)}>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => patch({ avatarFileId: null }).catch(toastError)}
+                >
                   <Trash2 size={14} /> {t('Remove')}
                 </button>
               )}
             </div>
-            <span className="faint small">{t('A square image of at least 256×256 works best.')}</span>
+            <span className="faint small">
+              {t('A square image of at least 256×256 works best.')}
+            </span>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => (onAvatar(e.target.files?.[0]), (e.target.value = ''))} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => (onAvatar(e.target.files?.[0]), (e.target.value = ''))}
+          />
         </div>
       </div>
       <form className="card" onSubmit={save}>
         <h3>{t('About you')}</h3>
         <div className="field">
           <label htmlFor="p-dn">{t('Display name')}</label>
-          <input id="p-dn" className="input" value={form.displayName} onChange={set('displayName')} required maxLength={80} />
-          <span className="hint">{t('How your name appears in messages. Your username is @{username}.', { username: me.username })}</span>
+          <input
+            id="p-dn"
+            className="input"
+            value={form.displayName}
+            onChange={set('displayName')}
+            required
+            maxLength={80}
+          />
+          <span className="hint">
+            {t('How your name appears in messages. Your username is @{username}.', {
+              username: me.username,
+            })}
+          </span>
         </div>
         <div className="field">
           <label htmlFor="p-fn">{t('Full name')}</label>
-          <input id="p-fn" className="input" value={form.fullName} onChange={set('fullName')} maxLength={120} />
+          <input
+            id="p-fn"
+            className="input"
+            value={form.fullName}
+            onChange={set('fullName')}
+            maxLength={120}
+          />
         </div>
         <div className="field">
           <label htmlFor="p-title">{t('Title')}</label>
-          <input id="p-title" className="input" value={form.title} onChange={set('title')} maxLength={120} placeholder={t('e.g. Head of Operations')} />
+          <input
+            id="p-title"
+            className="input"
+            value={form.title}
+            onChange={set('title')}
+            maxLength={120}
+            placeholder={t('e.g. Head of Operations')}
+          />
         </div>
         <div className="field">
           <label htmlFor="p-pron">{t('Pronouns')}</label>
-          <input id="p-pron" className="input" value={form.pronouns} onChange={set('pronouns')} maxLength={40} />
+          <input
+            id="p-pron"
+            className="input"
+            value={form.pronouns}
+            onChange={set('pronouns')}
+            maxLength={40}
+          />
         </div>
         <div className="field">
           <label htmlFor="p-phone">{t('Phone')}</label>
-          <input id="p-phone" className="input" type="tel" value={form.phone} onChange={set('phone')} maxLength={40} />
+          <input
+            id="p-phone"
+            className="input"
+            type="tel"
+            value={form.phone}
+            onChange={set('phone')}
+            maxLength={40}
+          />
         </div>
         <div className="field">
           <label htmlFor="p-tz">{t('Time zone')}</label>
           <div className="row">
             <select id="p-tz" className="select" value={form.timezone} onChange={set('timezone')}>
-              {!zones.includes(form.timezone) && <option value={form.timezone}>{form.timezone}</option>}
+              {!zones.includes(form.timezone) && (
+                <option value={form.timezone}>{form.timezone}</option>
+              )}
               {zones.map((z) => (
                 <option key={z} value={z}>
                   {z.replace(/_/g, ' ')}
                 </option>
               ))}
             </select>
-            <button type="button" className="btn" onClick={() => setForm((f) => ({ ...f, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }))}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() =>
+                setForm((f) => ({
+                  ...f,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                }))
+              }
+            >
               {t('Detect')}
             </button>
           </div>
@@ -144,7 +218,10 @@ function PasswordCard() {
     if (next !== confirm) return toast(t('Passwords do not match'), 'error');
     setBusy(true);
     try {
-      await api.post('/auth/password', { ...(me.hasPassword ? { currentPassword: current } : {}), newPassword: next });
+      await api.post('/auth/password', {
+        ...(me.hasPassword ? { currentPassword: current } : {}),
+        newPassword: next,
+      });
       useStore.setState({ me: { ...me, hasPassword: true } });
       setCurrent('');
       setNext('');
@@ -162,17 +239,42 @@ function PasswordCard() {
       {me.hasPassword && (
         <div className="field">
           <label htmlFor="a-cur">{t('Current password')}</label>
-          <input id="a-cur" className="input" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+          <input
+            id="a-cur"
+            className="input"
+            type="password"
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            required
+          />
         </div>
       )}
       <div className="field">
         <label htmlFor="a-new">{t('New password')}</label>
-        <input id="a-new" className="input" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} minLength={10} required />
+        <input
+          id="a-new"
+          className="input"
+          type="password"
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+          minLength={10}
+          required
+        />
         <span className="hint">{t('At least 10 characters.')}</span>
       </div>
       <div className="field">
         <label htmlFor="a-conf">{t('Confirm new password')}</label>
-        <input id="a-conf" className="input" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+        <input
+          id="a-conf"
+          className="input"
+          type="password"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          required
+        />
       </div>
       <button className="btn btn-primary" disabled={busy}>
         {t('Update password')}
@@ -199,16 +301,30 @@ function TwoFactorCard() {
   return (
     <div className="card">
       <h3>
-        {t('Two-factor authentication')} {me.totpEnabled && <span className="pill pill-brand">{t('On')}</span>}
+        {t('Two-factor authentication')}{' '}
+        {me.totpEnabled && <span className="pill pill-brand">{t('On')}</span>}
       </h3>
       {me.totpEnabled ? (
         settings?.require2fa ? (
-          <p className="muted small">{t('Your organization requires two-factor authentication, so it cannot be turned off.')}</p>
+          <p className="muted small">
+            {t('Your organization requires two-factor authentication, so it cannot be turned off.')}
+          </p>
         ) : (
           <form onSubmit={disable}>
-            <p className="muted small">{t('To turn off two-factor authentication, enter a current code from your app.')}</p>
+            <p className="muted small">
+              {t('To turn off two-factor authentication, enter a current code from your app.')}
+            </p>
             <div className="row">
-              <input className="input" style={{ maxWidth: 200 }} inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" aria-label={t('Two-factor code')} required />
+              <input
+                className="input"
+                style={{ maxWidth: 200 }}
+                inputMode="numeric"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="123456"
+                aria-label={t('Two-factor code')}
+                required
+              />
               <button className="btn btn-danger">{t('Turn off')}</button>
             </div>
           </form>
@@ -227,7 +343,15 @@ function SessionsCard() {
     load();
   }, []);
   const revoke = async (s: Session) => {
-    if (!(await confirmDialog({ title: t('Sign out this session?'), body: describeUserAgent(s.userAgent), confirmLabel: t('Sign out'), danger: true }))) return;
+    if (
+      !(await confirmDialog({
+        title: t('Sign out this session?'),
+        body: describeUserAgent(s.userAgent),
+        confirmLabel: t('Sign out'),
+        danger: true,
+      }))
+    )
+      return;
     try {
       await api.del(`/auth/sessions/${s.id}`);
       load();
@@ -247,10 +371,12 @@ function SessionsCard() {
               <Monitor size={20} className="faint" />
               <div className="grow" style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 600 }}>
-                  {describeUserAgent(s.userAgent)} {s.current && <span className="pill pill-brand">{t('This device')}</span>}
+                  {describeUserAgent(s.userAgent)}{' '}
+                  {s.current && <span className="pill pill-brand">{t('This device')}</span>}
                 </div>
                 <div className="faint small ellipsis" title={s.userAgent}>
-                  {s.ip} · {t('active {when}', { when: formatRelative(s.lastSeenAt) })} · {t('signed in {when}', { when: formatDateTime(s.createdAt) })}
+                  {s.ip} · {t('active {when}', { when: formatRelative(s.lastSeenAt) })} ·{' '}
+                  {t('signed in {when}', { when: formatDateTime(s.createdAt) })}
                 </div>
               </div>
               {!s.current && (
@@ -306,7 +432,12 @@ function KeywordEditor({ value, onChange }: { value: string[]; onChange: (v: str
           {value.map((k) => (
             <span key={k} className="pill pill-brand row" style={{ gap: 4 }}>
               {k}
-              <button className="icon-btn icon-btn-sm" style={{ width: 18, height: 18 }} onClick={() => onChange(value.filter((x) => x !== k))} aria-label={t('Remove {name}', { name: k })}>
+              <button
+                className="icon-btn icon-btn-sm"
+                style={{ width: 18, height: 18 }}
+                onClick={() => onChange(value.filter((x) => x !== k))}
+                aria-label={t('Remove {name}', { name: k })}
+              >
                 <X size={12} />
               </button>
             </span>
@@ -347,7 +478,9 @@ export function NotificationsSection() {
   const dnd = !!me.dndUntil;
   const setDnd = async (minutes: number | null) => {
     try {
-      const updated = await api.put<Me>('/me/dnd', { until: minutes ? new Date(Date.now() + minutes * 60_000).toISOString() : null });
+      const updated = await api.put<Me>('/me/dnd', {
+        until: minutes ? new Date(Date.now() + minutes * 60_000).toISOString() : null,
+      });
       useStore.setState({ me: updated });
     } catch (err) {
       toastError(err);
@@ -358,27 +491,46 @@ export function NotificationsSection() {
       <div className="card">
         <h3>{t('Desktop & mobile notifications')}</h3>
         {perm === 'unsupported' ? (
-          <p className="muted small">{t('This browser does not support notifications. Install the app on your device for push notifications.')}</p>
+          <p className="muted small">
+            {t(
+              'This browser does not support notifications. Install the app on your device for push notifications.',
+            )}
+          </p>
         ) : perm === 'granted' ? (
           <p className="small">✅ {t('Notifications are enabled on this device.')}</p>
         ) : perm === 'denied' ? (
-          <p className="muted small">{t('Notifications are blocked for this site. Allow them in your browser’s site settings, then reload.')}</p>
+          <p className="muted small">
+            {t(
+              'Notifications are blocked for this site. Allow them in your browser’s site settings, then reload.',
+            )}
+          </p>
         ) : (
           <>
-            <p className="muted small">{t('Get notified about mentions and direct messages, even when this tab is closed.')}</p>
-            <button className="btn btn-primary" onClick={() => enableNotifications().then(setPerm).catch(toastError)}>
+            <p className="muted small">
+              {t('Get notified about mentions and direct messages, even when this tab is closed.')}
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={() => enableNotifications().then(setPerm).catch(toastError)}
+            >
               {t('Enable notifications')}
             </button>
           </>
         )}
-        {!info?.vapidPublicKey && <p className="faint small">{t('Push notifications are not configured on this server.')}</p>}
+        {!info?.vapidPublicKey && (
+          <p className="faint small">
+            {t('Push notifications are not configured on this server.')}
+          </p>
+        )}
       </div>
       <div className="card">
         <h3>{t('Pause notifications')}</h3>
         {dnd ? (
           <div className="row">
             <BellOff size={16} />
-            <span className="grow small">{t('Paused until {when}', { when: formatDateTime(me.dndUntil!) })}</span>
+            <span className="grow small">
+              {t('Paused until {when}', { when: formatDateTime(me.dndUntil!) })}
+            </span>
             <button className="btn btn-sm" onClick={() => setDnd(null)}>
               {t('Resume')}
             </button>
@@ -402,17 +554,37 @@ export function NotificationsSection() {
       <div className="card">
         <h3>{t('Notification schedule')}</h3>
         <label className="checkbox">
-          <input type="checkbox" checked={sched.enabled} onChange={(e) => savePrefs({ notifySchedule: { ...sched, enabled: e.target.checked } })} />
+          <input
+            type="checkbox"
+            checked={sched.enabled}
+            onChange={(e) => savePrefs({ notifySchedule: { ...sched, enabled: e.target.checked } })}
+          />
           {t('Only notify me during these hours (in my time zone)')}
         </label>
         <div className="row" style={{ flexWrap: 'wrap', marginBottom: 10 }}>
           <label className="row small" htmlFor="n-start">
             {t('From')}
-            <input id="n-start" className="input" type="time" style={{ width: 'auto' }} value={sched.start} disabled={!sched.enabled} onChange={(e) => savePrefs({ notifySchedule: { ...sched, start: e.target.value } })} />
+            <input
+              id="n-start"
+              className="input"
+              type="time"
+              style={{ width: 'auto' }}
+              value={sched.start}
+              disabled={!sched.enabled}
+              onChange={(e) => savePrefs({ notifySchedule: { ...sched, start: e.target.value } })}
+            />
           </label>
           <label className="row small" htmlFor="n-end">
             {t('to')}
-            <input id="n-end" className="input" type="time" style={{ width: 'auto' }} value={sched.end} disabled={!sched.enabled} onChange={(e) => savePrefs({ notifySchedule: { ...sched, end: e.target.value } })} />
+            <input
+              id="n-end"
+              className="input"
+              type="time"
+              style={{ width: 'auto' }}
+              value={sched.end}
+              disabled={!sched.enabled}
+              onChange={(e) => savePrefs({ notifySchedule: { ...sched, end: e.target.value } })}
+            />
           </label>
         </div>
         <div className="row" style={{ flexWrap: 'wrap' }} role="group" aria-label={t('Days')}>
@@ -422,7 +594,16 @@ export function NotificationsSection() {
                 type="checkbox"
                 disabled={!sched.enabled}
                 checked={sched.days.includes(i)}
-                onChange={(e) => savePrefs({ notifySchedule: { ...sched, days: e.target.checked ? [...sched.days, i].sort() : sched.days.filter((x) => x !== i) } })}
+                onChange={(e) =>
+                  savePrefs({
+                    notifySchedule: {
+                      ...sched,
+                      days: e.target.checked
+                        ? [...sched.days, i].sort()
+                        : sched.days.filter((x) => x !== i),
+                    },
+                  })
+                }
               />
               {t(d)}
             </label>
@@ -432,12 +613,23 @@ export function NotificationsSection() {
       <div className="card">
         <h3>{t('Email')}</h3>
         <label className="checkbox">
-          <input type="checkbox" checked={prefs.emailNotifications} onChange={(e) => savePrefs({ emailNotifications: e.target.checked })} />
+          <input
+            type="checkbox"
+            checked={prefs.emailNotifications}
+            onChange={(e) => savePrefs({ emailNotifications: e.target.checked })}
+          />
           {t('Email me about mentions, direct messages and thread replies I miss')}
         </label>
         <div className="field">
           <label htmlFor="n-delay">{t('Send after I have been away for')}</label>
-          <select id="n-delay" className="select" style={{ maxWidth: 240 }} value={prefs.emailDelayMinutes} disabled={!prefs.emailNotifications} onChange={(e) => savePrefs({ emailDelayMinutes: Number(e.target.value) })}>
+          <select
+            id="n-delay"
+            className="select"
+            style={{ maxWidth: 240 }}
+            value={prefs.emailDelayMinutes}
+            disabled={!prefs.emailNotifications}
+            onChange={(e) => savePrefs({ emailDelayMinutes: Number(e.target.value) })}
+          >
             {[5, 15, 30, 60, 240].map((m) => (
               <option key={m} value={m}>
                 {m < 60 ? t('{n} minutes', { n: m }) : t('{n} hours', { n: m / 60 })}
@@ -448,7 +640,9 @@ export function NotificationsSection() {
       </div>
       <div className="card">
         <h3>{t('Keywords')}</h3>
-        <p className="muted small">{t('Get notified when anyone uses these words in a channel you belong to.')}</p>
+        <p className="muted small">
+          {t('Get notified when anyone uses these words in a channel you belong to.')}
+        </p>
         <KeywordEditor value={prefs.keywords} onChange={(keywords) => savePrefs({ keywords })} />
       </div>
     </>
@@ -463,7 +657,12 @@ export function PreferencesSection() {
         <h3>{t('Theme')}</h3>
         {(['system', 'light', 'dark'] as const).map((v) => (
           <label key={v} className="checkbox">
-            <input type="radio" name="theme" checked={prefs.theme === v} onChange={() => savePrefs({ theme: v })} />
+            <input
+              type="radio"
+              name="theme"
+              checked={prefs.theme === v}
+              onChange={() => savePrefs({ theme: v })}
+            />
             {v === 'system' ? t('Match my device') : v === 'light' ? t('Light') : t('Dark')}
           </label>
         ))}
@@ -472,19 +671,36 @@ export function PreferencesSection() {
         <h3>{t('Message density')}</h3>
         {(['comfortable', 'compact'] as const).map((v) => (
           <label key={v} className="checkbox">
-            <input type="radio" name="density" checked={prefs.density === v} onChange={() => savePrefs({ density: v })} />
-            {v === 'comfortable' ? t('Comfortable — larger avatars and spacing') : t('Compact — fit more messages on screen')}
+            <input
+              type="radio"
+              name="density"
+              checked={prefs.density === v}
+              onChange={() => savePrefs({ density: v })}
+            />
+            {v === 'comfortable'
+              ? t('Comfortable — larger avatars and spacing')
+              : t('Compact — fit more messages on screen')}
           </label>
         ))}
       </div>
       <div className="card">
         <h3>{t('Sending messages')}</h3>
         <label className="checkbox">
-          <input type="radio" name="send" checked={prefs.enterToSend} onChange={() => savePrefs({ enterToSend: true })} />
+          <input
+            type="radio"
+            name="send"
+            checked={prefs.enterToSend}
+            onChange={() => savePrefs({ enterToSend: true })}
+          />
           {t('Enter sends; Shift+Enter adds a new line')}
         </label>
         <label className="checkbox">
-          <input type="radio" name="send" checked={!prefs.enterToSend} onChange={() => savePrefs({ enterToSend: false })} />
+          <input
+            type="radio"
+            name="send"
+            checked={!prefs.enterToSend}
+            onChange={() => savePrefs({ enterToSend: false })}
+          />
           {t('Enter adds a new line; Ctrl/⌘+Enter sends')}
         </label>
       </div>

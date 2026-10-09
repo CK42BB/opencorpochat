@@ -18,7 +18,12 @@ export function TwoFactorGate() {
       <main className="auth-card">
         <Logo size={48} />
         <h1>{t('Set up two-factor authentication')}</h1>
-        <p className="muted">{t('{org} requires two-factor authentication for every account. It only takes a minute.', { org: info?.orgName ?? '' })}</p>
+        <p className="muted">
+          {t(
+            '{org} requires two-factor authentication for every account. It only takes a minute.',
+            { org: info?.orgName ?? '' },
+          )}
+        </p>
         <TwoFactorSetup onEnabled={() => {}} />
         <div className="footer-links">
           <button className="btn btn-ghost btn-sm" onClick={signOut}>

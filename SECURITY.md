@@ -4,12 +4,12 @@ We take the security of OpenCorpoChat seriously. Because it's self-hosted, the o
 
 ## Supported versions
 
-| Version | Supported |
-|---|---|
-| Latest minor release (e.g. `1.4.x`) | ✅ Security fixes |
+| Version                               | Supported                                                |
+| ------------------------------------- | -------------------------------------------------------- |
+| Latest minor release (e.g. `1.4.x`)   | ✅ Security fixes                                        |
 | Previous minor release (e.g. `1.3.x`) | ✅ Security fixes for 90 days after the next minor ships |
-| Older releases | ❌ Please upgrade |
-| `main` branch (unreleased) | ✅ Best effort |
+| Older releases                        | ❌ Please upgrade                                        |
+| `main` branch (unreleased)            | ✅ Best effort                                           |
 
 Before 1.0, only the latest `0.x` release is supported.
 
@@ -29,12 +29,12 @@ Please include:
 
 ## What to expect
 
-| Step | Target |
-|---|---|
-| Acknowledgement of your report | within **72 hours** |
-| Initial assessment and severity rating (CVSS) | within **7 days** |
-| Fix released for critical/high issues | as fast as possible, normally within **30 days** |
-| Public disclosure | coordinated, at most **90 days** after the report |
+| Step                                          | Target                                            |
+| --------------------------------------------- | ------------------------------------------------- |
+| Acknowledgement of your report                | within **72 hours**                               |
+| Initial assessment and severity rating (CVSS) | within **7 days**                                 |
+| Fix released for critical/high issues         | as fast as possible, normally within **30 days**  |
+| Public disclosure                             | coordinated, at most **90 days** after the report |
 
 We'll keep you informed as we go. Once a fix is available, we publish a GitHub Security Advisory, request a CVE where appropriate, and credit you unless you'd prefer to stay anonymous.
 

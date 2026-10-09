@@ -17,7 +17,12 @@ type Json = Record<string, unknown> | unknown[];
 let onUnauthorized: () => void = () => {};
 export const setUnauthorizedHandler = (fn: () => void) => (onUnauthorized = fn);
 
-export async function request<T = unknown>(method: string, path: string, body?: Json | FormData, opts: { signal?: AbortSignal; quiet401?: boolean } = {}): Promise<T> {
+export async function request<T = unknown>(
+  method: string,
+  path: string,
+  body?: Json | FormData,
+  opts: { signal?: AbortSignal; quiet401?: boolean } = {},
+): Promise<T> {
   const headers: Record<string, string> = { 'X-OCPC-CSRF': '1' };
   let payload: BodyInit | undefined;
   if (body instanceof FormData) payload = body;
@@ -25,7 +30,13 @@ export async function request<T = unknown>(method: string, path: string, body?: 
     headers['Content-Type'] = 'application/json';
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`/api/v1${path}`, { method, headers, body: payload, credentials: 'same-origin', signal: opts.signal });
+  const res = await fetch(`/api/v1${path}`, {
+    method,
+    headers,
+    body: payload,
+    credentials: 'same-origin',
+    signal: opts.signal,
+  });
   if (res.status === 204) return undefined as T;
   const text = await res.text();
   let data: unknown = null;
@@ -37,13 +48,19 @@ export async function request<T = unknown>(method: string, path: string, body?: 
   if (!res.ok) {
     const d = (data ?? {}) as { error?: string; message?: string; details?: unknown };
     if (res.status === 401 && !opts.quiet401 && d.error === 'unauthorized') onUnauthorized();
-    throw new ApiError(res.status, d.error ?? 'error', d.message ?? `Request failed (${res.status})`, d.details);
+    throw new ApiError(
+      res.status,
+      d.error ?? 'error',
+      d.message ?? `Request failed (${res.status})`,
+      d.details,
+    );
   }
   return data as T;
 }
 
 export const api = {
-  get: <T = unknown>(p: string, opts?: { signal?: AbortSignal; quiet401?: boolean }) => request<T>('GET', p, undefined, opts),
+  get: <T = unknown>(p: string, opts?: { signal?: AbortSignal; quiet401?: boolean }) =>
+    request<T>('GET', p, undefined, opts),
   post: <T = unknown>(p: string, b: Json | FormData = {}) => request<T>('POST', p, b),
   patch: <T = unknown>(p: string, b: Json = {}) => request<T>('PATCH', p, b),
   put: <T = unknown>(p: string, b: Json = {}) => request<T>('PUT', p, b),
@@ -70,7 +87,10 @@ export function uploadFile(
         /* ignore */
       }
       if (xhr.status >= 200 && xhr.status < 300) resolve(data as never);
-      else reject(new ApiError(xhr.status, data.error ?? 'upload_failed', data.message ?? 'Upload failed'));
+      else
+        reject(
+          new ApiError(xhr.status, data.error ?? 'upload_failed', data.message ?? 'Upload failed'),
+        );
     };
     xhr.onerror = () => reject(new ApiError(0, 'network', 'Network error during upload'));
     xhr.onabort = () => reject(new ApiError(0, 'aborted', 'Upload cancelled'));

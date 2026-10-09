@@ -24,7 +24,19 @@ export function SectionTitle({ title, children }: { title: string; children?: Re
 }
 
 /** Editable list of short strings shown as removable chips. */
-export function ChipInput({ value, onChange, placeholder, label, normalize = (s) => s.trim() }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string; label: string; normalize?: (s: string) => string }) {
+export function ChipInput({
+  value,
+  onChange,
+  placeholder,
+  label,
+  normalize = (s) => s.trim(),
+}: {
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+  label: string;
+  normalize?: (s: string) => string;
+}) {
   const [draft, setDraft] = useState('');
   const add = () => {
     const v = normalize(draft);
@@ -38,7 +50,11 @@ export function ChipInput({ value, onChange, placeholder, label, normalize = (s)
           {value.map((v) => (
             <span key={v} className="admin-chip">
               {v}
-              <button type="button" onClick={() => onChange(value.filter((x) => x !== v))} aria-label={t('Remove {name}', { name: v })}>
+              <button
+                type="button"
+                onClick={() => onChange(value.filter((x) => x !== v))}
+                aria-label={t('Remove {name}', { name: v })}
+              >
                 <X size={12} />
               </button>
             </span>

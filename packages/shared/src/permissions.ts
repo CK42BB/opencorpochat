@@ -39,7 +39,11 @@ export function canManageChannel(
   return isAdmin(a) || member?.role === 'admin' || (ch.createdBy === a.id && !!member);
 }
 
-export function canAddMembers(a: Actor, ch: Pick<Channel, 'kind' | 'archived'>, member: Membership | null) {
+export function canAddMembers(
+  a: Actor,
+  ch: Pick<Channel, 'kind' | 'archived'>,
+  member: Membership | null,
+) {
   if (ch.archived || ch.kind === 'dm' || ch.kind === 'group_dm') return false;
   if (isGuest(a)) return false;
   if (ch.kind === 'public') return !!member || isAdmin(a);
@@ -57,7 +61,11 @@ export function canEditMessage(
   return now - Date.parse(msg.createdAt) <= editWindowMinutes * 60_000;
 }
 
-export function canDeleteMessage(a: Actor, msg: { userId: string | null }, member: Membership | null) {
+export function canDeleteMessage(
+  a: Actor,
+  msg: { userId: string | null },
+  member: Membership | null,
+) {
   return msg.userId === a.id || isAdmin(a) || member?.role === 'admin';
 }
 

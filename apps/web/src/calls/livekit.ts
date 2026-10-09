@@ -31,8 +31,14 @@ export class LiveKitTransport implements CallTransport {
     this.room
       .on(RoomEvent.TrackSubscribed, (_track, _pub, p) => refresh(p))
       .on(RoomEvent.TrackUnsubscribed, (_track, _pub, p) => refresh(p))
-      .on(RoomEvent.TrackMuted, (_pub, p) => p !== this.room.localParticipant && refresh(p as RemoteParticipant))
-      .on(RoomEvent.TrackUnmuted, (_pub, p) => p !== this.room.localParticipant && refresh(p as RemoteParticipant))
+      .on(
+        RoomEvent.TrackMuted,
+        (_pub, p) => p !== this.room.localParticipant && refresh(p as RemoteParticipant),
+      )
+      .on(
+        RoomEvent.TrackUnmuted,
+        (_pub, p) => p !== this.room.localParticipant && refresh(p as RemoteParticipant),
+      )
       .on(RoomEvent.ParticipantDisconnected, (p) => setRemote(p.identity, null))
       .on(RoomEvent.LocalTrackPublished, () => this.publishLocal())
       .on(RoomEvent.LocalTrackUnpublished, () => this.publishLocal())
@@ -46,7 +52,9 @@ export class LiveKitTransport implements CallTransport {
     useCallStore.setState({ status: 'connected' });
     for (const p of this.room.remoteParticipants.values()) refresh(p);
     try {
-      await this.room.localParticipant.setMicrophoneEnabled(!useCallStore.getState().muted, { deviceId: useCallStore.getState().micId || undefined });
+      await this.room.localParticipant.setMicrophoneEnabled(!useCallStore.getState().muted, {
+        deviceId: useCallStore.getState().micId || undefined,
+      });
     } catch {
       toast(t('Could not access your microphone. You joined listen-only.'), 'error');
       useCallStore.setState({ muted: true });
@@ -67,7 +75,10 @@ export class LiveKitTransport implements CallTransport {
     const { Track } = this.lk;
     const lp = this.room.localParticipant;
     const audio = lp.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack;
-    const video = (lp.getTrackPublication(Track.Source.ScreenShare) ?? lp.getTrackPublication(Track.Source.Camera))?.track?.mediaStreamTrack;
+    const video = (
+      lp.getTrackPublication(Track.Source.ScreenShare) ??
+      lp.getTrackPublication(Track.Source.Camera)
+    )?.track?.mediaStreamTrack;
     const tracks = [audio, video].filter((x): x is MediaStreamTrack => !!x);
     useCallStore.setState({ localStream: tracks.length ? new MediaStream(tracks) : null });
   }
@@ -77,7 +88,11 @@ export class LiveKitTransport implements CallTransport {
       await fn();
     } catch (err) {
       const name = (err as { name?: string }).name;
-      throw new MediaError(name === 'NotAllowedError' ? t('Permission to use your {what} was denied.', { what }) : t('Could not access your {what}.', { what }));
+      throw new MediaError(
+        name === 'NotAllowedError'
+          ? t('Permission to use your {what} was denied.', { what })
+          : t('Could not access your {what}.', { what }),
+      );
     }
     this.publishLocal();
   }
@@ -88,7 +103,11 @@ export class LiveKitTransport implements CallTransport {
 
   setCamera(on: boolean) {
     return this.wrap(
-      () => this.room.localParticipant.setCameraEnabled(on, { deviceId: useCallStore.getState().camId || undefined, resolution: { width: 640, height: 360, frameRate: 24 } }),
+      () =>
+        this.room.localParticipant.setCameraEnabled(on, {
+          deviceId: useCallStore.getState().camId || undefined,
+          resolution: { width: 640, height: 360, frameRate: 24 },
+        }),
       t('camera'),
     );
   }

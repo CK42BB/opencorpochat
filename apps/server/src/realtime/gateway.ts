@@ -31,8 +31,16 @@ export function gatewayRoutes(app: FastifyInstance, ctx: Ctx) {
       lastTyping: new Map(),
     };
     ctx.hub.add(conn);
-    ctx.hub.sendToConn(conn.id, 'hello', { connectionId: conn.id, serverTime: nowIso(), userId: auth.user.id });
-    await ctx.db.updateTable('users').set({ last_seen_at: nowIso() }).where('id', '=', auth.user.id).execute();
+    ctx.hub.sendToConn(conn.id, 'hello', {
+      connectionId: conn.id,
+      serverTime: nowIso(),
+      userId: auth.user.id,
+    });
+    await ctx.db
+      .updateTable('users')
+      .set({ last_seen_at: nowIso() })
+      .where('id', '=', auth.user.id)
+      .execute();
 
     let alive = true;
     const ping = setInterval(() => {
@@ -73,7 +81,11 @@ export function gatewayRoutes(app: FastifyInstance, ctx: Ctx) {
             await ctx.hub.sendToChannel(
               frame.channelId,
               'typing',
-              { channelId: frame.channelId, threadRootId: frame.threadRootId ?? null, userId: conn.userId },
+              {
+                channelId: frame.channelId,
+                threadRootId: frame.threadRootId ?? null,
+                userId: conn.userId,
+              },
               { exceptUser: conn.userId },
             );
             break;
@@ -90,7 +102,12 @@ export function gatewayRoutes(app: FastifyInstance, ctx: Ctx) {
     socket.on('close', () => {
       clearInterval(ping);
       ctx.hub.remove(conn);
-      ctx.db.updateTable('users').set({ last_seen_at: nowIso() }).where('id', '=', conn.userId).execute().catch(() => {});
+      ctx.db
+        .updateTable('users')
+        .set({ last_seen_at: nowIso() })
+        .where('id', '=', conn.userId)
+        .execute()
+        .catch(() => {});
     });
   });
 }

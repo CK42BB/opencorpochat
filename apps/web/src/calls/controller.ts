@@ -17,6 +17,17 @@ interface JoinResponse {
 }
 
 let transport: CallTransport | null = null;
+
+// Console helper for troubleshooting calls (see docs/admin-guide.md → Troubleshooting).
+(globalThis as { ocpcCallDebug?: () => Promise<unknown> }).ocpcCallDebug = async () => ({
+  state: {
+    ...useCallStore.getState(),
+    localStream: undefined,
+    remote: Object.keys(useCallStore.getState().remote ?? {}),
+  },
+  peers:
+    (await (transport as { debugInfo?: () => Promise<unknown> } | null)?.debugInfo?.()) ?? null,
+});
 let joining = false;
 
 async function waitForConnection(timeoutMs = 5000): Promise<string | null> {
@@ -33,7 +44,14 @@ function postMedia() {
   const s = useCallStore.getState();
   const connectionId = useStore.getState().connectionId;
   if (!s.channelId || !connectionId) return;
-  api.post(`/channels/${s.channelId}/call/media`, { connectionId, audio: !s.muted, video: s.camera, screen: s.screen }).catch(() => {});
+  api
+    .post(`/channels/${s.channelId}/call/media`, {
+      connectionId,
+      audio: !s.muted,
+      video: s.camera,
+      screen: s.screen,
+    })
+    .catch(() => {});
 }
 
 export async function startCall(channelId: string) {
@@ -55,16 +73,34 @@ export async function startCall(channelId: string) {
       toast(t('Reconnecting to the server… try again in a moment.'), 'error');
       return;
     }
-    useCallStore.setState({ ...initialCallState, status: 'connecting', channelId, joinedAt: Date.now(), sinkId: cur.sinkId, micId: cur.micId, camId: cur.camId });
-    const res = await api.post<JoinResponse>(`/channels/${channelId}/call/join`, { connectionId, audio: true, video: false });
+    useCallStore.setState({
+      ...initialCallState,
+      status: 'connecting',
+      channelId,
+      joinedAt: Date.now(),
+      sinkId: cur.sinkId,
+      micId: cur.micId,
+      camId: cur.camId,
+    });
+    const res = await api.post<JoinResponse>(`/channels/${channelId}/call/join`, {
+      connectionId,
+      audio: true,
+      video: false,
+    });
     useCallStore.setState({ callId: res.call.id, mode: res.mode });
-    if (useStore.getState().ringing?.call.channelId === channelId) useStore.setState({ ringing: null });
+    if (useStore.getState().ringing?.call.channelId === channelId)
+      useStore.setState({ ringing: null });
 
     if (res.mode === 'livekit' && res.livekit) {
       const { LiveKitTransport } = await import('./livekit');
-      const lk = new LiveKitTransport(res.livekit.url, res.livekit.token, useStore.getState().me!.id, () => {
-        if (useCallStore.getState().channelId === channelId) leaveCall();
-      });
+      const lk = new LiveKitTransport(
+        res.livekit.url,
+        res.livekit.token,
+        useStore.getState().me!.id,
+        () => {
+          if (useCallStore.getState().channelId === channelId) leaveCall();
+        },
+      );
       transport = lk;
       await lk.init();
     } else {
@@ -73,16 +109,16 @@ export async function startCall(channelId: string) {
         if (useCallStore.getState().screen) toggleScreen();
       });
       transport = mesh;
-      try {
-        await mesh.init();
-      } catch (err) {
-        toastError(err);
-        toast(t('You joined listen-only. Unmute to try your microphone again.'));
-        useCallStore.setState({ muted: true });
-      }
+      // Connect first; the microphone is attached when (and if) permission is granted,
+      // so an unanswered permission prompt never blocks the call.
       const others = peersToOffer(res.call, connectionId);
       for (const p of others) mesh.connectTo(p.connectionId, p.userId, true);
       if (!others.length) useCallStore.setState({ status: 'connected' });
+      mesh.init().catch((err) => {
+        toastError(err);
+        toast(t('You joined listen-only. Unmute to try your microphone again.'));
+        useCallStore.setState({ muted: true });
+      });
     }
     postMedia();
   } catch (err) {
@@ -95,13 +131,23 @@ export async function startCall(channelId: string) {
 
 export async function leaveCall(opts: { notifyServer?: boolean } = {}) {
   const s = useCallStore.getState();
-  transport?.close();
+  const tr = transport;
   transport = null;
   const connectionId = useStore.getState().connectionId;
-  if (s.channelId && connectionId && opts.notifyServer !== false) {
-    await api.post(`/channels/${s.channelId}/call/leave`, { connectionId }).catch(() => {});
-  }
+  // Hang up from the user's point of view first: hide the call UI and tell the server, so
+  // others see us leave immediately even if tearing down media devices is slow.
   useCallStore.setState({ ...initialCallState, sinkId: s.sinkId, micId: s.micId, camId: s.camId });
+  const notify =
+    s.channelId && connectionId && opts.notifyServer !== false
+      ? api.post(`/channels/${s.channelId}/call/leave`, { connectionId }).catch(() => {})
+      : Promise.resolve();
+  // Release devices after the server knows we left (teardown can block on some platforms).
+  await notify;
+  try {
+    tr?.close();
+  } catch (err) {
+    console.warn('call teardown failed', err);
+  }
 }
 
 async function apply(fn: (t: CallTransport) => Promise<void>, rollback: () => void) {
@@ -171,7 +217,14 @@ export function installCallListeners() {
   installed = true;
 
   window.addEventListener('ocpc:call-signal', (e) => {
-    const d = (e as CustomEvent<{ callId: string; fromUserId: string; fromConnectionId: string; signal: CallSignal }>).detail;
+    const d = (
+      e as CustomEvent<{
+        callId: string;
+        fromUserId: string;
+        fromConnectionId: string;
+        signal: CallSignal;
+      }>
+    ).detail;
     if (!transport || d.callId !== useCallStore.getState().callId) return;
     transport.handleSignal(d.fromConnectionId, d.fromUserId, d.signal);
   });

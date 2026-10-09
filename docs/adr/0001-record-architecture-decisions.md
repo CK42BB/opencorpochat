@@ -5,7 +5,7 @@
 
 ## Context
 
-OpenCorpoChat is meant to be forked and extended by many small organizations. Contributors join and leave over time, and forkers need to understand *why* the code is the way it is. Without that, they may undo decisions without knowing what problems those decisions solved.
+OpenCorpoChat is meant to be forked and extended by many small organizations. Contributors join and leave over time, and forkers need to understand _why_ the code is the way it is. Without that, they may undo decisions without knowing what problems those decisions solved.
 
 ## Decision
 
@@ -19,7 +19,7 @@ An ADR is required for:
 - changes to the public REST API or the realtime protocol
 - changes to the security model
 
-ADRs are proposed in a PR with status *Proposed* and accepted according to [GOVERNANCE.md](../../GOVERNANCE.md). Accepted ADRs are never edited, only superseded by a new ADR.
+ADRs are proposed in a PR with status _Proposed_ and accepted according to [GOVERNANCE.md](../../GOVERNANCE.md). Accepted ADRs are never edited, only superseded by a new ADR.
 
 ## Consequences
 

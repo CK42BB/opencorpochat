@@ -7,7 +7,8 @@ type Dict = Record<string, string>;
 const locales = import.meta.glob<{ default: Dict }>('../locales/*.json', { eager: true });
 
 function pickLocale(): Dict {
-  const langs = typeof navigator !== 'undefined' ? navigator.languages ?? [navigator.language] : [];
+  const langs =
+    typeof navigator !== 'undefined' ? (navigator.languages ?? [navigator.language]) : [];
   for (const lang of langs) {
     for (const candidate of [lang, lang.split('-')[0]]) {
       const hit = locales[`../locales/${candidate}.json`];
@@ -24,6 +25,11 @@ export function t(text: string, vars?: Record<string, string | number>): string 
   return vars ? s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`)) : s;
 }
 
-export function plural(n: number, one: string, many: string, vars: Record<string, string | number> = {}) {
+export function plural(
+  n: number,
+  one: string,
+  many: string,
+  vars: Record<string, string | number> = {},
+) {
   return t(n === 1 ? one : many, { n, ...vars });
 }

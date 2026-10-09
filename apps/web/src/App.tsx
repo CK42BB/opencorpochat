@@ -5,14 +5,27 @@ import type { Notification as Note, ServerInfo } from '@ocpc/shared';
 import { api, setUnauthorizedHandler } from './lib/api';
 import { loadBootstrap, useStore } from './lib/store';
 import { connect, disconnect } from './lib/realtime';
-import { registerServiceWorker, showDesktopNotification, subscribePush, syncTitle, notificationPermission } from './lib/notify';
+import {
+  registerServiceWorker,
+  showDesktopNotification,
+  subscribePush,
+  syncTitle,
+  notificationPermission,
+} from './lib/notify';
 import { t } from './lib/i18n';
 import { Sidebar, useSidebarOrder } from './components/Sidebar';
 import { QuickSwitcher } from './components/QuickSwitcher';
 import { ConfirmHost, Spinner, useHotkey } from './components/ui';
 import { ShortcutsModal } from './components/modals';
 import { ChannelView } from './pages/ChannelView';
-import { ActivityPage, BrowsePage, PeoplePage, SavedPage, SearchPage, ThreadsPage } from './pages/lists';
+import {
+  ActivityPage,
+  BrowsePage,
+  PeoplePage,
+  SavedPage,
+  SearchPage,
+  ThreadsPage,
+} from './pages/lists';
 import { JoinPage, LoginPage, ResetPage, SetupPage } from './pages/auth';
 import { SettingsPage } from './settings/SettingsPage';
 import { AdminPage } from './admin/AdminPage';
@@ -23,7 +36,9 @@ import { TwoFactorGate } from './settings/TwoFactorGate';
 type Phase = 'loading' | 'setup' | 'anon' | 'ready' | 'error';
 
 function applyTheme(theme: string, density: string) {
-  const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const dark =
+    theme === 'dark' ||
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   document.documentElement.dataset.density = density;
 }
@@ -37,7 +52,10 @@ function Home() {
     /* ignore */
   }
   const channels = useStore((s) => s.channels);
-  const target = last && channels[last] ? last : (flat.find((c) => c.kind === 'public' && c.name === 'general') ?? flat[0])?.id;
+  const target =
+    last && channels[last]
+      ? last
+      : (flat.find((c) => c.kind === 'public' && c.name === 'general') ?? flat[0])?.id;
   return target ? <Navigate to={`/c/${target}`} replace /> : <main className="main" />;
 }
 
@@ -47,7 +65,7 @@ function Shell() {
   const [switcher, setSwitcher] = useState(false);
   const [shortcuts, setShortcuts] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const connected = useStore((s) => s.connected);
+  const connected = useStore((s) => s.connected || !s.everConnected);
   const me = useStore((s) => s.me)!;
   const { flat } = useSidebarOrder();
 
@@ -106,7 +124,10 @@ function Shell() {
       const current = location.pathname.startsWith('/c/') ? location.pathname.slice(3) : null;
       const list = flat;
       if (!list.length) return;
-      let i = Math.max(-1, list.findIndex((c) => c.id === current));
+      let i = Math.max(
+        -1,
+        list.findIndex((c) => c.id === current),
+      );
       for (let n = 0; n < list.length; n++) {
         i = (i + dir + list.length) % list.length;
         const c = list[i]!;
@@ -124,7 +145,9 @@ function Shell() {
     const chans = Object.values(useStore.getState().channels).filter((c) => c.unreadCount > 0);
     for (const c of chans) {
       if (c.lastMessageAt) {
-        const page = await api.get<{ messages: { id: string }[] }>(`/channels/${c.id}/messages?limit=1`).catch(() => null);
+        const page = await api
+          .get<{ messages: { id: string }[] }>(`/channels/${c.id}/messages?limit=1`)
+          .catch(() => null);
         const last = page?.messages[0]?.id;
         if (last) await api.post(`/channels/${c.id}/read`, { messageId: last }).catch(() => {});
       }
@@ -139,7 +162,15 @@ function Shell() {
         setShortcuts(true);
       }
       // Typing a printable key anywhere focuses the composer.
-      if (!typing && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey && e.key !== '?' && !document.querySelector('.overlay, .popover')) {
+      if (
+        !typing &&
+        e.key.length === 1 &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        e.key !== '?' &&
+        !document.querySelector('.overlay, .popover')
+      ) {
         const ta = document.querySelector<HTMLTextAreaElement>('.main .composer textarea');
         ta?.focus();
       }
@@ -166,7 +197,11 @@ function Shell() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {!connected && (
-        <div className="offline-banner" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 400 }} role="status">
+        <div
+          className="offline-banner"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 400 }}
+          role="status"
+        >
           {t('Reconnecting…')}
         </div>
       )}
@@ -216,7 +251,16 @@ function Root() {
   const signedIn = () => {
     setPhase('loading');
     const next = new URLSearchParams(location.search).get('next');
-    start().then(() => navigate(next && next.startsWith('/') ? next : location.pathname.startsWith('/join') || location.pathname === '/login' ? '/' : location.pathname, { replace: true }));
+    start().then(() =>
+      navigate(
+        next && next.startsWith('/')
+          ? next
+          : location.pathname.startsWith('/join') || location.pathname === '/login'
+            ? '/'
+            : location.pathname,
+        { replace: true },
+      ),
+    );
   };
 
   if (phase === 'loading') {
@@ -246,11 +290,20 @@ function Root() {
         <Route path="/join/:code" element={<JoinPage onDone={signedIn} />} />
         <Route path="/reset/:token" element={<ResetPage />} />
         <Route path="/login" element={<LoginPage onDone={signedIn} />} />
-        <Route path="*" element={<Navigate to={`/login${location.pathname !== '/' ? `?next=${encodeURIComponent(location.pathname + location.search + location.hash)}` : ''}`} replace />} />
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={`/login${location.pathname !== '/' ? `?next=${encodeURIComponent(location.pathname + location.search + location.hash)}` : ''}`}
+              replace
+            />
+          }
+        />
       </Routes>
     );
   }
-  if (location.pathname.startsWith('/join/') || location.pathname === '/login') return <Navigate to="/" replace />;
+  if (location.pathname.startsWith('/join/') || location.pathname === '/login')
+    return <Navigate to="/" replace />;
   // Organizations can require two-factor authentication.
   if (settings?.require2fa && me && !me.totpEnabled && !me.isBot) return <TwoFactorGate />;
   return <Shell />;

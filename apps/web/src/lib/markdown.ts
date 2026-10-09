@@ -22,7 +22,24 @@ import ruby from 'highlight.js/lib/languages/ruby';
 import diff from 'highlight.js/lib/languages/diff';
 import type { CustomEmoji, User, UserGroup } from '@ocpc/shared';
 
-for (const [name, lang] of Object.entries({ bash, css, go, java, javascript, json, python, rust, sql, typescript, xml, yaml, csharp, php, ruby, diff })) {
+for (const [name, lang] of Object.entries({
+  bash,
+  css,
+  go,
+  java,
+  javascript,
+  json,
+  python,
+  rust,
+  sql,
+  typescript,
+  xml,
+  yaml,
+  csharp,
+  php,
+  ruby,
+  diff,
+})) {
   hljs.registerLanguage(name, lang);
 }
 hljs.registerAliases(['sh', 'shell', 'zsh'], { languageName: 'bash' });
@@ -33,7 +50,11 @@ hljs.registerAliases(['yml'], { languageName: 'yaml' });
 hljs.registerAliases(['py'], { languageName: 'python' });
 hljs.registerAliases(['cs'], { languageName: 'csharp' });
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+const esc = (s: string) =>
+  s.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  );
 
 export interface RenderContext {
   usersByName: Map<string, User>;
@@ -67,7 +88,9 @@ const marked = new Marked({
     },
     image({ href, text }: Tokens.Image) {
       // Inline remote images are not loaded (privacy); render as a link.
-      return /^https?:/i.test(href) ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer nofollow">${esc(text || href)}</a>` : esc(text);
+      return /^https?:/i.test(href)
+        ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer nofollow">${esc(text || href)}</a>`
+        : esc(text);
     },
   },
 });
@@ -90,24 +113,33 @@ function decorate(root: HTMLElement, rc: RenderContext) {
     html = html.replace(MENTION_RE, (whole, pre: string, raw: string) => {
       const name = raw.toLowerCase().replace(/[._-]+$/, '');
       const trail = raw.slice(name.length);
-      if (['channel', 'here', 'everyone'].includes(name)) return `${pre}<span class="mention mention-broadcast">@${name}</span>${trail}`;
+      if (['channel', 'here', 'everyone'].includes(name))
+        return `${pre}<span class="mention mention-broadcast">@${name}</span>${trail}`;
       const u = rc.usersByName.get(name);
-      if (u) return `${pre}<span class="mention${name === rc.meUsername ? ' mention-me' : ''}" data-user-id="${u.id}" role="button" tabindex="0">@${esc(u.displayName || u.username)}</span>${trail}`;
+      if (u)
+        return `${pre}<span class="mention${name === rc.meUsername ? ' mention-me' : ''}" data-user-id="${u.id}" role="button" tabindex="0">@${esc(u.displayName || u.username)}</span>${trail}`;
       const g = rc.groupsByHandle.get(name);
-      if (g) return `${pre}<span class="mention mention-group" title="${esc(g.name)}">@${esc(g.handle)}</span>${trail}`;
+      if (g)
+        return `${pre}<span class="mention mention-group" title="${esc(g.name)}">@${esc(g.handle)}</span>${trail}`;
       return whole;
     });
     html = html.replace(CHANNEL_RE, (whole, pre: string, name: string) => {
       const id = rc.channelsByName.get(name.toLowerCase());
-      return id ? `${pre}<a class="channel-link" href="/c/${id}" data-channel-id="${id}">#${esc(name)}</a>` : whole;
+      return id
+        ? `${pre}<a class="channel-link" href="/c/${id}" data-channel-id="${id}">#${esc(name)}</a>`
+        : whole;
     });
     html = html.replace(EMOJI_RE, (whole, name: string) => {
       const e = rc.emoji.get(name);
-      return e ? `<img class="custom-emoji" src="${esc(e.url)}" alt=":${esc(name)}:" title=":${esc(name)}:" loading="lazy">` : whole;
+      return e
+        ? `<img class="custom-emoji" src="${esc(e.url)}" alt=":${esc(name)}:" title=":${esc(name)}:" loading="lazy">`
+        : whole;
     });
     if (html !== esc(node.data)) {
       const span = document.createElement('span');
-      span.innerHTML = DOMPurify.sanitize(html, { ADD_ATTR: ['data-user-id', 'data-channel-id', 'tabindex', 'role'] });
+      span.innerHTML = DOMPurify.sanitize(html, {
+        ADD_ATTR: ['data-user-id', 'data-channel-id', 'tabindex', 'role'],
+      });
       node.replaceWith(...Array.from(span.childNodes));
     }
   }
@@ -121,7 +153,32 @@ export function renderMarkdown(text: string, rc: RenderContext): string {
   if (hit !== undefined) return hit;
   const raw = marked.parse(text, { async: false }) as string;
   const clean = DOMPurify.sanitize(raw, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'del', 's', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'input'],
+    ALLOWED_TAGS: [
+      'p',
+      'br',
+      'strong',
+      'b',
+      'em',
+      'i',
+      'del',
+      's',
+      'code',
+      'pre',
+      'blockquote',
+      'ul',
+      'ol',
+      'li',
+      'a',
+      'span',
+      'hr',
+      'table',
+      'thead',
+      'tbody',
+      'tr',
+      'th',
+      'td',
+      'input',
+    ],
     ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class', 'type', 'checked', 'disabled'],
   });
   const div = document.createElement('div');
@@ -137,5 +194,8 @@ export function renderMarkdown(text: string, rc: RenderContext): string {
 export function isJumboEmoji(text: string) {
   const t = text.trim();
   if (!t || t.length > 24) return false;
-  return /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|‍|️|\s|:[a-z0-9_+-]+:)+$/u.test(t) && !/^[\d#*\s]+$/.test(t);
+  return (
+    /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|‍|️|\s|:[a-z0-9_+-]+:)+$/u.test(t) &&
+    !/^[\d#*\s]+$/.test(t)
+  );
 }

@@ -27,6 +27,9 @@ services:
       S3_FORCE_PATH_STYLE: 'true'
       TURN_URLS: turn:${OCPC_DOMAIN}:3478?transport=udp,turn:${OCPC_DOMAIN}:3478?transport=tcp
       TURN_SECRET: ${TURN_SECRET}
+      # coturn also answers STUN on 3478, so the built-in STUN server is disabled here.
+      STUN_URLS: stun:${OCPC_DOMAIN}:3478
+      OCPC_STUN_PORT: '0'
       LIVEKIT_URL: wss://${LIVEKIT_DOMAIN}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}

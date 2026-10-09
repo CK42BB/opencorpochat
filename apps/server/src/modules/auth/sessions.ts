@@ -11,7 +11,12 @@ import { DAY, isoIn, nowIso } from '../../lib/time.js';
 export const SESSION_COOKIE = 'ocpc_session';
 const SESSION_TTL = 30 * DAY;
 
-export async function createSession(ctx: Ctx, userId: string, req: FastifyRequest, reply: FastifyReply) {
+export async function createSession(
+  ctx: Ctx,
+  userId: string,
+  req: FastifyRequest,
+  reply: FastifyReply,
+) {
   const token = randomToken();
   const id = ulid();
   await ctx.db
@@ -38,7 +43,12 @@ export async function createSession(ctx: Ctx, userId: string, req: FastifyReques
 }
 
 export function clearSessionCookie(ctx: Ctx, reply: FastifyReply) {
-  reply.clearCookie(SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'lax', secure: ctx.config.secureCookies });
+  reply.clearCookie(SESSION_COOKIE, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: ctx.config.secureCookies,
+  });
 }
 
 /** Resolve the caller from a session cookie or `Authorization: Bearer <token>`. */
@@ -50,16 +60,30 @@ export async function resolveAuth(ctx: Ctx, req: FastifyRequest): Promise<AuthIn
       .selectFrom('api_tokens as t')
       .innerJoin('users as u', 'u.id', 't.user_id')
       .selectAll('u')
-      .select(['t.id as token_id', 't.scopes as token_scopes', 't.expires_at as token_expires', 't.last_used_at as token_used'])
+      .select([
+        't.id as token_id',
+        't.scopes as token_scopes',
+        't.expires_at as token_expires',
+        't.last_used_at as token_used',
+      ])
       .where('t.token_hash', '=', sha256(token))
       .executeTakeFirst();
     if (!row || row.deactivated_at) return null;
     if (row.token_expires && row.token_expires < nowIso()) return null;
     if (!row.token_used || Date.parse(row.token_used) < Date.now() - 60_000) {
-      await ctx.db.updateTable('api_tokens').set({ last_used_at: nowIso() }).where('id', '=', row.token_id).execute();
+      await ctx.db
+        .updateTable('api_tokens')
+        .set({ last_used_at: nowIso() })
+        .where('id', '=', row.token_id)
+        .execute();
     }
     const { token_id, token_scopes, token_expires: _e, token_used: _u, ...user } = row;
-    return { user, sessionId: null, tokenId: token_id, scopes: json<ApiScope[]>(token_scopes, ['read']) };
+    return {
+      user,
+      sessionId: null,
+      tokenId: token_id,
+      scopes: json<ApiScope[]>(token_scopes, ['read']),
+    };
   }
   const cookie = req.cookies?.[SESSION_COOKIE];
   if (!cookie) return null;
@@ -71,7 +95,11 @@ export async function sessionAuth(ctx: Ctx, token: string): Promise<AuthInfo | n
     .selectFrom('sessions as s')
     .innerJoin('users as u', 'u.id', 's.user_id')
     .selectAll('u')
-    .select(['s.id as session_id', 's.expires_at as session_expires', 's.last_seen_at as session_seen'])
+    .select([
+      's.id as session_id',
+      's.expires_at as session_expires',
+      's.last_seen_at as session_seen',
+    ])
     .where('s.token_hash', '=', sha256(token))
     .executeTakeFirst();
   if (!row || row.deactivated_at || row.session_expires < nowIso()) return null;

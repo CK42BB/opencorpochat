@@ -20,7 +20,8 @@
     "format:check": "prettier --check .",
     "licenses:check": "node scripts/check-licenses.mjs",
     "build:shared": "pnpm --filter @ocpc/shared build",
-    "cli": "pnpm --filter @ocpc/server cli"
+    "cli": "pnpm --filter @ocpc/server cli",
+    "e2e": "playwright test -c e2e/playwright.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
@@ -29,7 +30,8 @@
     "globals": "^16.5.0",
     "prettier": "^3.6.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.0"
+    "typescript-eslint": "^8.46.0",
+    "@playwright/test": "^1.56.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

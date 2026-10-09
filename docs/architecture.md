@@ -19,17 +19,17 @@ This is the contributor's map of OpenCorpoChat. For the reasoning behind the maj
                  or PostgreSQL      or S3-compatible      Web Push (optional)
 ```
 
-- **One process.** The server serves the API, the WebSocket gateway, background jobs, *and* the built web app. There's no Redis, message broker or search cluster.
+- **One process.** The server serves the API, the WebSocket gateway, background jobs, _and_ the built web app. There's no Redis, message broker or search cluster.
 - **One language.** Everything is TypeScript. Request and response shapes are Zod schemas in `packages/shared`, used by both the server (validation) and the client (types).
 - **The API is the product.** The web client only uses the public REST and WebSocket API, so bots and integrations can do anything the UI can.
 
 ## Packages
 
-| Path | Contents |
-|---|---|
+| Path              | Contents                                                                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/shared` | Zod schemas, realtime event types, permission constants, small pure utilities (mention parsing, ULID helpers). No Node- or browser-only APIs. |
-| `apps/server` | Fastify server, WebSocket gateway, background jobs, `ocpc` CLI. Entry points: `src/index.ts` (server) and `src/cli.ts` (CLI). |
-| `apps/web` | React SPA. In development, Vite runs on :5173 and proxies `/api` to :8080. In production, the server serves `apps/web/dist`. |
+| `apps/server`     | Fastify server, WebSocket gateway, background jobs, `ocpc` CLI. Entry points: `src/index.ts` (server) and `src/cli.ts` (CLI).                 |
+| `apps/web`        | React SPA. In development, Vite runs on :5173 and proxies `/api` to :8080. In production, the server serves `apps/web/dist`.                  |
 
 ## Server structure
 

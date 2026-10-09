@@ -31,7 +31,15 @@ export function isContinued(prev: Msg | undefined, m: Msg) {
   );
 }
 
-export function MessageList({ channel, focusMessageId, onOpenThread }: { channel: MyChannel; focusMessageId: string | null; onOpenThread: (id: string) => void }) {
+export function MessageList({
+  channel,
+  focusMessageId,
+  onOpenThread,
+}: {
+  channel: MyChannel;
+  focusMessageId: string | null;
+  onOpenThread: (id: string) => void;
+}) {
   const list = useStore((s) => s.lists[channel.id]);
   const messages = useStore((s) => s.messages);
   const meId = useStore((s) => s.me?.id);
@@ -46,7 +54,7 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
   const [unreadMarker, setUnreadMarker] = useState<string | null>(null);
 
   useEffect(() => {
-    setUnreadMarker(channel.unreadCount > 0 ? channel.membership.lastReadMessageId ?? '0' : null);
+    setUnreadMarker(channel.unreadCount > 0 ? (channel.membership.lastReadMessageId ?? '0') : null);
     atBottom.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id]);
@@ -71,7 +79,11 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
     const el = scroller.current;
     if (!el) return;
     const firstId = ids[0];
-    if (prevFirstId.current && firstId !== prevFirstId.current && ids.includes(prevFirstId.current)) {
+    if (
+      prevFirstId.current &&
+      firstId !== prevFirstId.current &&
+      ids.includes(prevFirstId.current)
+    ) {
       el.scrollTop += el.scrollHeight - prevHeight.current;
     } else if (highlight && document.getElementById(`m-${highlight}`)) {
       document.getElementById(`m-${highlight}`)!.scrollIntoView({ block: 'center' });
@@ -92,8 +104,23 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
   const markRead = useCallback(() => {
     const ch = useStore.getState().channels[channel.id];
     if (!ch || !lastId || lastId.startsWith('pending-') || list?.hasMoreAfter) return;
-    if (ch.unreadCount === 0 && ch.mentionCount === 0 && (ch.membership.lastReadMessageId ?? '') >= lastId) return;
-    useStore.setState((s) => ({ channels: { ...s.channels, [channel.id]: { ...ch, unreadCount: 0, mentionCount: 0, membership: { ...ch.membership, lastReadMessageId: lastId } } } }));
+    if (
+      ch.unreadCount === 0 &&
+      ch.mentionCount === 0 &&
+      (ch.membership.lastReadMessageId ?? '') >= lastId
+    )
+      return;
+    useStore.setState((s) => ({
+      channels: {
+        ...s.channels,
+        [channel.id]: {
+          ...ch,
+          unreadCount: 0,
+          mentionCount: 0,
+          membership: { ...ch.membership, lastReadMessageId: lastId },
+        },
+      },
+    }));
     api.post(`/channels/${channel.id}/read`, { messageId: lastId }).catch(() => {});
   }, [channel.id, lastId, list?.hasMoreAfter]);
 
@@ -110,7 +137,8 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
       prevHeight.current = el.scrollHeight;
       loadOlder(channel.id).catch(toastError);
     }
-    if (distance < 300 && list?.hasMoreAfter && !list.loading) loadNewer(channel.id).catch(toastError);
+    if (distance < 300 && list?.hasMoreAfter && !list.loading)
+      loadNewer(channel.id).catch(toastError);
     if (atBottom.current && useStore.getState().focused) markRead();
   };
 
@@ -127,7 +155,14 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
     const onEditLast = (e: Event) => {
       const d = (e as CustomEvent).detail as { channelId: string; threadRootId: string | null };
       if (d.channelId !== channel.id || d.threadRootId) return;
-      const mine = [...ids].reverse().find((id) => messages[id]?.userId === meId && !messages[id]?.deleted && messages[id]?.kind !== 'system');
+      const mine = [...ids]
+        .reverse()
+        .find(
+          (id) =>
+            messages[id]?.userId === meId &&
+            !messages[id]?.deleted &&
+            messages[id]?.kind !== 'system',
+        );
       if (mine) useStore.setState({ editRequest: mine });
     };
     window.addEventListener('ocpc:edit-last', onEditLast);
@@ -144,7 +179,15 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
 
   let dividerShown = false;
   return (
-    <div className="messages" ref={scroller} onScroll={onScroll} role="log" aria-live="polite" aria-label={t('Messages')} aria-relevant="additions">
+    <div
+      className="messages"
+      ref={scroller}
+      onScroll={onScroll}
+      role="log"
+      aria-live="polite"
+      aria-label={t('Messages')}
+      aria-relevant="additions"
+    >
       {list.hasMoreBefore ? (
         <div className="load-more">
           <Spinner />
@@ -157,7 +200,12 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
         if (!m) return null;
         const prev = i > 0 ? messages[ids[i - 1]!] : undefined;
         const newDay = !prev || !sameDay(prev.createdAt, m.createdAt);
-        const showUnread = !dividerShown && unreadMarker !== null && id > unreadMarker && m.userId !== meId && !id.startsWith('pending-');
+        const showUnread =
+          !dividerShown &&
+          unreadMarker !== null &&
+          id > unreadMarker &&
+          m.userId !== meId &&
+          !id.startsWith('pending-');
         if (showUnread) dividerShown = true;
         return (
           <Fragment key={id}>
@@ -171,7 +219,13 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
                 {t('New')}
               </div>
             )}
-            <Message message={m} continued={!newDay && !showUnread && isContinued(prev, m)} context="channel" highlight={highlight === id} onOpenThread={onOpenThread} />
+            <Message
+              message={m}
+              continued={!newDay && !showUnread && isContinued(prev, m)}
+              context="channel"
+              highlight={highlight === id}
+              onOpenThread={onOpenThread}
+            />
           </Fragment>
         );
       })}
@@ -181,7 +235,18 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
         </div>
       )}
       {showJump && (
-        <button className="btn btn-sm btn-primary" style={{ position: 'sticky', bottom: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 4, boxShadow: 'var(--shadow)' }} onClick={jumpToPresent}>
+        <button
+          className="btn btn-sm btn-primary"
+          style={{
+            position: 'sticky',
+            bottom: 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 4,
+            boxShadow: 'var(--shadow)',
+          }}
+          onClick={jumpToPresent}
+        >
           <ArrowDown size={14} /> {t('Jump to recent messages')}
         </button>
       )}

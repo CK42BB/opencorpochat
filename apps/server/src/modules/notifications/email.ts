@@ -36,7 +36,11 @@ export async function sendDigests(ctx: Ctx) {
     .where('kind', 'in', ['mention', 'dm', 'thread_reply'])
     .execute();
   for (const { user_id } of pending) {
-    const user = await ctx.db.selectFrom('users').selectAll().where('id', '=', user_id).executeTakeFirst();
+    const user = await ctx.db
+      .selectFrom('users')
+      .selectAll()
+      .where('id', '=', user_id)
+      .executeTakeFirst();
     if (!user || user.deactivated_at || user.role === 'bot') continue;
     const prefs = preferencesOf(user);
     if (!prefs.emailNotifications || ctx.hub.isOnline(user.id)) continue;
@@ -45,7 +49,16 @@ export async function sendDigests(ctx: Ctx) {
       .selectFrom('notifications as n')
       .leftJoin('users as a', 'a.id', 'n.actor_id')
       .leftJoin('channels as c', 'c.id', 'n.channel_id')
-      .select(['n.id', 'n.kind', 'n.text', 'n.channel_id', 'n.message_id', 'a.display_name', 'c.name as channel_name', 'c.kind as channel_kind'])
+      .select([
+        'n.id',
+        'n.kind',
+        'n.text',
+        'n.channel_id',
+        'n.message_id',
+        'a.display_name',
+        'c.name as channel_name',
+        'c.kind as channel_kind',
+      ])
       .where('n.user_id', '=', user.id)
       .where('n.read_at', 'is', null)
       .where('n.emailed_at', 'is', null)
@@ -58,17 +71,33 @@ export async function sendDigests(ctx: Ctx) {
     const org = ctx.settings.get().name;
     const base = ctx.config.publicUrl;
     const lines = items.map((i) => {
-      const where = i.channel_kind === 'dm' || i.channel_kind === 'group_dm' ? 'a direct message' : `#${i.channel_name}`;
-      return { text: `${i.display_name ?? 'Someone'} in ${where}: ${i.text}`, url: `${base}/c/${i.channel_id}#${i.message_id}` };
+      const where =
+        i.channel_kind === 'dm' || i.channel_kind === 'group_dm'
+          ? 'a direct message'
+          : `#${i.channel_name}`;
+      return {
+        text: `${i.display_name ?? 'Someone'} in ${where}: ${i.text}`,
+        url: `${base}/c/${i.channel_id}#${i.message_id}`,
+      };
     });
     const subject = `[${org}] You have ${items.length} unread message${items.length > 1 ? 's' : ''}`;
     const text = `${lines.map((l) => `- ${l.text}\n  ${l.url}`).join('\n')}\n\nChange email settings: ${base}/settings/notifications\n`;
     const html = `<p>Here's what you missed in ${esc(org)}:</p><ul>${lines
       .map((l) => `<li><a href="${esc(l.url)}">${esc(l.text)}</a></li>`)
-      .join('')}</ul><p style="color:#666;font-size:12px"><a href="${esc(base)}/settings/notifications">Notification settings</a></p>`;
+      .join(
+        '',
+      )}</ul><p style="color:#666;font-size:12px"><a href="${esc(base)}/settings/notifications">Notification settings</a></p>`;
     try {
       await sendMail(ctx, user.email, subject, text, html);
-      await ctx.db.updateTable('notifications').set({ emailed_at: nowIso() }).where('id', 'in', items.map((i) => i.id)).execute();
+      await ctx.db
+        .updateTable('notifications')
+        .set({ emailed_at: nowIso() })
+        .where(
+          'id',
+          'in',
+          items.map((i) => i.id),
+        )
+        .execute();
     } catch (err) {
       ctx.log.warn({ err }, 'failed to send digest email');
     }

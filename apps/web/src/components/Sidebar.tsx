@@ -36,7 +36,6 @@ import { CreateChannelModal, InviteModal, NewDmModal, ShortcutsModal, StatusModa
 
 type ModalKind = 'channel' | 'dm' | 'invite' | 'status' | 'shortcuts' | 'about' | null;
 
-
 export function useSidebarOrder() {
   const channels = useStore((s) => s.channels);
   const me = useStore((s) => s.me);
@@ -46,14 +45,29 @@ export function useSidebarOrder() {
     const custom = me?.preferences.sidebarSections ?? [];
     const inCustom = new Set(custom.flatMap((s) => s.channelIds));
     const titled = all.map((c) => ({ c, title: channelTitle(c, me?.id, users) }));
-    const starred = titled.filter((x) => x.c.membership.starred).sort((a, b) => a.title.localeCompare(b.title));
-    const chans = titled.filter((x) => !isDm(x.c) && !x.c.membership.starred && !inCustom.has(x.c.id)).sort((a, b) => a.title.localeCompare(b.title));
+    const starred = titled
+      .filter((x) => x.c.membership.starred)
+      .sort((a, b) => a.title.localeCompare(b.title));
+    const chans = titled
+      .filter((x) => !isDm(x.c) && !x.c.membership.starred && !inCustom.has(x.c.id))
+      .sort((a, b) => a.title.localeCompare(b.title));
     const dms = titled
       .filter((x) => isDm(x.c) && !x.c.membership.starred && !inCustom.has(x.c.id))
-      .sort((a, b) => (b.c.lastMessageAt ?? b.c.createdAt).localeCompare(a.c.lastMessageAt ?? a.c.createdAt))
+      .sort((a, b) =>
+        (b.c.lastMessageAt ?? b.c.createdAt).localeCompare(a.c.lastMessageAt ?? a.c.createdAt),
+      )
       .slice(0, 40);
-    const sections = custom.map((s) => ({ ...s, items: titled.filter((x) => s.channelIds.includes(x.c.id) && !x.c.membership.starred) }));
-    return { starred, chans, dms, sections, flat: [...starred, ...sections.flatMap((s) => s.items), ...chans, ...dms].map((x) => x.c) };
+    const sections = custom.map((s) => ({
+      ...s,
+      items: titled.filter((x) => s.channelIds.includes(x.c.id) && !x.c.membership.starred),
+    }));
+    return {
+      starred,
+      chans,
+      dms,
+      sections,
+      flat: [...starred, ...sections.flatMap((s) => s.items), ...chans, ...dms].map((x) => x.c),
+    };
   }, [channels, me, users]);
 }
 
@@ -61,12 +75,17 @@ function ChannelItem({ c, title }: { c: MyChannel; title: string }) {
   const me = useStore((s) => s.me);
   const users = useStore((s) => s.users);
   const call = useStore((s) => s.calls[c.id]);
-  const other = isDm(c) && c.dmUserIds?.length === 2 ? users[c.dmUserIds.find((id) => id !== me?.id) ?? ''] : undefined;
+  const other =
+    isDm(c) && c.dmUserIds?.length === 2
+      ? users[c.dmUserIds.find((id) => id !== me?.id) ?? '']
+      : undefined;
   const unread = c.unreadCount > 0 && !c.membership.muted;
   return (
     <NavLink
       to={`/c/${c.id}`}
-      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''} ${c.membership.muted ? 'muted-ch' : ''}`}
+      className={({ isActive }) =>
+        `sidebar-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''} ${c.membership.muted ? 'muted-ch' : ''}`
+      }
       onClick={() => window.dispatchEvent(new CustomEvent('ocpc:close-nav'))}
     >
       <span className="ch-icon">
@@ -92,7 +111,19 @@ function ChannelItem({ c, title }: { c: MyChannel; title: string }) {
   );
 }
 
-function Section({ id, title, items, onAdd, addLabel }: { id: string; title: string; items: { c: MyChannel; title: string }[]; onAdd?: () => void; addLabel?: string }) {
+function Section({
+  id,
+  title,
+  items,
+  onAdd,
+  addLabel,
+}: {
+  id: string;
+  title: string;
+  items: { c: MyChannel; title: string }[];
+  onAdd?: () => void;
+  addLabel?: string;
+}) {
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(`ocpc.collapsed.${id}`) === '1';
@@ -108,7 +139,9 @@ function Section({ id, title, items, onAdd, addLabel }: { id: string; title: str
       /* ignore */
     }
   };
-  const shown = collapsed ? items.filter((x) => x.c.unreadCount > 0 || location.pathname === `/c/${x.c.id}`) : items;
+  const shown = collapsed
+    ? items.filter((x) => x.c.unreadCount > 0 || location.pathname === `/c/${x.c.id}`)
+    : items;
   return (
     <div className="sidebar-section">
       <div className="sidebar-section-header">
@@ -116,7 +149,12 @@ function Section({ id, title, items, onAdd, addLabel }: { id: string; title: str
           {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />} {title}
         </button>
         {onAdd && (
-          <button className="icon-btn icon-btn-sm" onClick={onAdd} aria-label={addLabel} title={addLabel}>
+          <button
+            className="icon-btn icon-btn-sm"
+            onClick={onAdd}
+            aria-label={addLabel}
+            title={addLabel}
+          >
             <Plus size={15} />
           </button>
         )}
@@ -144,7 +182,9 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
 
   const setDnd = async (minutes: number | null) => {
     try {
-      const updated = await api.put('/me/dnd', { until: minutes ? new Date(Date.now() + minutes * 60_000).toISOString() : null });
+      const updated = await api.put('/me/dnd', {
+        until: minutes ? new Date(Date.now() + minutes * 60_000).toISOString() : null,
+      });
       useStore.setState({ me: updated as never });
     } catch (err) {
       toastError(err);
@@ -159,48 +199,97 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
   return (
     <nav className="sidebar" aria-label={t('Sidebar')}>
       <div className="sidebar-header">
-        <button className="org-button" onClick={(e) => setOrgMenu(e.currentTarget)} aria-haspopup="menu">
-          {settings?.iconUrl ? <img className="org-icon" src={settings.iconUrl} alt="" /> : <img className="org-icon" src="/icon.svg" alt="" />}
+        <button
+          className="org-button"
+          onClick={(e) => setOrgMenu(e.currentTarget)}
+          aria-haspopup="menu"
+        >
+          {settings?.iconUrl ? (
+            <img className="org-icon" src={settings.iconUrl} alt="" />
+          ) : (
+            <img className="org-icon" src="/icon.svg" alt="" />
+          )}
           <span className="ellipsis">{settings?.name ?? info?.orgName}</span>
           <ChevronDown size={14} />
         </button>
-        <button className="icon-btn" onClick={() => setModal('dm')} aria-label={t('New message')} title={t('New message')}>
+        <button
+          className="icon-btn"
+          onClick={() => setModal('dm')}
+          aria-label={t('New message')}
+          title={t('New message')}
+        >
           <SquarePen size={17} />
         </button>
       </div>
       <button className="sidebar-search" onClick={onSearch}>
-        <Search size={15} /> <span className="grow">{t('Search or jump to…')}</span> <span className="kbd" style={{ background: 'transparent', color: 'inherit', borderColor: 'rgba(255,255,255,0.2)' }}>⌘K</span>
+        <Search size={15} /> <span className="grow">{t('Search or jump to…')}</span>{' '}
+        <span
+          className="kbd"
+          style={{
+            background: 'transparent',
+            color: 'inherit',
+            borderColor: 'rgba(255,255,255,0.2)',
+          }}
+        >
+          ⌘K
+        </span>
       </button>
       <div className="sidebar-scroll">
-        <NavLink to="/threads" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${unreadThreads ? 'unread' : ''}`}>
+        <NavLink
+          to="/threads"
+          className={({ isActive }) =>
+            `sidebar-item ${isActive ? 'active' : ''} ${unreadThreads ? 'unread' : ''}`
+          }
+        >
           <span className="ch-icon">
             <MessageSquareText size={16} />
           </span>
           <span className="name">{t('Threads')}</span>
-          {unreadThreads > 0 && <span className="badge" style={{ background: 'var(--sidebar-text)', color: 'var(--sidebar-bg)' }}>{unreadThreads}</span>}
+          {unreadThreads > 0 && (
+            <span
+              className="badge"
+              style={{ background: 'var(--sidebar-text)', color: 'var(--sidebar-bg)' }}
+            >
+              {unreadThreads}
+            </span>
+          )}
         </NavLink>
-        <NavLink to="/activity" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${unreadNotifications ? 'unread' : ''}`}>
+        <NavLink
+          to="/activity"
+          className={({ isActive }) =>
+            `sidebar-item ${isActive ? 'active' : ''} ${unreadNotifications ? 'unread' : ''}`
+          }
+        >
           <span className="ch-icon">
             <AtSign size={16} />
           </span>
           <span className="name">{t('Activity')}</span>
           {unreadNotifications > 0 && <span className="badge">{unreadNotifications}</span>}
         </NavLink>
-        <NavLink to="/saved" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
+        <NavLink
+          to="/saved"
+          className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+        >
           <span className="ch-icon">
             <Bookmark size={16} />
           </span>
           <span className="name">{t('Saved')}</span>
         </NavLink>
         {me.role !== 'guest' && (
-          <NavLink to="/browse" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
+          <NavLink
+            to="/browse"
+            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+          >
             <span className="ch-icon">
               <Compass size={16} />
             </span>
             <span className="name">{t('Browse channels')}</span>
           </NavLink>
         )}
-        <NavLink to="/people" className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
+        <NavLink
+          to="/people"
+          className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+        >
           <span className="ch-icon">
             <Users size={16} />
           </span>
@@ -211,10 +300,26 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
         {sections.map((s) => (
           <Section key={s.id} id={`custom-${s.id}`} title={s.name} items={s.items} />
         ))}
-        <Section id="channels" title={t('Channels')} items={chans} onAdd={me.role === 'guest' ? undefined : () => setModal('channel')} addLabel={t('Create a channel')} />
-        <Section id="dms" title={t('Direct messages')} items={dms} onAdd={() => setModal('dm')} addLabel={t('New message')} />
+        <Section
+          id="channels"
+          title={t('Channels')}
+          items={chans}
+          onAdd={me.role === 'guest' ? undefined : () => setModal('channel')}
+          addLabel={t('Create a channel')}
+        />
+        <Section
+          id="dms"
+          title={t('Direct messages')}
+          items={dms}
+          onAdd={() => setModal('dm')}
+          addLabel={t('New message')}
+        />
         {me.role !== 'guest' && (
-          <button className="sidebar-item" style={{ marginTop: 10 }} onClick={() => setModal('invite')}>
+          <button
+            className="sidebar-item"
+            style={{ marginTop: 10 }}
+            onClick={() => setModal('invite')}
+          >
             <span className="ch-icon">
               <UserPlus size={16} />
             </span>
@@ -223,14 +328,19 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
         )}
       </div>
       <div className="sidebar-footer">
-        <button className="me-button" onClick={(e) => setMeMenu(e.currentTarget)} aria-haspopup="menu">
+        <button
+          className="me-button"
+          onClick={(e) => setMeMenu(e.currentTarget)}
+          aria-haspopup="menu"
+        >
           <Avatar user={me} size={28} presence />
           <span className="grow" style={{ minWidth: 0 }}>
             <div className="ellipsis" style={{ fontWeight: 700, fontSize: 14 }}>
               {displayName(me)}
             </div>
             <div className="ellipsis" style={{ fontSize: 12, color: 'var(--sidebar-text)' }}>
-              {me.statusEmoji} {me.statusText || (dnd ? t('Notifications paused') : t('Set a status'))}
+              {me.statusEmoji}{' '}
+              {me.statusText || (dnd ? t('Notifications paused') : t('Set a status'))}
             </div>
           </span>
         </button>
@@ -243,14 +353,47 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
             title={settings?.name}
             onClose={() => setOrgMenu(null)}
             items={[
-              { label: t('Invite people'), icon: <UserPlus size={15} />, onClick: () => setModal('invite'), hidden: me.role === 'guest' },
-              { label: t('Create a channel'), icon: <Plus size={15} />, onClick: () => setModal('channel'), hidden: me.role === 'guest' },
-              { label: t('Browse channels'), icon: <Compass size={15} />, onClick: () => navigate('/browse'), hidden: me.role === 'guest' },
+              {
+                label: t('Invite people'),
+                icon: <UserPlus size={15} />,
+                onClick: () => setModal('invite'),
+                hidden: me.role === 'guest',
+              },
+              {
+                label: t('Create a channel'),
+                icon: <Plus size={15} />,
+                onClick: () => setModal('channel'),
+                hidden: me.role === 'guest',
+              },
+              {
+                label: t('Browse channels'),
+                icon: <Compass size={15} />,
+                onClick: () => navigate('/browse'),
+                hidden: me.role === 'guest',
+              },
               'sep',
-              { label: t('Administration'), icon: <Shield size={15} />, onClick: () => navigate('/admin'), hidden: !isAdmin },
-              { label: t('Integrations'), icon: <Settings size={15} />, onClick: () => navigate('/settings/integrations'), hidden: me.role === 'guest' },
-              { label: t('Keyboard shortcuts'), icon: <Keyboard size={15} />, onClick: () => setModal('shortcuts') },
-              { label: t('About OpenCorpoChat'), icon: <Info size={15} />, onClick: () => setModal('about') },
+              {
+                label: t('Administration'),
+                icon: <Shield size={15} />,
+                onClick: () => navigate('/admin'),
+                hidden: !isAdmin,
+              },
+              {
+                label: t('Integrations'),
+                icon: <Settings size={15} />,
+                onClick: () => navigate('/settings/integrations'),
+                hidden: me.role === 'guest',
+              },
+              {
+                label: t('Keyboard shortcuts'),
+                icon: <Keyboard size={15} />,
+                onClick: () => setModal('shortcuts'),
+              },
+              {
+                label: t('About OpenCorpoChat'),
+                icon: <Info size={15} />,
+                onClick: () => setModal('about'),
+              },
             ]}
           />
         </Popover>
@@ -261,11 +404,34 @@ export function Sidebar({ onSearch }: { onSearch: () => void }) {
             title={`@${me.username}`}
             onClose={() => setMeMenu(null)}
             items={[
-              { label: t('Set a status'), icon: <Smile size={15} />, onClick: () => setModal('status') },
-              { label: dnd ? t('Resume notifications') : t('Pause notifications for 1 hour'), icon: dnd ? <Bell size={15} /> : <BellOff size={15} />, onClick: () => setDnd(dnd ? null : 60) },
-              { label: t('Pause until tomorrow'), icon: <Moon size={15} />, onClick: () => setDnd(Math.round((new Date(new Date().setHours(24 + 9, 0, 0, 0)).getTime() - Date.now()) / 60_000)), hidden: dnd },
+              {
+                label: t('Set a status'),
+                icon: <Smile size={15} />,
+                onClick: () => setModal('status'),
+              },
+              {
+                label: dnd ? t('Resume notifications') : t('Pause notifications for 1 hour'),
+                icon: dnd ? <Bell size={15} /> : <BellOff size={15} />,
+                onClick: () => setDnd(dnd ? null : 60),
+              },
+              {
+                label: t('Pause until tomorrow'),
+                icon: <Moon size={15} />,
+                onClick: () =>
+                  setDnd(
+                    Math.round(
+                      (new Date(new Date().setHours(24 + 9, 0, 0, 0)).getTime() - Date.now()) /
+                        60_000,
+                    ),
+                  ),
+                hidden: dnd,
+              },
               'sep',
-              { label: t('Profile & preferences'), icon: <Settings size={15} />, onClick: () => navigate('/settings') },
+              {
+                label: t('Profile & preferences'),
+                icon: <Settings size={15} />,
+                onClick: () => navigate('/settings'),
+              },
               'sep',
               { label: t('Sign out'), icon: <LogOut size={15} />, onClick: logout },
             ]}
@@ -294,7 +460,9 @@ function AboutModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <p className="small">
-        {t('This software is free and open source under the GNU Affero General Public License v3.0. You have the right to obtain the source code of the version running on this server:')}
+        {t(
+          'This software is free and open source under the GNU Affero General Public License v3.0. You have the right to obtain the source code of the version running on this server:',
+        )}
       </p>
       <p>
         <a href={info?.sourceUrl} target="_blank" rel="noopener noreferrer">

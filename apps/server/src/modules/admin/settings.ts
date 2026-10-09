@@ -31,7 +31,12 @@ export class SettingsStore {
 
   async load() {
     const rows = await this.db.selectFrom('org_settings').selectAll().execute();
-    const next: Stored = { ...DEFAULT_SETTINGS, maxUploadMb: this.maxUploadCapMb, iconFileId: null, setupComplete: false };
+    const next: Stored = {
+      ...DEFAULT_SETTINGS,
+      maxUploadMb: this.maxUploadCapMb,
+      iconFileId: null,
+      setupComplete: false,
+    };
     for (const r of rows) {
       try {
         (next as unknown as Record<string, unknown>)[r.key] = JSON.parse(r.value);

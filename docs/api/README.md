@@ -7,9 +7,9 @@ Everything the web client does goes through the same public API, so anything a p
 
 ## Authentication
 
-| Client | How |
-|---|---|
-| Web app | Session cookie `ocpc_session`. Cookie-authenticated requests other than `GET` must include the header `X-OCPC-CSRF: 1`. |
+| Client        | How                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web app       | Session cookie `ocpc_session`. Cookie-authenticated requests other than `GET` must include the header `X-OCPC-CSRF: 1`.                     |
 | Scripts, bots | `Authorization: Bearer <token>`. Create a personal token under **Settings → Integrations**, or a bot (admins) whose token posts as the bot. |
 
 Tokens carry scopes:
