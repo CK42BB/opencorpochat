@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Common emoji shortcodes → Unicode. Emoji are rendered with the platform's
+// native emoji font; no third-party emoji artwork is bundled.
+// Shortcode names follow widespread community convention (Unicode CLDR short names).
+
+export const EMOJI: Record<string, string> = {
+  '+1': '👍', thumbsup: '👍', '-1': '👎', thumbsdown: '👎', ok_hand: '👌', clap: '👏', wave: '👋',
+  raised_hands: '🙌', pray: '🙏', muscle: '💪', point_up: '☝️', point_right: '👉', point_left: '👈',
+  v: '✌️', crossed_fingers: '🤞', handshake: '🤝', writing_hand: '✍️', eyes: '👀', brain: '🧠',
+  smile: '😄', grinning: '😀', joy: '😂', rofl: '🤣', slightly_smiling_face: '🙂', wink: '😉',
+  blush: '😊', heart_eyes: '😍', star_struck: '🤩', thinking: '🤔', thinking_face: '🤔',
+  neutral_face: '😐', expressionless: '😑', unamused: '😒', roll_eyes: '🙄', grimacing: '😬',
+  relieved: '😌', pensive: '😔', sleepy: '😪', sleeping: '😴', face_with_monocle: '🧐',
+  sunglasses: '😎', nerd_face: '🤓', confused: '😕', worried: '😟', slightly_frowning_face: '🙁',
+  open_mouth: '😮', astonished: '😲', flushed: '😳', pleading_face: '🥺', cry: '😢', sob: '😭',
+  scream: '😱', rage: '😡', angry: '😠', exploding_head: '🤯', partying_face: '🥳',
+  sweat_smile: '😅', upside_down_face: '🙃', zipper_mouth_face: '🤐', shushing_face: '🤫',
+  hugging_face: '🤗', hugs: '🤗', saluting_face: '🫡', melting_face: '🫠', skull: '💀', ghost: '👻',
+  robot: '🤖', see_no_evil: '🙈', facepalm: '🤦', shrug: '🤷', heart: '❤️', orange_heart: '🧡',
+  yellow_heart: '💛', green_heart: '💚', blue_heart: '💙', purple_heart: '💜', black_heart: '🖤',
+  broken_heart: '💔', sparkling_heart: '💖', fire: '🔥', sparkles: '✨', star: '⭐', star2: '🌟',
+  zap: '⚡', boom: '💥', '100': '💯', tada: '🎉', confetti_ball: '🎊', balloon: '🎈', gift: '🎁',
+  trophy: '🏆', medal: '🏅', first_place_medal: '🥇', rocket: '🚀', airplane: '✈️', car: '🚗',
+  white_check_mark: '✅', heavy_check_mark: '✔️', ballot_box_with_check: '☑️', x: '❌',
+  negative_squared_cross_mark: '❎', warning: '⚠️', no_entry: '⛔', stop_sign: '🛑',
+  question: '❓', exclamation: '❗', bangbang: '‼️', bulb: '💡', memo: '📝', pencil: '📝',
+  pencil2: '✏️', pushpin: '📌', round_pushpin: '📍', paperclip: '📎', link: '🔗', lock: '🔒',
+  unlock: '🔓', key: '🔑', bell: '🔔', no_bell: '🔕', mega: '📣', loudspeaker: '📢',
+  speech_balloon: '💬', thought_balloon: '💭', calendar: '📅', date: '📅', clock: '🕐',
+  hourglass: '⌛', alarm_clock: '⏰', stopwatch: '⏱️', chart_with_upwards_trend: '📈',
+  chart_with_downwards_trend: '📉', bar_chart: '📊', clipboard: '📋', file_folder: '📁',
+  open_file_folder: '📂', page_facing_up: '📄', books: '📚', book: '📖', bookmark: '🔖',
+  computer: '💻', desktop_computer: '🖥️', keyboard: '⌨️', iphone: '📱', phone: '☎️',
+  telephone_receiver: '📞', email: '📧', envelope: '✉️', inbox_tray: '📥', outbox_tray: '📤',
+  package: '📦', moneybag: '💰', dollar: '💵', credit_card: '💳', gear: '⚙️', wrench: '🔧',
+  hammer: '🔨', hammer_and_wrench: '🛠️', toolbox: '🧰', bug: '🐛', ladybug: '🐞', lady_beetle: '🐞',
+  mag: '🔍', mag_right: '🔎', microscope: '🔬', test_tube: '🧪', dna: '🧬', coffee: '☕', tea: '🍵',
+  beer: '🍺', beers: '🍻', wine_glass: '🍷', champagne: '🍾', pizza: '🍕', hamburger: '🍔',
+  taco: '🌮', cake: '🍰', birthday: '🎂', cookie: '🍪', doughnut: '🍩', apple: '🍎',
+  avocado: '🥑', popcorn: '🍿', sunny: '☀️', cloud: '☁️', rain_cloud: '🌧️', umbrella: '☔',
+  snowflake: '❄️', rainbow: '🌈', ocean: '🌊', earth_americas: '🌎', globe_with_meridians: '🌐',
+  seedling: '🌱', evergreen_tree: '🌲', deciduous_tree: '🌳', cactus: '🌵', sunflower: '🌻',
+  rose: '🌹', tulip: '🌷', four_leaf_clover: '🍀', dog: '🐶', cat: '🐱', mouse: '🐭', fox_face: '🦊',
+  bear: '🐻', panda_face: '🐼', koala: '🐨', tiger: '🐯', lion: '🦁', cow: '🐮', pig: '🐷',
+  frog: '🐸', monkey_face: '🐵', chicken: '🐔', penguin: '🐧', bird: '🐦', owl: '🦉',
+  unicorn: '🦄', bee: '🐝', butterfly: '🦋', snail: '🐌', turtle: '🐢', snake: '🐍', octopus: '🐙',
+  whale: '🐳', dolphin: '🐬', fish: '🐟', crab: '🦀', sloth: '🦥', soccer: '⚽', basketball: '🏀',
+  football: '🏈', tennis: '🎾', video_game: '🎮', dart: '🎯', game_die: '🎲', jigsaw: '🧩',
+  art: '🎨', musical_note: '🎵', notes: '🎶', headphones: '🎧', microphone: '🎤', movie_camera: '🎥',
+  camera: '📷', tv: '📺', house: '🏠', office: '🏢', hospital: '🏥', school: '🏫', construction: '🚧',
+  rotating_light: '🚨', triangular_flag_on_post: '🚩', checkered_flag: '🏁', white_flag: '🏳️',
+  arrow_up: '⬆️', arrow_down: '⬇️', arrow_left: '⬅️', arrow_right: '➡️', arrows_counterclockwise: '🔄',
+  repeat: '🔁', heavy_plus_sign: '➕', heavy_minus_sign: '➖', heavy_division_sign: '➗',
+  infinity: '♾️', recycle: '♻️', red_circle: '🔴', large_orange_circle: '🟠', large_yellow_circle: '🟡',
+  large_green_circle: '🟢', large_blue_circle: '🔵', large_purple_circle: '🟣', black_circle: '⚫',
+  white_circle: '⚪', zzz: '💤', palm_tree: '🌴', beach_with_umbrella: '🏖️', thermometer: '🌡️',
+  face_with_thermometer: '🤒', mask: '😷', house_with_garden: '🏡', calendar_spiral: '🗓️',
+  spiral_calendar_pad: '🗓️', man_technologist: '👨‍💻', woman_technologist: '👩‍💻', technologist: '🧑‍💻',
+  raising_hand: '🙋', ok: '🆗', new: '🆕', free: '🆓', cool: '🆒', sos: '🆘', on: '🔛', top: '🔝',
+  soon: '🔜', back: '🔙', end: '🔚', hourglass_flowing_sand: '⏳', speaking_head: '🗣️',
+  busts_in_silhouette: '👥', bust_in_silhouette: '👤', bow: '🙇', dancer: '💃', running: '🏃',
+  walking: '🚶', mountain: '⛰️', volcano: '🌋', moon: '🌙', crescent_moon: '🌙', new_moon: '🌑',
+  full_moon: '🌕', sun_with_face: '🌞', candle: '🕯️', bomb: '💣', shield: '🛡️', crown: '👑',
+  gem: '💎', ring: '💍', lipstick: '💄', eyeglasses: '👓', tophat: '🎩', mortar_board: '🎓',
+  briefcase: '💼', handbag: '👜', school_satchel: '🎒', dress: '👗', shirt: '👕', jeans: '👖',
+  ticket: '🎫', label: '🏷️', bookmark_tabs: '📑', scroll: '📜', newspaper: '📰', card_index: '📇',
+  wastebasket: '🗑️', scissors: '✂️', straight_ruler: '📏', triangular_ruler: '📐', abacus: '🧮',
+  battery: '🔋', electric_plug: '🔌', satellite: '📡', flashlight: '🔦', bulb_off: '💡',
+};
+
+/** A small curated set offered as one-click reactions. */
+export const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '👀', '✅', '🙏', '🔥'];
+
+const SHORTCODE_RE = /:([a-z0-9_+-]{1,64}):/g;
+
+/** Replace :shortcode: with Unicode emoji where known; unknown codes are left for custom emoji. */
+export function replaceShortcodes(text: string): string {
+  return text.replace(SHORTCODE_RE, (whole, name: string) => EMOJI[name] ?? whole);
+}
+
+export function searchEmoji(prefix: string, limit = 20): Array<[string, string]> {
+  const p = prefix.toLowerCase();
+  const out: Array<[string, string]> = [];
+  const seen = new Set<string>();
+  for (const [name, ch] of Object.entries(EMOJI)) {
+    if (name.startsWith(p) && !seen.has(ch)) {
+      out.push([name, ch]);
+      seen.add(ch);
+      if (out.length >= limit) return out;
+    }
+  }
+  for (const [name, ch] of Object.entries(EMOJI)) {
+    if (!name.startsWith(p) && name.includes(p) && !seen.has(ch)) {
+      out.push([name, ch]);
+      seen.add(ch);
+      if (out.length >= limit) break;
+    }
+  }
+  return out;
+}

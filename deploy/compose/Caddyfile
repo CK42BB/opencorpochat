@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Caddy obtains and renews HTTPS certificates automatically.
+# OCPC_DOMAIN must point (DNS A/AAAA record) at this server, with ports 80 and 443 open.
+{$OCPC_DOMAIN} {
+	encode zstd gzip
+	# WebSockets (/api/v1/ws) are proxied automatically.
+	reverse_proxy app:8080
+}

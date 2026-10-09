@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Used by docker-compose.full.yml: chat app plus the LiveKit signaling endpoint.
+{$OCPC_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:8080
+}
+
+{$LIVEKIT_DOMAIN} {
+	reverse_proxy livekit:7880
+}

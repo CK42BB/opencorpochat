@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: CC0-1.0
+# REUSE specification annotations (https://reuse.software/spec/).
+# Source files carry their own SPDX headers; this file covers files that cannot.
+version = 1
+
+[[annotations]]
+path = ["docs/**", "**/*.md", "NOTICE"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The OpenCorpoChat contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = ["CODE_OF_CONDUCT.md"]
+precedence = "override"
+SPDX-FileCopyrightText = "Contributor Covenant contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+  "**/*.json",
+  "**/*.yaml",
+  "**/*.yml",
+  "**/*.toml",
+  ".github/**",
+  ".editorconfig",
+  ".gitignore",
+  ".dockerignore",
+  ".prettierrc.json",
+  ".prettierignore",
+  ".nvmrc",
+  "pnpm-lock.yaml",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The OpenCorpoChat contributors"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ["deploy/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The OpenCorpoChat contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = ["apps/web/public/**", "apps/web/src/assets/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The OpenCorpoChat contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"

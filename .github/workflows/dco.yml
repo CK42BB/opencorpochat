@@ -1,0 +1,35 @@
+name: DCO
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  signoff:
+    name: Check commits are signed off
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Verify Signed-off-by trailers
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
+            author_email=$(git log -1 --format='%ae' "$sha")
+            if ! git log -1 --format='%B' "$sha" | grep -qiE "^Signed-off-by: .+ <${author_email}>$"; then
+              echo "::error::Commit $sha ($(git log -1 --format='%s' "$sha")) is missing a Signed-off-by trailer matching its author <$author_email>."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Sign off your commits with 'git commit -s'. To fix existing commits: git rebase --signoff $BASE_SHA && git push --force-with-lease"
+            echo "See CONTRIBUTING.md#developer-certificate-of-origin-dco"
+            exit 1
+          fi
+          echo "All commits are signed off."

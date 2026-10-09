@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Recommended setup for most small organizations:
+# OpenCorpoChat (SQLite + local files) behind Caddy with automatic HTTPS.
+#
+#   cp .env.example .env   # then edit OCPC_DOMAIN
+#   docker compose up -d
+#
+name: opencorpochat
+
+services:
+  app:
+    image: ghcr.io/opencorpochat/opencorpochat:latest
+    container_name: ocpc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      OCPC_PUBLIC_URL: https://${OCPC_DOMAIN}
+      OCPC_TRUST_PROXY: 'true'
+    volumes:
+      - ocpc-data:/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      OCPC_DOMAIN: ${OCPC_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  ocpc-data:
+  caddy-data:
+  caddy-config:

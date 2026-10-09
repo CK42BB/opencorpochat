@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest an idea or improvement.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! OpenCorpoChat focuses on what teams under ~200 people need, with simple operations.
+        Check the [PRD](https://github.com/opencorpochat/opencorpochat/blob/main/docs/PRD.md) to see if it's already planned.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the need, not just the solution. "As a … I want … so that …" works well.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds, integrations (webhooks/bots), or other approaches.
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who benefits?
+      multiple: true
+      options:
+        - Members (everyday users)
+        - Admins
+        - Guests
+        - Integrators / bot developers
+        - Forkers / contributors
+  - type: checkboxes
+    id: ip
+    attributes:
+      label: IP guardrails
+      options:
+        - label: This request doesn't ask to copy another product's proprietary design, assets, or private protocols.
+          required: true
+        - label: I'm willing to help implement or test this.

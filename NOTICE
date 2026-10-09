@@ -1,0 +1,38 @@
+OpenCorpoChat
+Copyright (C) 2026 The OpenCorpoChat contributors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, version 3 (SPDX-License-Identifier: AGPL-3.0-only).
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+The full license text is in the LICENSE file.
+
+Network use (AGPL-3.0 section 13)
+---------------------------------
+If you run a modified version of OpenCorpoChat and let users interact with it
+over a network, you must offer those users the Corresponding Source of your
+modified version. The application includes a "Source code" link in its About
+dialog for this purpose; point it at your fork by setting OCPC_SOURCE_URL.
+
+Third-party software
+--------------------
+OpenCorpoChat depends on third-party open-source packages, each under its own
+license. A complete list with license texts is generated for every release in
+THIRD_PARTY_LICENSES.md (run `pnpm licenses:check --write` to produce it
+locally). All dependencies are checked in CI against an AGPL-3.0-compatible
+license allowlist.
+
+Icons are from Lucide (https://lucide.dev), ISC License.
+Emoji are rendered using the viewer's platform Unicode emoji font; no emoji
+image assets are distributed with this project.
+
+Trademarks
+----------
+"OpenCorpoChat" is the name of this project. Names of other products and
+companies (for example Slack, Microsoft Teams, Google, Okta, LiveKit) are
+trademarks of their respective owners. They are used in this project only to
+describe interoperability or compatibility (nominative use) and do not imply
+any affiliation with or endorsement by those owners.

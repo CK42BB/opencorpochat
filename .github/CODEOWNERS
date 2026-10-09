@@ -1,0 +1,10 @@
+# Default owners for everything in the repo.
+# Replace @opencorpochat/maintainers with the real team once the GitHub org exists.
+*                       @opencorpochat/maintainers
+
+# Legal and governance files need maintainer review.
+/LICENSE                @opencorpochat/maintainers
+/NOTICE                 @opencorpochat/maintainers
+/GOVERNANCE.md          @opencorpochat/maintainers
+/SECURITY.md            @opencorpochat/maintainers
+/scripts/check-licenses.mjs @opencorpochat/maintainers

@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Bare-metal systemd unit. Assumes the repository is built in /opt/opencorpochat
+# (pnpm install && pnpm build) and runs as a dedicated `ocpc` user.
+#
+#   sudo useradd --system --home /var/lib/opencorpochat --create-home ocpc
+#   sudo cp deploy/systemd/opencorpochat.service /etc/systemd/system/
+#   sudo mkdir -p /etc/opencorpochat && sudo cp deploy/compose/.env.example /etc/opencorpochat/env
+#   sudo systemctl daemon-reload && sudo systemctl enable --now opencorpochat
+
+[Unit]
+Description=OpenCorpoChat team chat server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ocpc
+Group=ocpc
+WorkingDirectory=/opt/opencorpochat
+Environment=NODE_ENV=production
+Environment=OCPC_DATA_DIR=/var/lib/opencorpochat
+EnvironmentFile=-/etc/opencorpochat/env
+ExecStart=/usr/bin/node apps/server/dist/index.js
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/opencorpochat
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

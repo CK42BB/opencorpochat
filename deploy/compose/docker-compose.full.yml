@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Full setup for larger organizations:
+# OpenCorpoChat + PostgreSQL + MinIO (S3 files) + coturn (TURN) + LiveKit (large calls) + Caddy.
+#
+#   cp .env.example .env   # fill in EVERY value marked "full setup"
+#   docker compose -f docker-compose.full.yml up -d
+#
+# Firewall: open 80/tcp, 443/tcp+udp, 3478/tcp+udp, 5349/tcp (TURN),
+# 49160-49200/udp (TURN relay), 7881/tcp and 50000-50100/udp (LiveKit media).
+name: opencorpochat
+
+services:
+  app:
+    image: ghcr.io/opencorpochat/opencorpochat:latest
+    container_name: ocpc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      OCPC_PUBLIC_URL: https://${OCPC_DOMAIN}
+      OCPC_TRUST_PROXY: 'true'
+      DATABASE_URL: postgres://ocpc:${POSTGRES_PASSWORD}@postgres:5432/ocpc
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: ocpc
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_FORCE_PATH_STYLE: 'true'
+      TURN_URLS: turn:${OCPC_DOMAIN}:3478?transport=udp,turn:${OCPC_DOMAIN}:3478?transport=tcp
+      TURN_SECRET: ${TURN_SECRET}
+      LIVEKIT_URL: wss://${LIVEKIT_DOMAIN}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+    volumes:
+      - ocpc-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ocpc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ocpc
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ocpc']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 2; done;
+      mc mb --ignore-existing local/ocpc
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+  coturn:
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host # TURN needs direct access to many UDP ports
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${OCPC_DOMAIN}
+    volumes:
+      - ../coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+
+  livekit:
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    environment:
+      LIVEKIT_KEYS: '${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}'
+    ports:
+      - '7881:7881'
+      - '50000-50100:50000-50100/udp'
+    volumes:
+      - ../livekit/livekit.yaml:/etc/livekit.yaml:ro
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app, livekit]
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      OCPC_DOMAIN: ${OCPC_DOMAIN}
+      LIVEKIT_DOMAIN: ${LIVEKIT_DOMAIN}
+    volumes:
+      - ./Caddyfile.full:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  ocpc-data:
+  pg-data:
+  minio-data:
+  caddy-data:
+  caddy-config:
