@@ -3,7 +3,7 @@
 # Build from the repository root:  docker build -f deploy/Dockerfile -t opencorpochat .
 
 # ---- Build stage ---------------------------------------------------------
-FROM node:22-bookworm-slim AS build
+FROM node:25-bookworm-slim AS build
 # Toolchain for native modules (better-sqlite3) when no prebuilt binary matches.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 make g++ \
@@ -27,7 +27,7 @@ RUN pnpm --filter @ocpc/server deploy --prod --legacy /out \
  && cp -r apps/web/dist /out/web/dist
 
 # ---- Runtime stage -------------------------------------------------------
-FROM node:22-bookworm-slim AS runtime
+FROM node:25-bookworm-slim AS runtime
 LABEL org.opencontainers.image.title="OpenCorpoChat" \
       org.opencontainers.image.description="Self-hosted, open-source team chat for small organizations" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
