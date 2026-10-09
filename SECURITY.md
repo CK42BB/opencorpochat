@@ -17,8 +17,8 @@ Before 1.0, only the latest `0.x` release is supported.
 
 **Please do not open a public issue, discussion, or pull request for security problems.**
 
-1. **Preferred:** Use GitHub's [private vulnerability reporting](https://github.com/opencorpochat/opencorpochat/security/advisories/new) ("Report a vulnerability" on the Security tab).
-2. **Alternative:** Email **security@opencorpochat.org**. <!-- Maintainers: replace with a real, monitored address before launch. -->
+1. **Preferred:** Use GitHub's [private vulnerability reporting](https://github.com/CK42BB/opencorpochat/security/advisories/new) ("Report a vulnerability" on the Security tab).
+2. **Alternative:** if you cannot use GitHub's private reporting, contact the maintainer [@CK42BB](https://github.com/CK42BB) on GitHub and ask for a private channel. Do not include vulnerability details in public issues.
 
 Please include:
 

@@ -12,3 +12,7 @@ test-results/
 .DS_Store
 *.log
 *.tsbuildinfo
+
+# Local secrets (never commit)
+local.env
+*.local.env

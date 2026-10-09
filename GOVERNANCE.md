@@ -15,7 +15,7 @@ OpenCorpoChat is a community project. It exists to give small organizations team
 - uphold the [Code of Conduct](CODE_OF_CONDUCT.md) and the IP guardrails in [CONTRIBUTING.md](CONTRIBUTING.md#ip-guardrails-reviewer-checklist)
 - handle security reports according to [SECURITY.md](SECURITY.md)
 
-Maintainers are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS) and in the `@opencorpochat/maintainers` team.
+Maintainers are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS) (currently [@CK42BB](https://github.com/CK42BB)).
 
 Some maintainers also act as **module owners** for an area of the codebase (for example `apps/server/src/modules/calls/`). Their review is required for significant changes there.
 

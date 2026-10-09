@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for the suggestion! OpenCorpoChat focuses on what teams under ~200 people need, with simple operations.
-        Check the [PRD](https://github.com/opencorpochat/opencorpochat/blob/main/docs/PRD.md) to see if it's already planned.
+        Check the [PRD](https://github.com/CK42BB/opencorpochat/blob/main/docs/PRD.md) to see if it's already planned.
   - type: textarea
     id: problem
     attributes:

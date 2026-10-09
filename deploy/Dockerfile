@@ -31,7 +31,7 @@ FROM node:22-bookworm-slim AS runtime
 LABEL org.opencontainers.image.title="OpenCorpoChat" \
       org.opencontainers.image.description="Self-hosted, open-source team chat for small organizations" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
-      org.opencontainers.image.source="https://github.com/opencorpochat/opencorpochat"
+      org.opencontainers.image.source="https://github.com/CK42BB/opencorpochat"
 
 ENV NODE_ENV=production \
     PORT=8080 \

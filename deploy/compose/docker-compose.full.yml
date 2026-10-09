@@ -11,7 +11,7 @@ name: opencorpochat
 
 services:
   app:
-    image: ghcr.io/opencorpochat/opencorpochat:latest
+    image: ghcr.io/ck42bb/opencorpochat:latest
     container_name: ocpc
     restart: unless-stopped
     env_file: .env

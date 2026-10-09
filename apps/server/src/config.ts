@@ -32,7 +32,7 @@ const EnvSchema = z.object({
   DATABASE_URL: opt,
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   OCPC_SECRET: opt,
-  OCPC_SOURCE_URL: z.string().default('https://github.com/opencorpochat/opencorpochat'),
+  OCPC_SOURCE_URL: z.string().default('https://github.com/CK42BB/opencorpochat'),
   OCPC_LOG_LEVEL: z.string().default('info'),
   OCPC_MAX_UPLOAD_MB: z.coerce.number().int().positive().default(100),
   OCPC_TRUST_PROXY: bool,

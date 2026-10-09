@@ -2,14 +2,14 @@
 
 Thanks for using OpenCorpoChat! Here's where to go:
 
-| You want to…                    | Go to                                                                                                                                             |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Install, configure, or upgrade  | [Admin Guide](docs/admin-guide.md) and [FAQ](docs/faq.md)                                                                                         |
-| Ask a question or share a setup | [GitHub Discussions](https://github.com/opencorpochat/opencorpochat/discussions) → Q&A                                                            |
-| Report a bug                    | [Open a bug report](https://github.com/opencorpochat/opencorpochat/issues/new?template=bug_report.yml)                                            |
-| Suggest a feature               | [Open a feature request](https://github.com/opencorpochat/opencorpochat/issues/new?template=feature_request.yml), or start in Discussions → Ideas |
-| Report a security problem       | **Privately**, following [SECURITY.md](SECURITY.md). Never in a public issue.                                                                     |
-| Contribute                      | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                                                |
+| You want to…                    | Go to                                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Install, configure, or upgrade  | [Admin Guide](docs/admin-guide.md) and [FAQ](docs/faq.md)                                                                                  |
+| Ask a question or share a setup | [GitHub Discussions](https://github.com/CK42BB/opencorpochat/discussions) → Q&A                                                            |
+| Report a bug                    | [Open a bug report](https://github.com/CK42BB/opencorpochat/issues/new?template=bug_report.yml)                                            |
+| Suggest a feature               | [Open a feature request](https://github.com/CK42BB/opencorpochat/issues/new?template=feature_request.yml), or start in Discussions → Ideas |
+| Report a security problem       | **Privately**, following [SECURITY.md](SECURITY.md). Never in a public issue.                                                              |
+| Contribute                      | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                                         |
 
 ## Before asking
 

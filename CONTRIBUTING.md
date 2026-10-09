@@ -6,7 +6,7 @@ By participating you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Ways to contribute
 
-- **Report bugs** and **suggest features** with the [issue forms](https://github.com/opencorpochat/opencorpochat/issues/new/choose).
+- **Report bugs** and **suggest features** with the [issue forms](https://github.com/CK42BB/opencorpochat/issues/new/choose).
 - **Improve docs.** The admin guide is written for non-experts, so if something confused you, it'll confuse others.
 - **Translate** the UI. All strings live in `apps/web/src/i18n/`.
 - **Write code.** Look for issues labelled `good first issue` or `help wanted`.
@@ -27,7 +27,7 @@ No database server is needed. Development uses SQLite in `./data/`.
 ### Run it
 
 ```bash
-git clone https://github.com/opencorpochat/opencorpochat.git
+git clone https://github.com/CK42BB/opencorpochat.git
 cd opencorpochat
 pnpm install
 pnpm dev

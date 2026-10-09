@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue"></a>
-  <a href="https://github.com/opencorpochat/opencorpochat/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/opencorpochat/opencorpochat/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/CK42BB/opencorpochat/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/CK42BB/opencorpochat/actions/workflows/ci.yml/badge.svg"></a>
 </p>
 
 ---
@@ -53,7 +53,7 @@ Run it on a $10 VPS or a spare office machine.
 ```sh
 docker run -d --name ocpc -p 8080:8080 -v ocpc-data:/data \
   -e OCPC_PUBLIC_URL=http://localhost:8080 \
-  ghcr.io/opencorpochat/opencorpochat:latest
+  ghcr.io/ck42bb/opencorpochat:latest
 ```
 
 Open http://localhost:8080. The setup wizard creates your organization and owner account.

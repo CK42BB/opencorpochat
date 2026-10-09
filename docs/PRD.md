@@ -426,5 +426,5 @@ Built-in jobs (in-process scheduler) handle scheduled messages, reminders, email
 ## 14. Open questions
 
 1. Should guests count toward any limits? (No limits exist — proposed: no.)
-2. Preferred container registry and GitHub org name (placeholder `opencorpochat/opencorpochat`).
+2. ~~Container registry and GitHub org name~~ — resolved: `github.com/CK42BB/opencorpochat`, images on `ghcr.io/ck42bb/opencorpochat`.
 3. Translation platform (Weblate hosted for OSS is the leading candidate).

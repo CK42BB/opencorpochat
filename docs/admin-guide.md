@@ -1,6 +1,6 @@
 # OpenCorpoChat Admin Guide
 
-This guide is for the person who installs and looks after OpenCorpoChat. That's often an office manager or IT generalist, not a full-time developer. If anything here is unclear, please [open an issue](https://github.com/opencorpochat/opencorpochat/issues). Unclear docs are bugs.
+This guide is for the person who installs and looks after OpenCorpoChat. That's often an office manager or IT generalist, not a full-time developer. If anything here is unclear, please [open an issue](https://github.com/CK42BB/opencorpochat/issues). Unclear docs are bugs.
 
 - [1. Choose an install path](#1-choose-an-install-path)
 - [2. Quick start (Docker)](#2-quick-start-docker)
@@ -38,7 +38,7 @@ This guide is for the person who installs and looks after OpenCorpoChat. That's 
 
 ```bash
 docker run -d --name ocpc -p 8080:8080 -v ocpc-data:/data \
-  ghcr.io/opencorpochat/opencorpochat:latest
+  ghcr.io/ck42bb/opencorpochat:latest
 ```
 
 Open <http://localhost:8080> and follow the [setup wizard](#6-first-run-setup-wizard).
@@ -56,7 +56,7 @@ You need:
 Then:
 
 ```bash
-git clone https://github.com/opencorpochat/opencorpochat.git
+git clone https://github.com/CK42BB/opencorpochat.git
 cd opencorpochat/deploy/compose
 cp .env.example .env
 nano .env            # set OCPC_DOMAIN=chat.example.com
@@ -102,7 +102,7 @@ Steps:
 Requirements: Node.js ≥ 22.12, pnpm 10 (`corepack enable`), and a build toolchain (`python3 make g++`) for the SQLite driver.
 
 ```bash
-sudo git clone https://github.com/opencorpochat/opencorpochat.git /opt/opencorpochat
+sudo git clone https://github.com/CK42BB/opencorpochat.git /opt/opencorpochat
 cd /opt/opencorpochat
 sudo corepack enable
 pnpm install --frozen-lockfile
@@ -130,18 +130,18 @@ The server checks its configuration at startup and exits with a clear message if
 
 ### Core
 
-| Variable             | Default                                          | Description                                                                                                                                   |
-| -------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`               | `8080`                                           | HTTP port                                                                                                                                     |
-| `HOST`               | `0.0.0.0`                                        | Interface to listen on                                                                                                                        |
-| `OCPC_PUBLIC_URL`    | —                                                | **Required in production.** The URL people use, e.g. `https://chat.example.com`. Used in links, emails, SSO redirects and push notifications. |
-| `OCPC_DATA_DIR`      | `./data` (`/data` in Docker)                     | Where the SQLite database, uploaded files and generated secrets are stored                                                                    |
-| `DATABASE_URL`       | SQLite file `$OCPC_DATA_DIR/ocpc.db`             | Set to `postgres://user:pass@host:5432/db` to use PostgreSQL                                                                                  |
-| `OCPC_SECRET`        | auto-generated                                   | Secret for signing tokens. If unset, one is generated and saved in the data directory. **Keep it safe; it's included in backups.**            |
-| `OCPC_SOURCE_URL`    | `https://github.com/opencorpochat/opencorpochat` | "Source code" link in the About dialog. If you modify OpenCorpoChat, the AGPL requires you to point this at your modified source.             |
-| `OCPC_LOG_LEVEL`     | `info`                                           | `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                                                                            |
-| `OCPC_MAX_UPLOAD_MB` | `100`                                            | Maximum size of a single uploaded file                                                                                                        |
-| `OCPC_TRUST_PROXY`   | `false`                                          | Set `true` when behind Caddy/nginx/a load balancer so the real client IPs are logged and rate-limited                                         |
+| Variable             | Default                                   | Description                                                                                                                                   |
+| -------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`               | `8080`                                    | HTTP port                                                                                                                                     |
+| `HOST`               | `0.0.0.0`                                 | Interface to listen on                                                                                                                        |
+| `OCPC_PUBLIC_URL`    | —                                         | **Required in production.** The URL people use, e.g. `https://chat.example.com`. Used in links, emails, SSO redirects and push notifications. |
+| `OCPC_DATA_DIR`      | `./data` (`/data` in Docker)              | Where the SQLite database, uploaded files and generated secrets are stored                                                                    |
+| `DATABASE_URL`       | SQLite file `$OCPC_DATA_DIR/ocpc.db`      | Set to `postgres://user:pass@host:5432/db` to use PostgreSQL                                                                                  |
+| `OCPC_SECRET`        | auto-generated                            | Secret for signing tokens. If unset, one is generated and saved in the data directory. **Keep it safe; it's included in backups.**            |
+| `OCPC_SOURCE_URL`    | `https://github.com/CK42BB/opencorpochat` | "Source code" link in the About dialog. If you modify OpenCorpoChat, the AGPL requires you to point this at your modified source.             |
+| `OCPC_LOG_LEVEL`     | `info`                                    | `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                                                                            |
+| `OCPC_MAX_UPLOAD_MB` | `100`                                     | Maximum size of a single uploaded file                                                                                                        |
+| `OCPC_TRUST_PROXY`   | `false`                                   | Set `true` when behind Caddy/nginx/a load balancer so the real client IPs are logged and rate-limited                                         |
 
 ### File storage (S3-compatible)
 
@@ -252,7 +252,7 @@ Database migrations run automatically at startup inside a transaction. If one fa
 
 **Rollback:** migrations only go forward. To go back to an older version, stop the server, restore the backup you took before upgrading, and start the old image tag.
 
-**Pinning versions:** in production, consider pinning a minor version instead of `latest`, e.g. `ghcr.io/opencorpochat/opencorpochat:1.2`. You'll still get patch releases, and you choose when to take minor ones.
+**Pinning versions:** in production, consider pinning a minor version instead of `latest`, e.g. `ghcr.io/ck42bb/opencorpochat:1.2`. You'll still get patch releases, and you choose when to take minor ones.
 
 ## 11. Calls: STUN, TURN and LiveKit
 
@@ -374,7 +374,7 @@ Upload limits: `OCPC_MAX_UPLOAD_MB` sets the per-file limit. Allowed file types 
 - [ ] Turn on **Admin → Authentication → Require two-factor authentication**, or use SSO with MFA at the identity provider.
 - [ ] Restrict invite links to your email domain, and set them to expire.
 - [ ] Nightly backups, copied off the server, with a restore you've actually tested.
-- [ ] Keep the host OS and Docker updated. Subscribe to [releases](https://github.com/opencorpochat/opencorpochat/releases) (Watch → Custom → Releases) to hear about security fixes.
+- [ ] Keep the host OS and Docker updated. Subscribe to [releases](https://github.com/CK42BB/opencorpochat/releases) (Watch → Custom → Releases) to hear about security fixes.
 - [ ] Use a non-public S3 bucket with a credential limited to that bucket.
 - [ ] TURN: keep the `denied-peer-ip` lines in `turnserver.conf` so your relay can't be used to reach your internal network.
 
@@ -384,7 +384,7 @@ Upload limits: `OCPC_MAX_UPLOAD_MB` sets the per-file limit. Allowed file types 
 : Read the message. It names the variable and the problem. Check `docker logs ocpc`.
 
 **"Migration failed" on startup**
-: Nothing was changed. Restore isn't needed. Check the logs, then [open an issue](https://github.com/opencorpochat/opencorpochat/issues) with the error and the version you upgraded from and to. You can go back to the previous image tag.
+: Nothing was changed. Restore isn't needed. Check the logs, then [open an issue](https://github.com/CK42BB/opencorpochat/issues) with the error and the version you upgraded from and to. You can go back to the previous image tag.
 
 **Messages don't appear live; you have to refresh**
 : Your reverse proxy isn't passing WebSockets through. In nginx, make sure the `/api/v1/ws` block with the `Upgrade`/`Connection` headers is present (see `deploy/nginx/opencorpochat.conf`). Some corporate proxies block WebSockets.
