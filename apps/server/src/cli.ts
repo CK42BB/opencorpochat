@@ -38,6 +38,8 @@ Commands:
   restore --in DIR                Restore a backup made with "backup" (stop the server first)
   export --out FILE               Export the organization as NDJSON
   import-slack --in FILE|DIR      Import a Slack-format workspace export (ZIP or folder)
+  seed-demo [--password P] [--force]
+                                  Fill an EMPTY instance with a fictional demo company to explore
   generate-vapid                  Print a new VAPID key pair for Web Push
   --version                       Print version
 `;
@@ -69,6 +71,7 @@ async function main() {
       name: { type: 'string' },
       out: { type: 'string' },
       in: { type: 'string' },
+      force: { type: 'boolean' },
     },
     allowPositionals: true,
   });
@@ -223,6 +226,21 @@ async function main() {
       await withApp(async (ctx) => {
         const { importSlackExport } = await import('./modules/admin/import-slack.js');
         await importSlackExport(ctx, input);
+      });
+      return;
+    }
+
+    case 'seed-demo': {
+      await withApp(async (ctx) => {
+        const { seedDemo } = await import('./modules/admin/seed-demo.js');
+        const r = await seedDemo(ctx, { force: values.force, password: values.password });
+        console.log(
+          `Demo company "Brightfield Studio" created: ${r.people} people, ${r.channels} channels.`,
+        );
+        console.log(`Sign in as ${r.email} with password: ${r.password}`);
+        console.log(
+          '(Every demo account uses the same password. Usernames: jordan, maya, sam, priya, leo, ...)',
+        );
       });
       return;
     }

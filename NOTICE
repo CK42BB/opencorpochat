@@ -36,3 +36,11 @@ companies (for example Slack, Microsoft Teams, Google, Okta, LiveKit) are
 trademarks of their respective owners. They are used in this project only to
 describe interoperability or compatibility (nominative use) and do not imply
 any affiliation with or endorsement by those owners.
+
+Images
+------
+Screenshots, marketing images and demo artwork in docs/images/ and apps/server/assets/
+are licensed CC-BY-4.0. The demo company ("Brightfield Studio"), its people and their
+conversations are fictional. Webcam photos, the demo design mockup and background art
+were generated with AI image models specifically for this project and do not depict
+real people.

@@ -21,7 +21,9 @@
     "licenses:check": "node scripts/check-licenses.mjs",
     "build:shared": "pnpm --filter @ocpc/shared build",
     "cli": "pnpm --filter @ocpc/server cli",
-    "e2e": "playwright test -c e2e/playwright.config.ts"
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "screenshots": "node scripts/screenshots/capture.mjs",
+    "marketing": "node scripts/marketing/render.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

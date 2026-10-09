@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/icon.svg" width="72" height="72" alt="">
+  <img src="docs/images/marketing/hero.png" alt="OpenCorpoChat — team chat you own" width="100%">
 </p>
 
 <h1 align="center">OpenCorpoChat</h1>
@@ -46,6 +46,26 @@ Run it on a $10 VPS or a spare office machine.
 | **Admin & compliance**   | Admin console, usage stats (computed locally), audit log, retention policies, per-person data export and erasure, full org export, import from Slack-format export archives, backup and restore CLI                                                                                |
 | **Accessibility & i18n** | Keyboard-first (press `?`), screen-reader live regions, light and dark themes, compact mode, translation-ready UI                                                                                                                                                                  |
 
+## Screenshots
+
+|                                                                                                                                                    |                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [![Messaging](docs/images/screenshots/messaging.png)](docs/features.md#1-messaging--threads)<br>**Channels, threads and rich messages**            | [![Calls](docs/images/screenshots/calls.png)](docs/features.md#2-voice-video--screen-sharing)<br>**Voice, video and screen sharing**                                    |
+| [![Search](docs/images/screenshots/search.png)](docs/features.md#3-search)<br>**Full-text search with filters**                                    | [![Integrations](docs/images/screenshots/integrations.png)](docs/features.md#4-integrations-bots-webhooks-slash-commands--api)<br>**Bots, webhooks and slash commands** |
+| [![Admin](docs/images/screenshots/admin.png)](docs/features.md#5-administration-security--compliance)<br>**Admin console, SSO, 2FA and audit log** | [![Dark mode](docs/images/screenshots/dark.png)](docs/features.md#more-screenshots)<br>**Dark mode, PWA and mobile**                                                    |
+
+See the full **[feature tour](docs/features.md)**.
+
+## Try the demo in 60 seconds
+
+```sh
+docker run -d --name ocpc -p 8080:8080 -v ocpc-data:/data \
+  -e OCPC_PUBLIC_URL=http://localhost:8080 ghcr.io/ck42bb/opencorpochat:latest
+docker exec -it ocpc ocpc seed-demo   # prints the demo login
+```
+
+Open http://localhost:8080 and sign in as `demo@brightfield.example`.
+
 ## Quick start
 
 ### Docker (recommended)
@@ -70,7 +90,7 @@ pnpm build
 OCPC_PUBLIC_URL=http://localhost:8080 pnpm start
 ```
 
-The **[Admin guide](docs/admin-guide.md)** covers HTTPS, SSO, email, TURN, backups, upgrades and every configuration option.
+**[Getting started](docs/getting-started.md)** walks through every install path, including production with automatic HTTPS on a small VPS. The **[Admin guide](docs/admin-guide.md)** covers HTTPS, SSO, email, calls (STUN/TURN/LiveKit), backups, upgrades and every configuration option.
 
 ## Development
 
@@ -79,7 +99,10 @@ pnpm install
 pnpm dev        # API on :8080, web app with hot reload on http://localhost:5173
 pnpm test       # unit + integration tests (SQLite; set DATABASE_URL to run against Postgres)
 pnpm typecheck && pnpm lint
+pnpm build && pnpm e2e   # end-to-end tests in real browsers (Playwright)
 ```
+
+See the **[development guide](docs/development.md)** for a codebase tour and a step-by-step feature recipe, and **[forking & rebranding](docs/forking.md)** to make it your own.
 
 ```
 apps/server     Fastify API, WebSocket gateway, jobs, `ocpc` CLI   (src/modules/<feature>/)
@@ -88,6 +111,14 @@ packages/shared Zod schemas, types, realtime events, permissions — shared by b
 deploy/         Dockerfile, Compose, Caddy/nginx/coturn/LiveKit/systemd examples
 docs/           PRD, architecture, admin guide, API, ADRs
 ```
+
+## Documentation
+
+Start at **[docs/README.md](docs/README.md)**. Highlights:
+
+- [Getting started](docs/getting-started.md) · [Admin guide](docs/admin-guide.md) · [User guide](docs/user-guide.md)
+- [Features](docs/features.md) · [Integrations cookbook](docs/integrations.md) · [API](docs/api/README.md)
+- [Development guide](docs/development.md) · [Forking & rebranding](docs/forking.md) · [Architecture](docs/architecture.md)
 
 ## API
 

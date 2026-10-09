@@ -218,7 +218,7 @@ export function CallWindow() {
           {st.expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
       </div>
-      <div className="call-grid">
+      <div className="call-grid" data-count={Math.min(ordered.length, 9)}>
         {ordered.map((p) => {
           const local = p.connectionId === myConn || p.connectionId === 'local';
           const stream = local

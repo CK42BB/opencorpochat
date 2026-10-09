@@ -45,3 +45,11 @@ path = ["apps/web/public/**", "apps/web/src/assets/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 The OpenCorpoChat contributors"
 SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+# Screenshots, marketing images and demo artwork. Demo people and companies are fictional;
+# photos and backgrounds were generated with AI image models for this project.
+path = ["docs/images/**", "apps/server/assets/**", "apps/web/public/*.png", "apps/web/public/*.svg"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The OpenCorpoChat contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

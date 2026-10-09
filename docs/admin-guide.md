@@ -195,45 +195,47 @@ If `S3_BUCKET` is unset, files are stored on local disk in `$OCPC_DATA_DIR/files
 
 In Docker, run commands with `docker exec -it ocpc ocpc <command>`. On bare metal, use `node apps/server/dist/cli.js <command>` from the install directory.
 
-| Command                                                 | What it does                                                                                   |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `ocpc migrate`                                          | Apply database migrations. This also happens automatically at startup.                         |
-| `ocpc create-admin --email E --username U --password P` | Create an owner/admin account (useful if you skipped the wizard or got locked out)             |
-| `ocpc reset-password --email E`                         | Set a new password for a user (it prompts for or prints one)                                   |
-| `ocpc backup --out FILE`                                | Write a consistent backup of the database, files and secrets                                   |
-| `ocpc restore --in FILE`                                | Restore a backup into an **empty** data directory or database                                  |
-| `ocpc export --out FILE`                                | Export the whole organization (messages, channels, users, files) in the documented JSON format |
-| `ocpc import-slack --in export.zip`                     | Import channels, users and messages from a Slack-format workspace export archive               |
-| `ocpc generate-vapid`                                   | Print a new pair of Web Push keys                                                              |
-| `ocpc --version`                                        | Print the version                                                                              |
+| Command                                                              | What it does                                                                                                                         |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ocpc migrate`                                                       | Apply database migrations. This also happens automatically at startup.                                                               |
+| `ocpc create-admin --email E --username U [--password P] [--name N]` | Create an owner account. Useful if you skipped the wizard or got locked out. If you omit the password, one is generated and printed. |
+| `ocpc reset-password --email E [--password P]`                       | Set a new password and sign the user out everywhere. If you omit the password, one is generated and printed.                         |
+| `ocpc backup --out DIR`                                              | **SQLite only:** write a consistent copy of the database, uploaded files and generated secrets into a new directory.                 |
+| `ocpc restore --in DIR`                                              | Restore a directory made by `ocpc backup`. Stop the server first.                                                                    |
+| `ocpc export --out FILE`                                             | Export the whole organization as NDJSON (see [export-format.md](export-format.md)).                                                  |
+| `ocpc import-slack --in FILE_OR_DIR`                                 | Import channels, users and messages from a Slack-format workspace export (ZIP or unzipped folder).                                   |
+| `ocpc seed-demo [--force]`                                           | Fill an **empty** instance with a demo company, "Brightfield Studio", for evaluation, and print the demo owner login.                |
+| `ocpc generate-vapid`                                                | Print a new pair of Web Push keys.                                                                                                   |
+| `ocpc --version`                                                     | Print the version.                                                                                                                   |
 
 ## 9. Backups and restore
 
-**What to back up:** the database, uploaded files, and the generated secrets in the data directory. `ocpc backup` collects all three into a single file:
+**What to back up:** the database, uploaded files, and the generated secrets in the data directory (`secret.key`, `vapid.json`). With SQLite, `ocpc backup` copies all three into a new directory. It uses SQLite's online backup, so the server can keep running:
 
 ```bash
-docker exec ocpc ocpc backup --out /data/backups/ocpc-$(date +%F).tar
-docker cp ocpc:/data/backups/ocpc-$(date +%F).tar ./
+docker exec ocpc ocpc backup --out /data/backups/ocpc-$(date +%F)
+docker cp ocpc:/data/backups/ocpc-$(date +%F) ./
 ```
 
-Automate it with cron on the host. Here's an example that runs every night at 02:30 and keeps 14 days:
+Automate it with cron on the host. This example runs every night at 02:30 and keeps 14 days:
 
 ```cron
-30 2 * * * docker exec ocpc ocpc backup --out /data/backups/ocpc-$(date +\%F).tar && find /var/lib/docker/volumes/compose_ocpc-data/_data/backups -mtime +14 -delete
+30 2 * * * docker exec ocpc ocpc backup --out /data/backups/ocpc-$(date +\%F) && find /var/lib/docker/volumes/compose_ocpc-data/_data/backups -mindepth 1 -maxdepth 1 -mtime +14 -exec rm -rf {} +
 ```
 
 **Copy backups off the server.** A backup on the same disk won't help if the disk dies.
 
-If you use **Postgres** or **S3**, also back those up with their own tools (`pg_dump`, bucket versioning or replication). `ocpc backup` then only includes what lives in the data directory.
+If you use **Postgres**, back up the database with `pg_dump`. If you use **S3**, use bucket versioning or replication. In both cases, also back up the data directory for its secrets. `ocpc backup` only supports SQLite.
 
-**To restore:**
+**To restore (SQLite):**
 
 ```bash
-docker compose down
-docker volume rm compose_ocpc-data            # ⚠️ deletes current data
-docker compose run --rm app ocpc restore --in /path/in/container/ocpc-2026-10-09.tar
-docker compose up -d
+docker compose stop app
+docker compose run --rm app ocpc restore --in /data/backups/ocpc-2026-10-09
+docker compose start app
 ```
+
+`restore` replaces the current database and files with the backup's, then rebuilds the search index.
 
 Test a restore on a spare machine at least once. Until you've done that, you can't be sure the backup works.
 
@@ -362,7 +364,7 @@ Upload limits: `OCPC_MAX_UPLOAD_MB` sets the per-file limit. Allowed file types 
 
 - **Retention:** **Admin → Retention** sets how long messages and files are kept, org-wide or per channel. A nightly job permanently deletes anything older. The default is to keep everything forever.
 - **Audit log:** **Admin → Audit log** records sign-ins, role changes, deletions, exports and settings changes.
-- **Org export:** `ocpc export --out org.json` or **Admin → Export**. Exports are recorded in the audit log.
+- **Org export:** `ocpc export --out org.ndjson` or **Admin → Export**. Exports are recorded in the audit log.
 - **Person-level requests** (for example GDPR): in **Admin → Users → (user)** you can export one person's data, deactivate them (they can't log in, but their messages remain), or erase them (their personal data is removed and their messages are attributed to "Deleted user").
 - **Data location:** everything stays on your server and your configured services. OpenCorpoChat has no telemetry and makes no outbound calls except to services you configure: SMTP, OIDC, S3, TURN/LiveKit, browser push services, and link previews. Link previews can be turned off in **Admin → Messages**.
 

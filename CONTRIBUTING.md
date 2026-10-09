@@ -22,7 +22,9 @@ For anything large (a new feature, a new dependency, or a data-model change), pl
 - **pnpm 10** (`corepack enable` gives you the version pinned in `package.json`)
 - Git
 
-No database server is needed. Development uses SQLite in `./data/`.
+No database server is needed. Development uses SQLite in `apps/server/data/`.
+
+> New here? The **[development guide](docs/development.md)** has a codebase tour, the request lifecycle, migration rules and a step-by-step "add a feature" recipe. If you're adapting OpenCorpoChat for your own organization, see **[forking & rebranding](docs/forking.md)**.
 
 ### Run it
 
@@ -36,19 +38,20 @@ pnpm dev
 - Web client: <http://localhost:5173>. Vite proxies `/api` (including the WebSocket at `/api/v1/ws`) to the server.
 - API server: <http://localhost:8080>
 
-On first visit you'll see the **setup wizard**, which creates the owner account. To start over, stop the server and delete `./data/`.
+On first visit you'll see the **setup wizard**, which creates the owner account. To start over, stop the server and delete `apps/server/data/`. Run `pnpm cli seed-demo` on an empty database to get realistic demo data.
 
 ### Common commands
 
-| Command               | What it does                                         |
-| --------------------- | ---------------------------------------------------- |
-| `pnpm dev`            | Run server and web client with hot reload            |
-| `pnpm test`           | Run all unit/integration tests (Vitest)              |
-| `pnpm typecheck`      | Type-check every package                             |
-| `pnpm lint`           | ESLint                                               |
-| `pnpm format`         | Format with Prettier (`pnpm format:check` to verify) |
-| `pnpm build`          | Production build (shared → web → server)             |
-| `pnpm licenses:check` | Verify all dependency licenses are AGPL-compatible   |
+| Command               | What it does                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| `pnpm dev`            | Run server and web client with hot reload                                                           |
+| `pnpm test`           | Run all unit/integration tests (Vitest)                                                             |
+| `pnpm typecheck`      | Type-check every package                                                                            |
+| `pnpm lint`           | ESLint                                                                                              |
+| `pnpm format`         | Format with Prettier (`pnpm format:check` to verify)                                                |
+| `pnpm build`          | Production build (shared → web → server)                                                            |
+| `pnpm e2e`            | Playwright end-to-end tests (run `pnpm build` first; once: `pnpm exec playwright install chromium`) |
+| `pnpm licenses:check` | Verify all dependency licenses are AGPL-compatible                                                  |
 
 ### Testing against PostgreSQL
 

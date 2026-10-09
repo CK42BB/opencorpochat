@@ -700,6 +700,8 @@ button {
   justify-content: center;
   margin: 10px 0 4px;
   pointer-events: none;
+  padding: 4px 0 8px;
+  background: linear-gradient(var(--bg) 65%, transparent);
 }
 .day-divider span {
   pointer-events: auto;

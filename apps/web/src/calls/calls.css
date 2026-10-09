@@ -4,6 +4,32 @@
 }
 .call-window.expanded .call-grid {
   max-height: none;
+  /* Fit the whole grid on screen: rows × tile height must not exceed the window. */
+  width: min(100%, calc((100vh - 200px) * 1.6));
+  margin: 0 auto;
+  align-content: center;
+  gap: 10px;
+  padding: 12px;
+}
+.call-window.expanded .call-grid[data-count='1'] {
+  grid-template-columns: 1fr;
+}
+.call-window.expanded .call-grid[data-count='2'],
+.call-window.expanded .call-grid[data-count='3'],
+.call-window.expanded .call-grid[data-count='4'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.call-window.expanded .call-grid[data-count='5'],
+.call-window.expanded .call-grid[data-count='6'],
+.call-window.expanded .call-grid[data-count='7'],
+.call-window.expanded .call-grid[data-count='8'],
+.call-window.expanded .call-grid[data-count='9'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, calc((100vh - 200px) * 1.6 * 1.5));
+}
+.call-window.expanded .call-tile .tile-name {
+  font-size: 14px;
+  padding: 4px 10px;
 }
 .call-window .call-tile .avatar {
   margin: auto;
