@@ -13,7 +13,7 @@ jobs:
     # Bots (Dependabot, etc.) cannot sign the DCO; their changes are reviewed by a maintainer.
     if: ${{ !endsWith(github.event.pull_request.user.login, '[bot]') }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Verify Signed-off-by trailers
