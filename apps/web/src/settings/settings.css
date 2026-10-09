@@ -1,0 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+.settings-main { overflow-y: auto; min-width: 0; }
+.settings-main .page-content { max-width: 720px; }
+.settings-main .card h3 { display: flex; align-items: center; gap: 6px; }

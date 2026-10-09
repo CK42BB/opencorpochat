@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+.admin-chart { width: 100%; height: auto; display: block; }
+.admin-chart .bar { fill: var(--brand); }
+.admin-chart .bar:hover { fill: var(--brand-strong); }
+.admin-chart .axis { fill: var(--text-faint); font-size: 10px; }
+.admin-chart .grid { stroke: var(--border); stroke-width: 1; }
+.admin-check { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.admin-check:last-child { border-bottom: 0; }
+.admin-check .ok { color: var(--success); }
+.admin-check .off { color: var(--text-faint); }
+.admin-check code, .admin-hint code { font-family: var(--mono); font-size: 12px; background: var(--bg-sunken); padding: 1px 4px; border-radius: 4px; }
+.admin-savebar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; justify-content: flex-end; padding: 12px 16px; margin: 0 -20px -16px; background: var(--bg); border-top: 1px solid var(--border); box-shadow: 0 -4px 16px rgba(20, 20, 40, 0.06); }
+.admin-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.admin-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); font-size: 13px; font-weight: 600; }
+.admin-chip button { border: 0; background: none; color: inherit; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; }
+.admin-chip button:hover { background: rgba(0, 0, 0, 0.08); }
+.admin-emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.admin-emoji { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+.admin-emoji img { width: 36px; height: 36px; object-fit: contain; }
+.admin-emoji .del { position: absolute; top: 4px; right: 4px; }
+.admin-json { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-all; margin: 4px 0 0; background: var(--bg-sunken); padding: 6px 8px; border-radius: var(--radius-sm); max-width: 420px; }
+.admin-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.admin-filters .input, .admin-filters .select { width: auto; min-width: 160px; }
+.admin-icon-preview { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); }

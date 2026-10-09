@@ -181,7 +181,9 @@ export async function buildApp(config: Config, opts: { scheduler?: boolean; logg
       },
     });
     app.setNotFoundHandler((req, reply) => {
-      if (req.method === 'GET' && !req.url.startsWith('/api/')) {
+      // Unknown hashed assets must 404 (never the HTML shell), or caches would store HTML as JS.
+      const isAsset = req.url.startsWith('/assets/') || /\.[a-z0-9]{2,5}(\?|$)/i.test(req.url);
+      if (req.method === 'GET' && !req.url.startsWith('/api/') && !isAsset) {
         reply.header('Cache-Control', 'no-cache');
         return reply.sendFile('index.html');
       }

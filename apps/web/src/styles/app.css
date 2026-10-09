@@ -311,6 +311,8 @@ button { cursor: pointer; }
 .composer textarea:focus { outline: none; }
 .composer-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; }
 .composer-toolbar .icon-btn { width: 28px; height: 28px; }
+.panel .composer-toolbar .fmt { display: none; }
+@media (max-width: 760px) { .composer-toolbar .fmt { display: none; } }
 .send-btn { width: 32px; height: 28px; border-radius: var(--radius-sm); border: 0; background: var(--brand); color: #fff; display: grid; place-items: center; }
 .send-btn:disabled { background: var(--bg-sunken); color: var(--text-faint); cursor: default; }
 .composer-files { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 0; }

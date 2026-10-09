@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — call UI additions (base styles live in styles/app.css). */
+.call-window .call-grid { max-height: 320px; }
+.call-window.expanded .call-grid { max-height: none; }
+.call-window .call-tile .avatar { margin: auto; }
+.call-window .call-tile audio { display: none; }
+.call-window .select, .popover .select { font-size: 13px; }
+.ring-pulse { display: inline-flex; border-radius: 22%; animation: ring-pulse 1.4s ease-out infinite; }
+@keyframes ring-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(74, 58, 255, 0.5); }
+  100% { box-shadow: 0 0 0 18px rgba(74, 58, 255, 0); }
+}

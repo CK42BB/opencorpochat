@@ -46,7 +46,7 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
     url: '/channels',
     summary: 'Browse the channel directory (public channels, plus private ones you belong to)',
     tags: ['channels'],
-    query: z.object({ q: z.string().max(80).optional(), archived: z.enum(['true', 'false']).optional() }),
+    query: z.object({ q: z.string().max(80).optional(), archived: z.enum(['true', 'false']).optional(), all: z.enum(['true', 'false']).optional() }),
     handler: async ({ user, query }): Promise<Channel[]> => {
       if (user.role === 'guest') return [];
       let q = ctx.db
@@ -56,7 +56,10 @@ export function channelRoutes(app: FastifyInstance, ctx: Ctx) {
           eb.selectFrom('channel_members as cm').select(eb.fn.countAll<number>().as('n')).whereRef('cm.channel_id', '=', 'c.id').as('member_count'),
         )
         .where((eb) =>
-          eb.or([
+          // Admins may list every channel (admin console); DMs are never listed.
+          query.all === 'true' && isAdmin(actorOf(user))
+            ? eb('c.kind', 'in', ['public', 'private'])
+            : eb.or([
             eb('c.kind', '=', 'public'),
             eb.and([
               eb('c.kind', '=', 'private'),

@@ -479,23 +479,23 @@ export function Composer({ channel, threadRootId = null, placeholder }: { channe
             <Paperclip size={16} />
           </button>
           <input ref={fileInput} type="file" multiple hidden onChange={(e) => (addFiles(Array.from(e.target.files ?? [])), (e.target.value = ''))} />
-          <span style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 4px' }} />
-          <button className="icon-btn" onClick={() => wrap('**')} aria-label={t('Bold')} title={t('Bold')}>
+          <span className="fmt" style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 4px' }} />
+          <button className="icon-btn fmt" onClick={() => wrap('**')} aria-label={t('Bold')} title={t('Bold')}>
             <Bold size={15} />
           </button>
-          <button className="icon-btn" onClick={() => wrap('_')} aria-label={t('Italic')} title={t('Italic')}>
+          <button className="icon-btn fmt" onClick={() => wrap('_')} aria-label={t('Italic')} title={t('Italic')}>
             <Italic size={15} />
           </button>
-          <button className="icon-btn" onClick={() => wrap('~~')} aria-label={t('Strikethrough')} title={t('Strikethrough')}>
+          <button className="icon-btn fmt" onClick={() => wrap('~~')} aria-label={t('Strikethrough')} title={t('Strikethrough')}>
             <Strikethrough size={15} />
           </button>
-          <button className="icon-btn" onClick={() => (text.slice(ref.current!.selectionStart, ref.current!.selectionEnd).includes('\n') ? wrap('```\n', '\n```') : wrap('`'))} aria-label={t('Code')} title={t('Code')}>
+          <button className="icon-btn fmt" onClick={() => (text.slice(ref.current!.selectionStart, ref.current!.selectionEnd).includes('\n') ? wrap('```\n', '\n```') : wrap('`'))} aria-label={t('Code')} title={t('Code')}>
             <Code size={15} />
           </button>
-          <button className="icon-btn" onClick={() => wrap('[', '](https://)')} aria-label={t('Link')} title={t('Link')}>
+          <button className="icon-btn fmt" onClick={() => wrap('[', '](https://)')} aria-label={t('Link')} title={t('Link')}>
             <Link2 size={15} />
           </button>
-          <button className="icon-btn" onClick={() => insertAtCaret('@')} aria-label={t('Mention someone')} title={t('Mention someone')}>
+          <button className="icon-btn fmt" onClick={() => insertAtCaret('@')} aria-label={t('Mention someone')} title={t('Mention someone')}>
             <AtSign size={15} />
           </button>
           <button className="icon-btn" onClick={(e) => setEmojiAnchor(e.currentTarget)} aria-label={t('Emoji')} title={t('Emoji')}>
@@ -503,7 +503,7 @@ export function Composer({ channel, threadRootId = null, placeholder }: { channe
           </button>
           <span className="spacer" />
           {threadRootId && (
-            <label className="row small muted" style={{ marginRight: 8, gap: 4 }}>
+            <label className="row small muted" style={{ marginRight: 8, gap: 4, whiteSpace: 'nowrap' }}>
               <input type="checkbox" checked={alsoInChannel} onChange={(e) => setAlsoInChannel(e.target.checked)} />
               {t('Also send to channel')}
             </label>

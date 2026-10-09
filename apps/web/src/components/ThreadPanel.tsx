@@ -10,6 +10,8 @@ import { isContinued } from './MessageList';
 import { Spinner } from './ui';
 import { TypingIndicator } from './TypingIndicator';
 
+const EMPTY: string[] = [];
+
 export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () => void }) {
   const root = useStore((s) => s.messages[rootId]);
   const thread = useStore((s) => s.threads[rootId]);
@@ -27,7 +29,7 @@ export function ThreadPanel({ rootId, onClose }: { rootId: string; onClose: () =
       });
   }, [rootId, onClose]);
 
-  const replyIds = thread?.replyIds ?? [];
+  const replyIds = thread?.replyIds ?? EMPTY;
   useLayoutEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTop = el.scrollHeight;

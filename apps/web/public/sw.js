@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Service worker: offline app shell + Web Push notifications.
-const SHELL = 'ocpc-shell-v1';
+const SHELL = 'ocpc-shell-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(SHELL).then((c) => c.addAll(['/', '/icon.svg', '/manifest.webmanifest'])).then(() => self.skipWaiting()));
@@ -30,7 +30,8 @@ self.addEventListener('fetch', (event) => {
           hit ||
           fetch(req).then((res) => {
             const copy = res.clone();
-            if (res.ok) caches.open(SHELL).then((c) => c.put(req, copy));
+            const type = res.headers.get('content-type') || '';
+            if (res.ok && !type.includes('text/html')) caches.open(SHELL).then((c) => c.put(req, copy));
             return res;
           }),
       ),

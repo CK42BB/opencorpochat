@@ -187,7 +187,8 @@ function MessageImpl({ message: m, continued, context, highlight, onOpenThread }
   const channel = useStore((s) => s.channels[m.channelId]);
   const settings = useStore((s) => s.settings);
   const compact = useStore((s) => s.me?.preferences.density === 'compact');
-  const replyUsers = useStore((s) => m.replyUserIds.map((id) => s.users[id]));
+  const allUsers = useStore((s) => s.users);
+  const replyUsers = m.replyUserIds.map((id) => allUsers[id]);
   const rc = useRenderContext();
   const navigate = useNavigate();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);

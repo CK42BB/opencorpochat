@@ -14,6 +14,8 @@ import { ChannelIntro } from './ChannelIntro';
 
 const GROUP_MS = 5 * 60_000;
 
+const EMPTY: string[] = [];
+
 export function isContinued(prev: Msg | undefined, m: Msg) {
   return (
     !!prev &&
@@ -61,7 +63,7 @@ export function MessageList({ channel, focusMessageId, onOpenThread }: { channel
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id, focusMessageId]);
 
-  const ids = list?.ids ?? [];
+  const ids = list?.ids ?? EMPTY;
   const lastId = ids[ids.length - 1];
 
   // Keep scroll position: stick to bottom for new messages, preserve offset when prepending.

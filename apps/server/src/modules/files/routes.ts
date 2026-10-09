@@ -15,6 +15,7 @@ import { toFileInfo } from '../messages/service.js';
 const INLINE_TYPES = /^(image\/(png|jpeg|gif|webp|avif|bmp)|video\/(mp4|webm|ogg|quicktime)|audio\/(mpeg|ogg|wav|webm|mp4|aac|flac)|application\/pdf|text\/plain)$/;
 
 function sanitizeName(name: string) {
+  // eslint-disable-next-line no-control-regex -- stripping control characters is the point
   const clean = name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').trim().slice(0, 200);
   return clean || 'file';
 }

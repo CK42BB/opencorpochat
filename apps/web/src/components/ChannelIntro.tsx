@@ -8,6 +8,11 @@ import { t } from '../lib/i18n';
 import { Avatar } from './ui';
 import { AddMembersModal } from './modals';
 
+function createdLabel(iso: string) {
+  const d = formatDay(iso);
+  return d === t('Today') ? t('today') : d === t('Yesterday') ? t('yesterday') : t('on {date}', { date: d });
+}
+
 export function ChannelIntro({ channel }: { channel: MyChannel }) {
   const me = useStore((s) => s.me);
   const users = useStore((s) => s.users);
@@ -42,8 +47,8 @@ export function ChannelIntro({ channel }: { channel: MyChannel }) {
       </h3>
       <p className="muted">
         {creator
-          ? t('{name} created this channel on {date}.', { name: displayName(creator), date: formatDay(channel.createdAt) })
-          : t('This channel was created on {date}.', { date: formatDay(channel.createdAt) })}{' '}
+          ? t('{name} created this channel {date}.', { name: displayName(creator), date: createdLabel(channel.createdAt) })
+          : t('This channel was created {date}.', { date: createdLabel(channel.createdAt) })}{' '}
         {channel.description || t('This is the very beginning of #{name}.', { name: channel.name })}
       </p>
       {!channel.archived && me?.role !== 'guest' && (
