@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-09
+
 ### Added
 
 - Product Requirements Document (`docs/PRD.md`) and architecture decision records.
@@ -25,4 +27,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - End-to-end tests (Playwright): setup, invites, realtime messaging, threads, unread badges, search and a two-person call.
 - Open-source governance: AGPL-3.0 license, NOTICE, Code of Conduct, contributing guide with DCO, security policy, CI with license allowlist, CodeQL and OpenSSF Scorecard.
 
-[Unreleased]: https://github.com/CK42BB/opencorpochat/commits/main
+[Unreleased]: https://github.com/CK42BB/opencorpochat/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/CK42BB/opencorpochat/releases/tag/v0.1.0
