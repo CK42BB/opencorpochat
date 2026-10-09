@@ -10,6 +10,8 @@ jobs:
   signoff:
     name: Check commits are signed off
     runs-on: ubuntu-latest
+    # Bots (Dependabot, etc.) cannot sign the DCO; their changes are reviewed by a maintainer.
+    if: ${{ !endsWith(github.event.pull_request.user.login, '[bot]') }}
     steps:
       - uses: actions/checkout@v5
         with:
