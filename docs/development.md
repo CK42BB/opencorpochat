@@ -158,11 +158,11 @@ Run `pnpm typecheck && pnpm lint && pnpm test`, then commit with `git commit -s`
 
 ## Debugging
 
-| Want to…                        | Do                                                                                         |
-| ------------------------------- | ------------------------------------------------------------------------------------------ |
-| See every request               | `OCPC_LOG_LEVEL=debug pnpm dev`                                                            |
-| Inspect a call                  | Run `ocpcCallDebug()` in the browser console during a call: peer, ICE and candidate states |
-| Inspect realtime traffic        | DevTools → Network → WS → `/api/v1/ws` → Messages                                          |
-| Read the API                    | Open `/api/v1/openapi.json` in any OpenAPI viewer                                          |
-| Reset dev data                  | Stop the server and delete `apps/server/data/`                                             |
-| Test on Postgres without Docker | Any local Postgres works: `DATABASE_URL=postgres://user:pass@localhost:5432/ocpc`          |
+| Want to…                        | Do                                                                                                                                                                                                                                                                                       |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| See every request               | `OCPC_LOG_LEVEL=debug pnpm dev`                                                                                                                                                                                                                                                          |
+| Inspect a call                  | Run `ocpcCallDebug()` in the browser console during a call: peer, ICE and candidate states                                                                                                                                                                                               |
+| Inspect realtime traffic        | DevTools → Network → WS → `/api/v1/ws` → Messages                                                                                                                                                                                                                                        |
+| Read the API                    | Open `/api/v1/openapi.json` in any OpenAPI viewer                                                                                                                                                                                                                                        |
+| Reset dev data                  | Stop the server and delete `apps/server/data/`                                                                                                                                                                                                                                           |
+| Test on Postgres without Docker | Any local Postgres works: `DATABASE_URL=postgres://user:pass@localhost:5432/ocpc`. Each test server creates and drops its own temporary database, so the user needs `CREATEDB`. If you can't grant it, set `OCPC_TEST_SHARED_DB=1` and use `--no-file-parallelism` on an empty database. |

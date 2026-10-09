@@ -10,15 +10,40 @@ export interface TestServer extends BuiltApp {
   close(): Promise<void>;
 }
 
+/** On Postgres, give every test server its own fresh database so test files can run in parallel. */
+async function isolatedPostgres(baseUrl: string) {
+  const pg = (await import('pg')).default;
+  const name = `ocpc_test_${process.pid}_${Math.random().toString(36).slice(2, 8)}`;
+  const admin = new pg.Client({ connectionString: baseUrl });
+  await admin.connect();
+  await admin.query(`CREATE DATABASE ${name}`);
+  await admin.end();
+  const url = new URL(baseUrl);
+  url.pathname = `/${name}`;
+  return {
+    url: url.toString(),
+    async drop() {
+      const c = new pg.Client({ connectionString: baseUrl });
+      await c.connect();
+      await c.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`).catch(() => {});
+      await c.end();
+    },
+  };
+}
+
 export async function startTestServer(env: Record<string, string> = {}): Promise<TestServer> {
   const dir = mkdtempSync(path.join(tmpdir(), 'ocpc-test-'));
+  const pgdb =
+    process.env.DATABASE_URL && !process.env.OCPC_TEST_SHARED_DB
+      ? await isolatedPostgres(process.env.DATABASE_URL)
+      : null;
   const config = loadConfig({
     NODE_ENV: 'test',
     OCPC_DATA_DIR: dir,
     OCPC_PUBLIC_URL: 'http://localhost:8080',
     OCPC_LOG_LEVEL: 'silent',
     // Allow running the suite against Postgres in CI.
-    ...(process.env.DATABASE_URL ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
+    ...(process.env.DATABASE_URL ? { DATABASE_URL: pgdb?.url ?? process.env.DATABASE_URL } : {}),
     ...(process.env.DATABASE_POOL_MAX ? { DATABASE_POOL_MAX: process.env.DATABASE_POOL_MAX } : {}),
     ...env,
   });
@@ -29,6 +54,7 @@ export async function startTestServer(env: Record<string, string> = {}): Promise
     dir,
     async close() {
       await built.stop();
+      await pgdb?.drop();
       rmSync(dir, { recursive: true, force: true });
     },
   };
