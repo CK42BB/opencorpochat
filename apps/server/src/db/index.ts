@@ -1,15 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Database connection + migrations. SQLite is the zero-config default; PostgreSQL is
 // selected when DATABASE_URL starts with postgres://.
-import {
-  Kysely,
-  PostgresDialect,
-  SqliteDialect,
-  sql,
-  type Migration,
-  type MigrationProvider,
-  Migrator,
-} from 'kysely';
+import { Kysely, PostgresDialect, SqliteDialect, sql } from 'kysely';
+import { Migrator, type Migration, type MigrationProvider } from 'kysely/migration';
 import type { Config } from '../config.js';
 import type { Database } from './schema.js';
 import * as m0001 from './migrations/0001_initial.js';
