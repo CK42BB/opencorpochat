@@ -105,7 +105,13 @@ export async function buildApp(
   await app.register(cookie);
   await app.register(multipart);
   await app.register(websocket, { options: { maxPayload: 256 * 1024 } });
-  await app.register(rateLimit, { global: true, max: 600, timeWindow: '1 minute' });
+  await app.register(rateLimit, {
+    global: true,
+    max: 600,
+    timeWindow: '1 minute',
+    // Some transports (injected test requests, unix sockets) have no client IP.
+    keyGenerator: (req) => req.ip ?? req.socket?.remoteAddress ?? 'unknown',
+  });
 
   app.decorateRequest('auth', null);
 
@@ -192,9 +198,10 @@ export async function buildApp(
       root: config.webDir,
       wildcard: false,
       setHeaders: (res, filePath) => {
+        // @fastify/static >= 10 passes the Fastify reply here.
         if (filePath.includes(`${path.sep}assets${path.sep}`))
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        else res.setHeader('Cache-Control', 'no-cache');
+          res.header('Cache-Control', 'public, max-age=31536000, immutable');
+        else res.header('Cache-Control', 'no-cache');
       },
     });
     app.setNotFoundHandler((req, reply) => {
