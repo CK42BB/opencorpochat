@@ -5,3 +5,8 @@ packages:
 # Supply-chain safeguard: never install a package version published less than
 # 3 days ago (in minutes). Matches the Dependabot cooldown in .github/dependabot.yml.
 minimumReleaseAge: 4320
+
+overrides:
+  # GHSA-g3hv-75wg-m249 (ReDoS). eslint and typescript-eslint still pin minimatch 10.
+  # Remove once they depend on minimatch >=11.0.1.
+  minimatch@>=7 <11.0.1: ^11.0.1

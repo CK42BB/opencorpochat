@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Upgraded nodemailer from 7 to 10.3, fixing several high- and moderate-severity advisories in outgoing email handling.
+- Upgraded fast-uri (via fastify), glob (via @fastify/static) and minimatch (via eslint) to patched versions.
+
+### Changed
+
+- Updated dependencies, including better-sqlite3 13, marked 18, vitest 5, jsdom 30, eslint 10 and @vitejs/plugin-react 6.
+
 ## [0.1.0] - 2026-10-09
 
 ### Added

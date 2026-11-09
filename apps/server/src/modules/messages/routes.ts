@@ -62,8 +62,8 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
           .where('channel_id', '=', params.id!)
           .where((eb) => eb.or([eb('thread_root_id', 'is', null), eb('also_in_channel', '=', 1)]));
       let rows: MessagesTable[];
-      let hasMoreBefore = false;
-      let hasMoreAfter = false;
+      let hasMoreBefore: boolean;
+      let hasMoreAfter: boolean;
       if (query.around) {
         const half = Math.ceil(query.limit / 2);
         const older = await base()
