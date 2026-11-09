@@ -82,7 +82,7 @@ export class Client {
       const [pair] = c.split(';');
       if (pair?.startsWith('ocpc_session=')) this.cookie = pair.endsWith('=') ? '' : pair;
     }
-    let json: any = null;
+    let json: any;
     try {
       json = res.body ? JSON.parse(res.body) : null;
     } catch {
