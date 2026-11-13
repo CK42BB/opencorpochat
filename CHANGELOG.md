@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated dependencies, including better-sqlite3 13, marked 18, vitest 5, jsdom 30, eslint 10 and @vitejs/plugin-react 6.
+- Updated dependencies, including better-sqlite3 13, marked 18, vitest 5, jsdom 31, eslint 10 and @vitejs/plugin-react 6.
+- Moved CodeQL analysis to github/codeql-action v4.
 
 ## [0.1.0] - 2026-10-09
 
