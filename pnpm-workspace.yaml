@@ -5,3 +5,11 @@ packages:
 # Supply-chain safeguard: never install a package version published less than
 # 3 days ago (in minutes). Matches the Dependabot cooldown in .github/dependabot.yml.
 minimumReleaseAge: 4320
+
+overrides:
+  # vite 8.3.8 pulls in wasm32-only packages (@emnapi/*, @tybys/wasm-util) that
+  # depend on tslib 2.9.1. pnpm 10.28 then skips tslib 2.9.1 on every platform,
+  # even though @aws-sdk/* needs it, so a clean install leaves the AWS SDK
+  # without tslib (and `pnpm licenses list` fails). Using a single tslib version
+  # avoids that. Remove once a clean install works without it.
+  tslib: 2.9.1
