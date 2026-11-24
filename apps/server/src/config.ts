@@ -35,6 +35,7 @@ const EnvSchema = z.object({
   OCPC_SOURCE_URL: z.string().default('https://github.com/CK42BB/opencorpochat'),
   OCPC_LOG_LEVEL: z.string().default('info'),
   OCPC_MAX_UPLOAD_MB: z.coerce.number().int().positive().default(100),
+  OCPC_MAX_IMPORT_MB: z.coerce.number().int().positive().max(4096).default(2048),
   OCPC_TRUST_PROXY: bool,
   OCPC_WEB_DIR: opt,
   OCPC_WEB_DIST: opt,
@@ -90,6 +91,8 @@ export interface Config {
   sourceUrl: string;
   logLevel: string;
   maxUploadMb: number;
+  /** Largest migration archive accepted through the admin console. */
+  maxImportMb: number;
   trustProxy: boolean;
   webDir: string | null;
   s3: null | {
@@ -205,6 +208,7 @@ export function loadConfig(
     sourceUrl: env.OCPC_SOURCE_URL,
     logLevel: env.OCPC_LOG_LEVEL,
     maxUploadMb: env.OCPC_MAX_UPLOAD_MB,
+    maxImportMb: env.OCPC_MAX_IMPORT_MB,
     trustProxy: env.OCPC_TRUST_PROXY,
     webDir,
     s3: env.S3_BUCKET

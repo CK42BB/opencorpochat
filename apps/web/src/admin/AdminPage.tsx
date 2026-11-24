@@ -2,6 +2,7 @@
 // Administration console: /admin/*
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import {
+  ArrowRightLeft,
   BarChart3,
   Download,
   Hash,
@@ -26,6 +27,7 @@ import { Groups } from './Groups';
 import { Emoji } from './Emoji';
 import { Audit } from './Audit';
 import { Export } from './Export';
+import { Migrate } from './Migrate';
 import './admin.css';
 
 const SECTIONS = [
@@ -37,6 +39,7 @@ const SECTIONS = [
   { path: 'groups', label: 'User groups', icon: UsersRound, el: <Groups /> },
   { path: 'emoji', label: 'Custom emoji', icon: Smile, el: <Emoji /> },
   { path: 'audit', label: 'Audit log', icon: ListChecks, el: <Audit /> },
+  { path: 'migrate', label: 'Migrate', icon: ArrowRightLeft, el: <Migrate /> },
   { path: 'export', label: 'Export & backups', icon: Download, el: <Export /> },
 ] as const;
 

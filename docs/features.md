@@ -152,7 +152,7 @@ This page covers the five features teams rely on most, then lists every feature 
   - Retention policies, org-wide or per channel.
   - Per-person data export and erasure for data-subject requests.
   - Full organization export in a [documented format](export-format.md).
-  - Import from Slack-format export archives.
+  - Migrate from Slack-format exports and Microsoft Teams (via Microsoft Graph), with a preview, opt-in for private conversations, audit trail, re-runnable cut-over imports, undo, and email-bound invites for people to claim their history.
   - Backup and restore from the CLI.
 
 ![Admin overview](images/screenshots/admin.png)
@@ -287,17 +287,17 @@ This page covers the five features teams rely on most, then lists every feature 
 
 ### Administration & compliance
 
-| Feature                                                            | Status |
-| ------------------------------------------------------------------ | ------ |
-| Admin console (people, invites, channels, settings, groups, emoji) | ✅     |
-| Audit log                                                          | ✅     |
-| Retention policies (org-wide; per channel in the data model)       | ✅     |
-| Organization export (NDJSON); per-person export and erasure        | ✅     |
-| Import from Slack-format export archives (CLI)                     | ✅     |
-| Local usage statistics                                             | ✅     |
-| Backup and restore CLI (SQLite; use `pg_dump` for Postgres)        | ✅     |
-| Legal hold                                                         | 🔜     |
-| Prometheus metrics endpoint                                        | 🔜     |
+| Feature                                                                       | Status |
+| ----------------------------------------------------------------------------- | ------ |
+| Admin console (people, invites, channels, settings, groups, emoji)            | ✅     |
+| Audit log                                                                     | ✅     |
+| Retention policies (org-wide; per channel in the data model)                  | ✅     |
+| Organization export (NDJSON); per-person export and erasure                   | ✅     |
+| Migrate from Slack-format exports and Microsoft Teams (admin console and CLI) | ✅     |
+| Local usage statistics                                                        | ✅     |
+| Backup and restore CLI (SQLite; use `pg_dump` for Postgres)                   | ✅     |
+| Legal hold                                                                    | 🔜     |
+| Prometheus metrics endpoint                                                   | 🔜     |
 
 ### Clients
 

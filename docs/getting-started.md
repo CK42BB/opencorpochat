@@ -145,10 +145,10 @@ sudo -u ocpc OCPC_DATA_DIR=/var/lib/opencorpochat node /opt/opencorpochat/apps/s
 | ☐   | Test a call between two different networks. If it fails, set up TURN                                                 | [Admin guide §11](admin-guide.md#11-calls-stun-turn-and-livekit)      |
 | ☐   | Subscribe to releases: **Watch → Custom → Releases** on GitHub                                                       | [Releases](https://github.com/CK42BB/opencorpochat/releases)          |
 
-**Moving from another chat tool?** If you have a Slack-format workspace export, import it with:
+**Moving from another chat tool?** Open **Admin → Migrate** and upload a Slack-format workspace export, or a Microsoft Teams archive made with `ocpc collect-teams`. You get a preview before anything is imported. From the command line:
 
 ```sh
-docker exec -it ocpc ocpc import-slack --in /data/export.zip
+docker exec -it ocpc ocpc import --in /data/export.zip
 ```
 
-Imported people become inactive placeholder accounts until you invite them.
+Imported people get inactive accounts holding their history until they claim them. See [migration.md](migration.md) for the full guide, including Microsoft Teams.

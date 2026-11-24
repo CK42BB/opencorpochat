@@ -43,7 +43,7 @@ Run it on a $10 VPS or a spare office machine.
 | **Calls**                | 1:1 calls and channel huddles with screen sharing over WebRTC, TURN support, an optional LiveKit SFU for larger meetings, and a built-in connection diagnostics page                                                                                                               |
 | **Integrations**         | REST API with an OpenAPI spec, realtime WebSocket API, bot accounts, scoped API tokens, incoming and outgoing webhooks (HMAC-signed), custom slash commands                                                                                                                        |
 | **Identity & security**  | Invite links, guest accounts, OpenID Connect SSO (Google, Microsoft Entra, Okta, Keycloak, Authentik…), TOTP 2FA (can be required org-wide), session management, rate limiting, strict CSP                                                                                         |
-| **Admin & compliance**   | Admin console, usage stats (computed locally), audit log, retention policies, per-person data export and erasure, full org export, import from Slack-format export archives, backup and restore CLI                                                                                |
+| **Admin & compliance**   | Admin console, usage stats (computed locally), audit log, retention policies, per-person data export and erasure, full org export, guided migration from Slack-format exports and Microsoft Teams, backup and restore CLI                                                          |
 | **Accessibility & i18n** | Keyboard-first (press `?`), screen-reader live regions, light and dark themes, compact mode, translation-ready UI                                                                                                                                                                  |
 
 ## Screenshots
@@ -139,4 +139,4 @@ To report a vulnerability, follow [SECURITY.md](SECURITY.md). Please don't open 
 
 OpenCorpoChat is free software, licensed under the **[GNU Affero General Public License v3.0](LICENSE)**. If you run a modified version for others over a network, you must offer them its source code. Set `OCPC_SOURCE_URL` to point to your fork; the link is shown in the app's About dialog.
 
-OpenCorpoChat is an independent project. It is not affiliated with or endorsed by any other chat vendor. Product names such as Slack® and Microsoft Teams® are trademarks of their respective owners. They are mentioned only to describe compatibility, such as importing a Slack-format export. See [NOTICE](NOTICE).
+OpenCorpoChat is an independent project. It is not affiliated with or endorsed by any other chat vendor. Product names such as Slack® and Microsoft Teams® are trademarks of their respective owners. They are mentioned only to describe compatibility, such as importing a Slack-format export or migrating from Microsoft Teams. See [NOTICE](NOTICE).

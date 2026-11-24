@@ -28,7 +28,14 @@ import { isoIn, nowIso } from '../../lib/time.js';
 import { audit } from '../admin/audit.js';
 import { createChannel, joinDefaultChannels } from '../channels/service.js';
 import { createMessage } from '../messages/service.js';
-import { findUserByLogin, insertUser, isUsernameTaken, toMe } from '../users/service.js';
+import { claimablePlaceholder, markClaimed } from '../migration/engine.js';
+import {
+  findUserByLogin,
+  insertUser,
+  isUsernameTaken,
+  publishUser,
+  toMe,
+} from '../users/service.js';
 import { finishOidc, startOidc, type OidcState } from './oidc.js';
 import { clearSessionCookie, createSession } from './sessions.js';
 
@@ -235,16 +242,42 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
         throw forbidden('Guest accounts are disabled');
       if (ctx.settings.get().ssoOnly && ctx.config.oidc)
         throw forbidden('Accounts are created through single sign-on');
-      if (await findUserByLogin(ctx, body.email))
-        throw conflict('An account with that email already exists');
-      if (await isUsernameTaken(ctx, body.username)) throw conflict('That username is taken');
-      const user = await insertUser(ctx, {
-        email: body.email,
-        username: body.username,
-        displayName: body.displayName,
-        role: inv.role as 'member',
-        passwordHash: await hashPassword(body.password),
-      });
+      // People brought over by a migration already have an (inactive) account holding
+      // their history. An invite bound to that exact email address lets them claim it.
+      const existing = await findUserByLogin(ctx, body.email);
+      const claim =
+        !!existing &&
+        !!existing.deactivated_at &&
+        existing.email.toLowerCase() === body.email.toLowerCase() &&
+        inv.email?.toLowerCase() === body.email.toLowerCase() &&
+        (await claimablePlaceholder(ctx, existing.id));
+      if (existing && !claim) throw conflict('An account with that email already exists');
+      if (await isUsernameTaken(ctx, body.username, existing?.id))
+        throw conflict('That username is taken');
+      let user;
+      if (existing && claim) {
+        await ctx.db
+          .updateTable('users')
+          .set({
+            username: body.username,
+            display_name: body.displayName,
+            password_hash: await hashPassword(body.password),
+            role: inv.role,
+            deactivated_at: null,
+          })
+          .where('id', '=', existing.id)
+          .execute();
+        await markClaimed(ctx, existing.id);
+        user = await publishUser(ctx, existing.id);
+      } else {
+        user = await insertUser(ctx, {
+          email: body.email,
+          username: body.username,
+          displayName: body.displayName,
+          role: inv.role as 'member',
+          passwordHash: await hashPassword(body.password),
+        });
+      }
       await ctx.db
         .updateTable('invites')
         .set((eb) => ({ uses: eb('uses', '+', 1) }))
@@ -257,7 +290,7 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
         targetType: 'user',
         targetId: user.id,
         ip: req.ip,
-        metadata: { inviteId: inv.id, role: inv.role },
+        metadata: { inviteId: inv.id, role: inv.role, ...(claim ? { claimedImport: true } : {}) },
       });
       await createSession(ctx, user.id, req, reply);
       return { me: toMe(user) };
@@ -496,6 +529,29 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
         if (domains.length && !domains.includes(email.split('@')[1] ?? ''))
           return fail('Your email domain is not allowed here.');
         user = await findUserByLogin(ctx, email);
+        // A verified SSO email claims the matching account created by a migration.
+        if (
+          user?.deactivated_at &&
+          user.email === email &&
+          (await claimablePlaceholder(ctx, user.id))
+        ) {
+          await ctx.db
+            .updateTable('users')
+            .set({ deactivated_at: null })
+            .where('id', '=', user.id)
+            .execute();
+          await markClaimed(ctx, user.id);
+          await joinDefaultChannels(ctx, user.id);
+          user = await publishUser(ctx, user.id);
+          await audit(ctx, {
+            actorId: user.id,
+            action: 'user.registered',
+            targetType: 'user',
+            targetId: user.id,
+            ip: req.ip,
+            metadata: { via: 'oidc', claimedImport: true },
+          });
+        }
         if (!user && ctx.config.oidc.autoCreate) {
           let base = (claims.preferred_username ?? email.split('@')[0] ?? 'user')
             .toLowerCase()

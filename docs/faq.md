@@ -14,7 +14,7 @@ No. If you can follow the [Docker Compose steps](admin-guide.md#3-recommended-pr
 
 ### Can we move our history over from our current chat tool?
 
-If your current tool can produce a **Slack-format workspace export archive** (a ZIP of JSON files), `ocpc import-slack` imports its channels, users and messages. Other tools can be supported through the documented import format. Contributions of new importers that use publicly documented export formats are welcome.
+Yes, from Slack-format workspace exports and from Microsoft Teams. Open **Admin → Migrate**, upload the archive, review what it contains and choose what to bring over. For Teams, `ocpc collect-teams` first collects your data through Microsoft's documented Graph API. Private channels and direct messages are only imported if you explicitly include them. People claim their own accounts with their history in place. See the [migration guide](migration.md). Contributions of new importers that use publicly documented formats are welcome.
 
 ### Is it affiliated with Slack or Microsoft?
 

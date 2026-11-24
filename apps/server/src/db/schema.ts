@@ -294,6 +294,37 @@ export interface CallsTable {
   participant_ids: string;
 }
 
+export interface ImportsTable {
+  id: string;
+  source: string; // slack | teams
+  label: string;
+  file_name: string;
+  archive_path: string | null;
+  sha256: string;
+  size: number;
+  status: string; // analyzing | ready | running | completed | failed | undone
+  options: string | null;
+  preview: string | null;
+  progress: string | null;
+  report: string | null;
+  error: string | null;
+  created_by: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface ImportItemsTable {
+  source: string;
+  kind: string; // user | channel | member | message | file
+  source_id: string;
+  import_id: string;
+  local_id: string;
+  created: number; // 1 = created by the import, 0 = matched an existing row
+  claimed_at: string | null;
+  former: Generated<number>;
+}
+
 export interface Database {
   users: UsersTable;
   sessions: SessionsTable;
@@ -323,6 +354,8 @@ export interface Database {
   org_settings: OrgSettingsTable;
   kv: KvTable;
   calls: CallsTable;
+  imports: ImportsTable;
+  import_items: ImportItemsTable;
 }
 
 // Re-exported so modules don't need to import kysely types directly.

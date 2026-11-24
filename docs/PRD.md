@@ -185,17 +185,17 @@ Priority key: **P0** = v1.0 launch blocker, **P1** = v1.x, **P2** = later / comm
 
 ### 6.9 Administration & compliance
 
-| ID  | Feature                                                                                                     | Pri |
-| --- | ----------------------------------------------------------------------------------------------------------- | --- |
-| A-1 | Admin console: users, invites, roles, channels, settings, custom emoji                                      | P0  |
-| A-2 | Audit log (logins, role changes, deletions, settings changes, exports)                                      | P0  |
-| A-3 | Message retention policy (org-wide and per channel; automatic purge job)                                    | P1  |
-| A-4 | Full org export (JSON + files, documented format)                                                           | P0  |
-| A-5 | Import from public export formats: generic chat export JSON (Slack-format export archive as first importer) | P1  |
-| A-6 | Legal hold (exempt users/channels from retention)                                                           | P2  |
-| A-7 | Data-subject requests: export a user's data, erase a user                                                   | P1  |
-| A-8 | Usage stats dashboard (local only, no telemetry)                                                            | P1  |
-| A-9 | Backup & restore commands (`ocpc backup`, `ocpc restore`)                                                   | P0  |
+| ID  | Feature                                                                                                                                            | Pri |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| A-1 | Admin console: users, invites, roles, channels, settings, custom emoji                                                                             | P0  |
+| A-2 | Audit log (logins, role changes, deletions, settings changes, exports)                                                                             | P0  |
+| A-3 | Message retention policy (org-wide and per channel; automatic purge job)                                                                           | P1  |
+| A-4 | Full org export (JSON + files, documented format)                                                                                                  | P0  |
+| A-5 | Import from public export formats and documented APIs: Slack-format export archives, Microsoft Teams via Microsoft Graph (see `docs/migration.md`) | P1  |
+| A-6 | Legal hold (exempt users/channels from retention)                                                                                                  | P2  |
+| A-7 | Data-subject requests: export a user's data, erase a user                                                                                          | P1  |
+| A-8 | Usage stats dashboard (local only, no telemetry)                                                                                                   | P1  |
+| A-9 | Backup & restore commands (`ocpc backup`, `ocpc restore`)                                                                                          | P0  |
 
 ### 6.10 Clients
 
@@ -373,7 +373,7 @@ Org-level settings (name, invite policy, retention, 2FA requirement…) live in 
 
 Built-in jobs (in-process scheduler) handle scheduled messages, reminders, email digests, retention purges, expired-status clearing, and session cleanup.
 
-`ocpc` CLI commands: `migrate`, `create-admin`, `reset-password`, `backup`, `restore`, `export`, `import-slack`, `generate-vapid`.
+`ocpc` CLI commands: `migrate`, `create-admin`, `reset-password`, `backup`, `restore`, `export`, `import` (alias `import-slack`), `collect-teams`, `generate-vapid`.
 
 ## 10. Open-source standards & compliance checklist
 
