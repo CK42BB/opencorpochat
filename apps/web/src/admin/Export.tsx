@@ -56,11 +56,11 @@ export function Export() {
             </tr>
             <tr>
               <td>
-                <code>ocpc import-slack --in export.zip</code>
+                <code>ocpc import --in export.zip</code>
               </td>
               <td className="small">
                 {t(
-                  'Import public channels, messages, threads and reactions from a Slack-format workspace export. Import is available from the command line only.',
+                  'Import a Slack-format export or a Microsoft Teams archive from the command line, for archives too large to upload. Admin → Migrate does the same in the browser.',
                 )}
               </td>
             </tr>

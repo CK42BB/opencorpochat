@@ -13,11 +13,12 @@ Pick the section that matches what you're trying to do.
 
 ## Install & operate
 
-| Doc                                   | What's in it                                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [Getting started](getting-started.md) | Four install paths, from a one-line demo to production, plus a first-day checklist.              |
-| [Admin guide](admin-guide.md)         | Every setting: HTTPS, SSO, email, calls (STUN/TURN/LiveKit), backups, upgrades, troubleshooting. |
-| [Export format](export-format.md)     | The NDJSON organization export, for compliance and migrations.                                   |
+| Doc                                   | What's in it                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [Getting started](getting-started.md) | Four install paths, from a one-line demo to production, plus a first-day checklist.                              |
+| [Admin guide](admin-guide.md)         | Every setting: HTTPS, SSO, email, calls (STUN/TURN/LiveKit), backups, upgrades, troubleshooting.                 |
+| [Export format](export-format.md)     | The NDJSON organization export, for compliance and migrations.                                                   |
+| [Migration guide](migration.md)       | Move your history from Slack-format exports or Microsoft Teams, with preview, privacy opt-in, cut-over and undo. |
 
 ## Use
 

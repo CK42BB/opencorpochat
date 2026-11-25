@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Guided migration from Slack-format exports and Microsoft Teams in **Admin → Migrate** and the new `ocpc import` command. Every import starts with a preview. Private channels and direct messages are opt-in and need a recorded confirmation. You can limit an import by channel and date range. Each import is checksummed and audited, can be downloaded as a report, re-run for cut-over, and undone. See `docs/migration.md`.
+- `ocpc collect-teams` collects Microsoft Teams channels, chats, inline images and (optionally) files through the Microsoft Graph API into a reviewable archive.
+- Imported people can claim their account and history with an email-bound invite or single sign-on.
+
+### Fixed
+
+- People imported from an export can now claim their accounts. Before, invites for their email address were rejected as "account already exists", and they were never added to their channels.
+- Large ZIP archives are read from disk on demand instead of being loaded into memory.
+
 ### Security
 
 - Upgraded nodemailer from 7 to 10.3, fixing several high- and moderate-severity advisories in outgoing email handling.

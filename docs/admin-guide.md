@@ -141,6 +141,7 @@ The server checks its configuration at startup and exits with a clear message if
 | `OCPC_SOURCE_URL`    | `https://github.com/CK42BB/opencorpochat` | "Source code" link in the About dialog. If you modify OpenCorpoChat, the AGPL requires you to point this at your modified source.             |
 | `OCPC_LOG_LEVEL`     | `info`                                    | `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                                                                            |
 | `OCPC_MAX_UPLOAD_MB` | `100`                                     | Maximum size of a single uploaded file                                                                                                        |
+| `OCPC_MAX_IMPORT_MB` | `2048`                                    | Maximum size of a migration archive uploaded in **Admin → Migrate** (at most 4096). Larger archives can be imported with `ocpc import`.       |
 | `OCPC_TRUST_PROXY`   | `false`                                   | Set `true` when behind Caddy/nginx/a load balancer so the real client IPs are logged and rate-limited                                         |
 
 ### File storage (S3-compatible)
@@ -203,7 +204,8 @@ In Docker, run commands with `docker exec -it ocpc ocpc <command>`. On bare meta
 | `ocpc backup --out DIR`                                              | **SQLite only:** write a consistent copy of the database, uploaded files and generated secrets into a new directory.                 |
 | `ocpc restore --in DIR`                                              | Restore a directory made by `ocpc backup`. Stop the server first.                                                                    |
 | `ocpc export --out FILE`                                             | Export the whole organization as NDJSON (see [export-format.md](export-format.md)).                                                  |
-| `ocpc import-slack --in FILE_OR_DIR`                                 | Import channels, users and messages from a Slack-format workspace export (ZIP or unzipped folder).                                   |
+| `ocpc import --in FILE_OR_DIR [--dry-run]`                           | Import a Slack-format export or a Teams archive (ZIP or folder). See [migration.md](migration.md) for all options.                   |
+| `ocpc collect-teams --out FILE.zip --tenant T --client-id C`         | Collect Microsoft Teams data through Microsoft Graph into an archive for `import`. See [migration.md](migration.md).                 |
 | `ocpc seed-demo [--force]`                                           | Fill an **empty** instance with a demo company, "Brightfield Studio", for evaluation, and print the demo owner login.                |
 | `ocpc generate-vapid`                                                | Print a new pair of Web Push keys.                                                                                                   |
 | `ocpc --version`                                                     | Print the version.                                                                                                                   |

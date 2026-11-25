@@ -140,3 +140,70 @@
   object-fit: cover;
   border: 1px solid var(--border);
 }
+
+/* ----- Migrate ----- */
+.migrate-steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  line-height: 1.5;
+}
+.migrate-steps li {
+  margin-bottom: 6px;
+}
+.migrate-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+.migrate-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+.migrate-bar > div {
+  height: 100%;
+  background: var(--brand);
+  transition: width 0.3s;
+}
+.migrate-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.migrate-note {
+  border-left: 3px solid var(--warning);
+  padding: 6px 10px;
+  background: var(--bg-sunken);
+  border-radius: 4px;
+}
+.migrate-ack {
+  border: 1px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+.migrate-summary h4,
+.card h4 {
+  margin: 16px 0 6px;
+  font-size: 14px;
+}
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--brand);
+  cursor: pointer;
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.link-btn.mono,
+textarea.mono {
+  font-family: var(--mono);
+}

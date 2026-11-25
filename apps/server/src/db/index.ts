@@ -6,6 +6,7 @@ import { Migrator, type Migration, type MigrationProvider } from 'kysely/migrati
 import type { Config } from '../config.js';
 import type { Database } from './schema.js';
 import * as m0001 from './migrations/0001_initial.js';
+import * as m0002 from './migrations/0002_imports.js';
 
 export type Dialect = 'sqlite' | 'postgres';
 export type DB = Kysely<Database>;
@@ -41,6 +42,7 @@ export async function openDatabase(config: Config): Promise<DbHandle> {
 
 const MIGRATIONS: Record<string, { up: (db: Kysely<any>, d: Dialect) => Promise<void> }> = {
   '0001_initial': m0001,
+  '0002_imports': m0002,
 };
 
 export async function migrate(handle: DbHandle): Promise<string[]> {

@@ -32,6 +32,7 @@ import { callRoutes, onConnectionClosed } from './modules/calls/routes.js';
 import { integrationRoutes, runOutgoingWebhooks } from './modules/integrations/routes.js';
 import { slashRoutes } from './modules/integrations/slash.js';
 import { adminRoutes } from './modules/admin/routes.js';
+import { migrationRoutes } from './modules/migration/routes.js';
 import { directoryRoutes } from './modules/admin/directory.js';
 import { schedulingRoutes } from './modules/scheduling/routes.js';
 import { startScheduler } from './jobs/scheduler.js';
@@ -180,6 +181,7 @@ export async function buildApp(
       integrationRoutes(api, ctx);
       slashRoutes(api, ctx);
       adminRoutes(api, ctx);
+      migrationRoutes(api, ctx);
       directoryRoutes(api, ctx);
       schedulingRoutes(api, ctx);
       gatewayRoutes(api, ctx);

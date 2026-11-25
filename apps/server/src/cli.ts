@@ -37,7 +37,15 @@ Commands:
   backup --out DIR                SQLite: consistent copy of the DB + files into DIR
   restore --in DIR                Restore a backup made with "backup" (stop the server first)
   export --out FILE               Export the organization as NDJSON
-  import-slack --in FILE|DIR      Import a Slack-format workspace export (ZIP or folder)
+  import --in FILE|DIR [--dry-run] [--channels a,b] [--since YYYY-MM-DD] [--until YYYY-MM-DD]
+         [--include-private] [--include-dms] [--acknowledge-private] [--no-files] [--no-merge]
+                                  Import a Slack-format export or a Teams archive (ZIP or folder).
+                                  Shows a preview first; --dry-run stops there. Safe to re-run.
+  collect-teams --out FILE.zip [--tenant T --client-id C] [--teams a,b]
+         [--include-private-channels] [--include-chats] [--download-files] [--since YYYY-MM-DD]
+                                  Collect Microsoft Teams data through Microsoft Graph into an
+                                  archive for "import". Secret: OCPC_GRAPH_CLIENT_SECRET, or a
+                                  token in OCPC_GRAPH_TOKEN. See docs/migration.md.
   seed-demo [--password P] [--force]
                                   Fill an EMPTY instance with a fictional demo company to explore
   generate-vapid                  Print a new VAPID key pair for Web Push
@@ -72,6 +80,22 @@ async function main() {
       out: { type: 'string' },
       in: { type: 'string' },
       force: { type: 'boolean' },
+      'dry-run': { type: 'boolean' },
+      channels: { type: 'string' },
+      since: { type: 'string' },
+      until: { type: 'string' },
+      'include-private': { type: 'boolean' },
+      'include-dms': { type: 'boolean' },
+      'acknowledge-private': { type: 'boolean' },
+      'no-files': { type: 'boolean' },
+      'no-merge': { type: 'boolean' },
+      tenant: { type: 'string' },
+      'client-id': { type: 'string' },
+      teams: { type: 'string' },
+      'include-private-channels': { type: 'boolean' },
+      'include-chats': { type: 'boolean' },
+      'download-files': { type: 'boolean' },
+      'max-file-mb': { type: 'string' },
     },
     allowPositionals: true,
   });
@@ -221,11 +245,114 @@ async function main() {
       return;
     }
 
+    case 'import':
     case 'import-slack': {
-      const input = values.in ?? fail('Provide --in FILE|DIR');
+      const input = path.resolve(values.in ?? fail('Provide --in FILE|DIR'));
+      const date = (v: string | undefined, name: string) => {
+        if (!v) return undefined;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) fail(`--${name} must look like 2024-01-31`);
+        return `${v}T00:00:00.000Z`;
+      };
+      const options = {
+        channelIds: undefined as string[] | undefined,
+        includePrivate: !!values['include-private'],
+        includeDirect: !!values['include-dms'],
+        acknowledgePrivate: !!values['acknowledge-private'],
+        since: date(values.since, 'since'),
+        until: date(values.until, 'until'),
+        files: !values['no-files'],
+        mergeExisting: !values['no-merge'],
+      };
+      if ((options.includePrivate || options.includeDirect) && !options.acknowledgePrivate)
+        fail(
+          'Importing private channels or direct messages requires --acknowledge-private: confirm you have the authority and a lawful basis to move these conversations, and that people have been told.',
+        );
       await withApp(async (ctx) => {
-        const { importSlackExport } = await import('./modules/admin/import-slack.js');
-        await importSlackExport(ctx, input);
+        const { analyzeArchive, startImport } = await import('./modules/migration/service.js');
+        const owner = await ctx.db
+          .selectFrom('users')
+          .select('id')
+          .where('role', '=', 'owner')
+          .where('deactivated_at', 'is', null)
+          .orderBy('created_at')
+          .executeTakeFirst();
+        if (!owner) fail('Run first-time setup before importing');
+        const { id, preview } = await analyzeArchive(ctx, {
+          archivePath: input,
+          fileName: path.basename(input),
+          actorId: owner.id,
+          ip: 'cli',
+          keepArchive: false,
+        });
+        console.log(`${preview.label}`);
+        console.log(
+          `People: ${preview.totals.users} (${preview.totals.newUsers} new, created as inactive accounts until claimed)`,
+        );
+        const wanted = values.channels?.split(',').map((c) => c.trim().replace(/^#/, ''));
+        const chosen = preview.channels.filter((c) => {
+          if (wanted && !wanted.includes(c.name) && !wanted.includes(c.id)) return false;
+          if (c.kind === 'private') return options.includePrivate;
+          if (c.kind === 'dm' || c.kind === 'group_dm') return options.includeDirect;
+          return true;
+        });
+        if (wanted) options.channelIds = chosen.map((c) => c.id);
+        for (const c of preview.channels) {
+          const mark = chosen.includes(c) ? '+' : '-';
+          const label = c.kind === 'public' || c.kind === 'private' ? `#${c.name}` : c.name;
+          const extra = c.alreadyImported ? `, ${c.alreadyImported} already imported` : '';
+          console.log(
+            `  ${mark} ${label} [${c.kind}] ${c.messages} messages, ${c.files} files${extra}`,
+          );
+        }
+        if (preview.retention?.olderMessages)
+          console.log(
+            `Note: ${preview.retention.olderMessages} messages are older than your ${preview.retention.days}-day retention policy and will be deleted by the next retention run.`,
+          );
+        for (const w of preview.warnings) console.log(`Warning: ${w}`);
+        if (values['dry-run']) {
+          console.log('Dry run: nothing was imported.');
+          return;
+        }
+        const r = await startImport(ctx, id, options, { id: owner.id, ip: 'cli' }, input);
+        for (const c of r.channels)
+          console.log(
+            `  ${c.name}: ${c.messages} messages, ${c.files} files${c.skippedExisting ? ` (${c.skippedExisting} already imported)` : ''}`,
+          );
+        console.log(
+          `Done: ${r.channels.length} conversations, ${r.totals.messages} messages, ${r.totals.files} files. People: ${r.users.created} created, ${r.users.matched} matched.`,
+        );
+        if (r.skipped.length)
+          console.log(`${r.skipped.length} items skipped; see the report in Admin → Migrate.`);
+        console.log(`Import id: ${id}. Undo it from Admin → Migrate if needed.`);
+      });
+      return;
+    }
+
+    case 'collect-teams': {
+      const out = path.resolve(values.out ?? fail('Provide --out FILE.zip'));
+      if (existsSync(out)) fail(`${out} already exists`);
+      const token = process.env.OCPC_GRAPH_TOKEN;
+      const clientSecret = process.env.OCPC_GRAPH_CLIENT_SECRET;
+      if (!token && !(values.tenant && values['client-id'] && clientSecret))
+        fail(
+          'Provide --tenant and --client-id with the secret in OCPC_GRAPH_CLIENT_SECRET, or an access token in OCPC_GRAPH_TOKEN',
+        );
+      const { collectTeams } = await import('./modules/migration/teams-collect.js');
+      await collectTeams({
+        out,
+        token,
+        tenantId: values.tenant,
+        clientId: values['client-id'],
+        clientSecret,
+        teams: values.teams
+          ?.split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+        includePrivateChannels: values['include-private-channels'],
+        includeChats: values['include-chats'],
+        downloadFiles: values['download-files'],
+        maxFileMb: values['max-file-mb'] ? Number(values['max-file-mb']) : undefined,
+        since: values.since ? `${values.since}T00:00:00.000Z` : undefined,
       });
       return;
     }
