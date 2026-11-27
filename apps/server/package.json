@@ -19,7 +19,7 @@
   "dependencies": {
     "@fastify/cookie": "^11.1.5",
     "@fastify/multipart": "^10.1.9",
-    "@fastify/rate-limit": "^11.2.2",
+    "@fastify/rate-limit": "^11.3.0",
     "@fastify/static": "^10.1.12",
     "@fastify/websocket": "^11.3.7",
     "@ocpc/shared": "workspace:*",
@@ -32,7 +32,7 @@
     "zod": "^4.6.7"
   },
   "optionalDependencies": {
-    "@aws-sdk/client-s3": "^3.1174.0"
+    "@aws-sdk/client-s3": "^3.1176.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
