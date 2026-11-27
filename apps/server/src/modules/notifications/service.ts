@@ -50,7 +50,8 @@ export function isQuiet(user: UsersTable, now = new Date()) {
 let webpush: typeof import('web-push') | null = null;
 async function getWebPush(ctx: Ctx) {
   if (!webpush) {
-    webpush = (await import('web-push')).default as unknown as typeof import('web-push');
+    // web-push 4 is ESM-only with named exports (no default export).
+    webpush = await import('web-push');
     webpush.setVapidDetails(
       ctx.config.vapid.subject,
       ctx.config.vapid.publicKey,
